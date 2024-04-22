@@ -20,6 +20,15 @@ module.exports = (sequelize, DataTypes) => {
         expiresIn: process.env.JWT_EXPIRE
       });
     }
+
+    matchPassword(enteredPassword) {
+      try {
+        const isMatch = bcrypt.compareSync(enteredPassword.trim(), this.password.trim());
+        return isMatch;
+      } catch (error) {
+        return false;
+      }
+    }
   }
   User.init({
     firstName: DataTypes.STRING,
