@@ -1,6 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 const app = express();
 
@@ -9,6 +9,12 @@ app.use(express.json());
 
 //Enable CORS
 app.use(cors());
+
+//Route files
+const auth = require('./routes/auth.routes');
+
+//Mount routers
+app.use('/api/v1/auth', auth);
 
 //Load env vars
 dotenv.config({
