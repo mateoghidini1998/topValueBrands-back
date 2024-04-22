@@ -3,17 +3,19 @@
   "version": "1.0.0",
   "description": "��#\u0000 \u0000t\u0000o\u0000p\u0000V\u0000a\u0000l\u0000u\u0000e\u0000B\u0000r\u0000a\u0000n\u0000d\u0000s\u0000-\u0000b\u0000a\u0000c\u0000k\u0000\r\u0000 \u0000",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Mateo Ghidini",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.9.7",
     "sequelize": "^6.37.3"
   },
