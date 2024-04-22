@@ -7,6 +7,10 @@ const asyncHandler = require('../middlewares/async')
 //@access   Private
 exports.register = asyncHandler(async(req, res, next) => {
     const { firstName, lastName, email, password } = req.body;
+
+    if(req.user.role !== 'admin'){
+        return res.status(401).json({ errors: [{ msg: `User ${req.user.firstName} ${req.user.lastName} has no clearance to create a new user` }] });
+    }
     
     let user = await User.findOne({ where: { email } });
 
