@@ -12,9 +12,12 @@ app.use(cors());
 
 //Route files
 const auth = require('./routes/auth.routes');
+const products = require('./routes/products.routes');
 
 //Mount routers
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/products', products);
+
 
 //Load env vars
 dotenv.config({
