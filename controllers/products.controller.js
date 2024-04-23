@@ -1,6 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
+const dotenv = require('dotenv');
 
 dotenv.config({
     path: './.env'
@@ -8,7 +9,7 @@ dotenv.config({
 
 exports.getToken = asyncHandler(async (req, res) => {
     try {
-        const response = await axios.post(process.env.AMZ_ENDPOINT, {
+        const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
             'grant_type': 'refresh_token',
             'refresh_token': process.env.REFRESH_TOKEN,
             'client_id': process.env.CLIENT_ID,
