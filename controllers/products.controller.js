@@ -1,6 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
+const dotenv = require('dotenv');
 
 dotenv.config({
     path: './.env'
