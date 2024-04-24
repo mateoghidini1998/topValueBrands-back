@@ -9,32 +9,40 @@ dotenv.config({
 })
 
 
-// Middleware para obtener el token y agregarlo a los headers
-exports.addAccessTokenHeader = asyncHandler(async (req, res, next) => {
-  try {
-      // Obtener el token utilizando getLWAToken
-      const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
-          'grant_type': 'refresh_token',
-          'refresh_token': process.env.REFRESH_TOKEN,
-          'client_id': process.env.CLIENT_ID,
-          'client_secret': process.env.CLIENT_SECRET
-      });
+let accessToken = null;
+let tokenExpiration = new Date(0);
 
-      const accessToken = response.data;
+async function fetchNewToken() {
+    const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
+       'grant_type': 'refresh_token',
+       'refresh_token': process.env.REFRESH_TOKEN,
+       'client_id': process.env.CLIENT_ID,
+       'client_secret': process.env.CLIENT_SECRET
+    });
+   
+    accessToken = response.data.access_token;
+    tokenExpiration = new Date(Date.now() + response.data.expires_in * 1000);
+    return accessToken;
+}
 
-      // Agregar el token a los headers
-      req.headers['x-amz-access-token'] = accessToken.access_token;
-
-      // Registrar el token en la consola para verificar
-      // console.log('x-amz-access-token:', accessToken.access_token);
-
-      // Llamar al siguiente middleware en la cadena
-      next();
-  } catch (error) {
-      // Manejar errores
-      console.error('Error fetching access token:', error);
-      // Si ocurrió un error, llamar al siguiente middleware con el error
-      next(error);
-  }
-});
+exports.addAccessTokenHeader = asyncHandler(async(req, res, next) => {
+    try {
+        const now = new Date(Date.now());
+        if(!accessToken || !tokenExpiration  || now >= tokenExpiration ) {
+            console.log('Fetching new token...');
+            accessToken = await fetchNewToken();
+            req.headers['x-amz-access-token'] = accessToken;
+            console.log(accessToken)
+        } else {
+            console.log('Token is still valid...')
+            req.headers['x-amz-access-token'] = accessToken;
+            console.log(accessToken)
+        }
+    
+        next();
+    } catch (error) {
+        console.error('Error fetching access token:', error);
+        next(error);
+    }
+})
 
