@@ -4,11 +4,9 @@ const router = express.Router();
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 const {
-    getToken,
     getInventorySummary,
 } = require('../controllers/products.controller');
 
-router.post('/', getToken);
 router.get('/inventorySummary', addAccessTokenHeader, getInventorySummary);
 
 
