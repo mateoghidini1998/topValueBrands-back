@@ -12,17 +12,16 @@ dotenv.config({
 exports.getInventorySummary = asyncHandler(async (req, res) => {
     try {
         // Construir la URL de la solicitud con los parámetros
-        const url = `${'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries'}?granularityType=${'Marketplace'}&granularityId=${'ATVPDKIKX0DER'}&marketplaceIds=${'ATVPDKIKX0DER'}`;
+        const url = `${'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries'}?granularityType=${process.env.GRANULARITY_TYPE}&granularityId=${process.env.GRANULARITY_US_ID}&marketplaceIds=${process.env.MARKETPLACE_US_ID}`;
 
         // Realizar la solicitud
         const response = await axios.get(url,
             {
                 headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+                    "x-amz-access-token": req.headers['x-amz-access-token']
                 }
             });
-
-        console.log(req);
         // Extraer datos de la respuesta
         const inventory = response;
 
@@ -30,11 +29,11 @@ exports.getInventorySummary = asyncHandler(async (req, res) => {
         console.log(inventory);
 
         // Responder con el inventario
-        res.status(200).json({ inventory });
+        res.status(200).json(inventory.data);
     } catch (error) {
         // Manejar errores
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        // console.error(error);
+        res.status(403).json({ error: 'Forbidden' });
     }
 });
 
