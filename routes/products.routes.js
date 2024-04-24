@@ -5,10 +5,12 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 const {
     getInventorySummary,
-    addExtraInfoToProduct
+    getAllInventorySummary,
+    addExtraInfoToProduct,
 } = require('../controllers/products.controller');
 
 router.get('/inventorySummary', addAccessTokenHeader, getInventorySummary);
+router.get('/inventorySummary/all', addAccessTokenHeader, getAllInventorySummary);
 router.put('/addExtraInfoToProduct', addExtraInfoToProduct);
 
 
