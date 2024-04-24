@@ -2,6 +2,7 @@ const express = require('express');
 const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
 const dotenv = require('dotenv');
+const { Product } = require('../models');
 
 dotenv.config({
     path: './.env'
@@ -12,8 +13,6 @@ dotenv.config({
 exports.getInventorySummary = asyncHandler(async (req, res) => {
     try {
         const url = `${'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries'}?granularityType=${process.env.GRANULARITY_TYPE}&granularityId=${process.env.GRANULARITY_US_ID}&marketplaceIds=${process.env.MARKETPLACE_US_ID}&details=true`;
-
-
         const response = await axios.get(url,
             {
                 headers: {
@@ -21,32 +20,25 @@ exports.getInventorySummary = asyncHandler(async (req, res) => {
                     "x-amz-access-token": req.headers['x-amz-access-token']
                 }
             });
+        const inventorySummaries = response.data;
 
-        const inventory = response;
+        /* const products = await Promise.all(inventorySummaries.map(product => {
+            return Product.create({
+                ASIN: product.asin,
+                product_name: product.productName,
+                seller_sku: product.sellerSku,
+                FBA_available_inventory: product.inventoryDetails.fulfillableQuantity,
+                FC_transfer: product.inventoryDetails.pendingTransshipmentQuantity,
+                Inbound_to_FBA: product.inventoryDetails.inboundShippedQuantity
+            });
+        })); */
 
-        res.status(200).json(inventory.data);
+        res.status(200).json(inventorySummaries);
     } catch (error) {;
-        res.status(403).json({ error: 'Forbidden' });
+        console.error({msg: error.message})
     }
 });
 
-exports.getToken = asyncHandler(async (req, res) => {
-    try {
-        const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
-            'grant_type': 'refresh_token',
-            'refresh_token': process.env.REFRESH_TOKEN,
-            'client_id': process.env.CLIENT_ID,
-            'client_secret': process.env.CLIENT_SECRET
-        });
-
-        const accessToken = response.data;
-        console.log(accessToken);
-        res.status(200).json({ accessToken });
-
-    } catch (error) {
-        console.error(error);
-    }
-});
 
 
 
