@@ -11,10 +11,9 @@ dotenv.config({
 
 exports.getInventorySummary = asyncHandler(async (req, res) => {
     try {
-        // Construir la URL de la solicitud con los parámetros
         const url = `${'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries'}?granularityType=${process.env.GRANULARITY_TYPE}&granularityId=${process.env.GRANULARITY_US_ID}&marketplaceIds=${process.env.MARKETPLACE_US_ID}`;
 
-        // Realizar la solicitud
+
         const response = await axios.get(url,
             {
                 headers: {
@@ -22,17 +21,11 @@ exports.getInventorySummary = asyncHandler(async (req, res) => {
                     "x-amz-access-token": req.headers['x-amz-access-token']
                 }
             });
-        // Extraer datos de la respuesta
+
         const inventory = response;
 
-        // Imprimir inventario en consola
-        console.log(inventory);
-
-        // Responder con el inventario
         res.status(200).json(inventory.data);
-    } catch (error) {
-        // Manejar errores
-        // console.error(error);
+    } catch (error) {;
         res.status(403).json({ error: 'Forbidden' });
     }
 });
