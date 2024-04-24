@@ -7,6 +7,37 @@ dotenv.config({
     path: './.env'
 })
 
+//Function to getInventorySummary
+
+exports.getInventorySummary = asyncHandler(async (req, res) => {
+    try {
+        // Construir la URL de la solicitud con los parámetros
+        const url = `${'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries'}?granularityType=${'Marketplace'}&granularityId=${'ATVPDKIKX0DER'}&marketplaceIds=${'ATVPDKIKX0DER'}`;
+
+        // Realizar la solicitud
+        const response = await axios.get(url,
+            {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+                }
+            });
+
+        console.log(req);
+        // Extraer datos de la respuesta
+        const inventory = response;
+
+        // Imprimir inventario en consola
+        console.log(inventory);
+
+        // Responder con el inventario
+        res.status(200).json({ inventory });
+    } catch (error) {
+        // Manejar errores
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 exports.getToken = asyncHandler(async (req, res) => {
     try {
         const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
@@ -15,12 +46,16 @@ exports.getToken = asyncHandler(async (req, res) => {
             'client_id': process.env.CLIENT_ID,
             'client_secret': process.env.CLIENT_SECRET
         });
-    
+
         const accessToken = response.data;
         console.log(accessToken);
         res.status(200).json({ accessToken });
-        
+
     } catch (error) {
         console.error(error);
     }
 });
+
+
+
+
