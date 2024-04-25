@@ -188,7 +188,7 @@ exports.getReport = asyncHandler(async (req, res, next) => {
             }
 
             // Define directory to save CSV files
-            const csvDirectory = path.join(__dirname, 'csv_files');
+            const csvDirectory = path.resolve('./reports');
             if (!fs.existsSync(csvDirectory)) {
                 fs.mkdirSync(csvDirectory);
             }
