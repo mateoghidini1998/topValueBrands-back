@@ -3,10 +3,14 @@ const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
 const dotenv = require('dotenv');
 const { Product } = require('../models');
+const fs = require('fs')
+const path = require('path')
 
 dotenv.config({
     path: './.env'
 })
+
+
 
 //Function to getInventorySummary
 exports.getInventorySummary = asyncHandler(async (req, res) => {
@@ -156,5 +160,56 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
         console.error({ msg: error.message })
     }
 })
+
+
+exports.getReport = asyncHandler(async (req, res, next) => {
+    const rptId = 'amzn1.spdoc.1.4.na.d71d9464-63c2-4ec1-964b-2c2397dd9d7a.TYE9C6AV67LAT.300';
+    try {
+        const apiResponse = await axios.get(`https://sellingpartnerapi-na.amazon.com/reports/2021-06-30/documents/${rptId}`, {
+            headers: {
+                'x-amz-access-token': req.headers['x-amz-access-token']
+            }
+        });
+
+        const responseData = apiResponse.data; // Accessing response data
+        if (responseData.url) {
+            const url = responseData.url;
+            console.log(url);
+            const resp = await axios.get(url, { responseType: 'arraybuffer' });
+            let respData = resp.data;
+
+            if (responseData.compressionAlgorithm) {
+                try {
+                    respData = require('zlib').gunzipSync(respData);
+                } catch (e) {
+                    console.error(e);
+                    return res.status(500).send('Error while decompressing data');
+                }
+            }
+
+            // Define directory to save CSV files
+            const csvDirectory = path.join(__dirname, 'csv_files');
+            if (!fs.existsSync(csvDirectory)) {
+                fs.mkdirSync(csvDirectory);
+            }
+
+            // Generate unique filename for CSV file
+            const timestamp = Date.now();
+            const csvFilename = `report_${timestamp}.csv`;
+            const csvFilePath = path.join(csvDirectory, csvFilename);
+
+            // Write CSV data to file
+            fs.writeFileSync(csvFilePath, respData);
+
+            return res.send(`CSV file saved: ${csvFilePath}`);
+        } else {
+            return res.status(404).send('Report URL not found');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
+});
+
 
 

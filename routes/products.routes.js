@@ -7,8 +7,10 @@ const {
     getInventorySummary,
     getAllInventorySummary,
     addExtraInfoToProduct,
+    getReport
 } = require('../controllers/products.controller');
 
+router.get('/report', addAccessTokenHeader, getReport);
 router.get('/inventorySummary', addAccessTokenHeader, getInventorySummary);
 router.get('/inventorySummary/all', addAccessTokenHeader, getAllInventorySummary);
 router.put('/addExtraInfoToProduct', addExtraInfoToProduct);
