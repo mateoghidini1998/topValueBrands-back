@@ -11,8 +11,8 @@ module.exports = {
       },
       ASIN: {
         type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: true,
+        unique: false
       },
       product_image: {
         type: Sequelize.STRING,
@@ -20,25 +20,25 @@ module.exports = {
       },
       product_name: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: true
       },
       seller_sku: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: true
       },
       FBA_available_inventory: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         defaultValue: 0
       },
       FC_transfer: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         defaultValue: 0
       },
       Inbound_to_FBA: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         defaultValue: 0
       },
       supplier_name: {
@@ -51,7 +51,7 @@ module.exports = {
       },
       product_cost: {
         type: Sequelize.FLOAT,
-        allowNull: false,
+        allowNull: true,
         defaultValue: 0
       },
       pack_type: {
@@ -59,11 +59,11 @@ module.exports = {
         allowNull: true,
       },
       createdAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE
       }
     });
