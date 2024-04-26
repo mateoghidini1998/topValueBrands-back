@@ -3,9 +3,9 @@ const router = express.Router();
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 const {
-    generateReport,
+    sendCSVasJSON,
 } = require('../controllers/reports.controller');
 
-router.get('/', addAccessTokenHeader ,generateReport);
+router.get('/', addAccessTokenHeader ,sendCSVasJSON);
 
 module.exports = router;
