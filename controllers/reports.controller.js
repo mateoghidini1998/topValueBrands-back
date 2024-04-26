@@ -1,5 +1,5 @@
 const asyncHandler = require('../middlewares/async')
-const { Product } = require('../models/')
+const { Product } = require('../models')
 const dotenv = require('dotenv');
 const axios = require('axios');
 const fs = require('fs');
@@ -20,7 +20,7 @@ exports.createReport = asyncHandler(async (req, res, next) => {
     const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
 
     const requestBody = {
-        "reportType": "GET_FBA_MYI_ALL_INVENTORY_DATA",
+        "reportType": "GET_MERCHANT_LISTINGS_ALL_DATA",
         "marketplaceIds": [`${process.env.MARKETPLACE_US_ID}`],
         "custom": true
     };
@@ -50,6 +50,7 @@ const pollReportStatus = async (reportId, accessToken) => {
         console.log(reportStatus)
         // Wait for a short period before polling again to avoid hitting rate limits
         await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds
+        
     }
     return reportStatus;
 };
@@ -141,15 +142,34 @@ exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
 
 exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
     try {
-        const csvFile = await this.downloadCSVReport(req, res, next)
+        const csvFile = await this.downloadCSVReport(req, res, next);
         const results = [];
 
-        fs.createReadStream(csvFile)
-        .pipe(csv({ separator: '\t' }))
-        .on('data', (data) => results.push(data))
-        .on('end', () => {     
-            res.json(results);
+        const products = await new Promise((resolve, reject) => {
+            fs.createReadStream(csvFile)
+            .pipe(csv({ 
+                separator: '\ts',
+                encoding: 'utf8',
+             }))
+            .on('data', (data) => results.push(data))
+            .on('end', async () => {
+                // Send the JSON response to the client
+                res.json(results);
+
+                // Save products to the database asynchronously
+                /* try {
+                    await saveProductsToDatabase(results);
+                } catch (error) {
+                    console.error(error.message);
+                } */
+
+                resolve(); // Resolve the promise when the stream ends
+            })
+            .on('error', (error) => {
+                reject(error); // Reject the promise if there's an error
+            });
         });
+
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Internal Server Error');
@@ -157,6 +177,26 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
 });
 
 
-exports.saveProducts = asyncHandler(async (req, res, next) => {
-    
-});
+
+async function saveProductsToDatabase(inventorySummaries) {
+
+    const products = await Promise.all(inventorySummaries.map(product => {
+        return Product.create({
+            ASIN: product.asin,
+            product_name: product["product-name"],
+            product_cost: product["your-price"],
+            seller_sku: product.sku,
+            FBA_available_inventory:product["afn-fulfillable-quantity"],
+            FC_transfer: product["afn-reserved-quantity"],
+            Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
+        });
+    }));
+    return products;
+}
+
+//Function to compare DB to new JSON Report
+//1- Validate if JSON Report item SKU is in DB
+//2- If not, add it to DB
+//3- If yes, check if ASIN, product_name, product_cost, seller_sku, FBA_available_inventory, FC_transfer, Inbound_to_FBA are the same
+//4- If not, update the DB item with the new values
+//5- If yes, do nothing
