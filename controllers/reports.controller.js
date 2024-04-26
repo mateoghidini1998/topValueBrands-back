@@ -188,12 +188,12 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
         const report = await this.sendCSVasJSON(req, res, next);
 
         // Continue with the rest of the code after sendCSVasJSON has completed
-        const newSync  = await processReport(report);
-        
+        const newSync = await processReport(report);
+
         res.json(newSync);
         // return report; // Returning the report
         return newSync;
-        
+
     } catch (error) {
         // Handle any errors
         next(error);
@@ -248,16 +248,32 @@ const processReport = async (productsArray) => {
                     updates.product_cost = product["your-price"];
                 }
                 // Agregar más campos a verificar según sea necesario
+                // Convertir otros valores numéricos a números antes de comparar
+                const newFBAInventory = parseFloat(product["afn-fulfillable-quantity"]);
+                if (existingProduct.FBA_available_inventory !== newFBAInventory) {
+                    updates.FBA_available_inventory = newFBAInventory;
+                }
+
+                const newFCTransfer = parseFloat(product["afn-reserved-quantity"]);
+                if (existingProduct.FC_transfer !== newFCTransfer) {
+                    updates.FC_transfer = newFCTransfer;
+                }
+
+                const newInboundToFBa = parseFloat(product["afn-inbound-shipped-quantity"]);
+                if (existingProduct.Inbound_to_FBA !== newInboundToFBa) {
+                    updates.Inbound_to_FBA = newInboundToFBa;
+                }
 
                 if (Object.keys(updates).length > 0) {
                     await Product.update(updates, {
                         where: { seller_sku: product.sku }
                     });
+                    updatedProducts.push(product);
                 }
             }
         }
         // Retornar la lista de productos actualizados
-        return updatedProducts;
+        return { newSyncQuantity: updatedProducts.length, newSyncData: updatedProducts };
     } catch (error) {
         console.error('Error al actualizar o crear productos:', error);
         throw error; // Propagar el error para manejarlo en un nivel superior si es necesario
