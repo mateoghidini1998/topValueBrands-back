@@ -3,7 +3,7 @@ const router = express.Router();
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 const {
-    generateReport
+    generateReport,
 } = require('../controllers/reports.controller');
 
 router.get('/', addAccessTokenHeader ,generateReport);
