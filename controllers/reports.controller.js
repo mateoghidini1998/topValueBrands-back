@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
+const readline = require('readline/promises');
 
 dotenv.config({path: './.env'});
 
@@ -142,34 +143,38 @@ exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
 
 exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
     try {
-        const csvFile = await this.downloadCSVReport(req, res, next);
+        const csvFile = './reports/report_1714151134866.csv';
         const results = [];
+        let keys = [];
 
-        const products = await new Promise((resolve, reject) => {
-            fs.createReadStream(csvFile)
-            .pipe(csv({ 
-                separator: '\t\t',
-                encoding: 'utf8',
-             }))
-            .on('data', (data) => results.push(data))
-            .on('end', async () => {
-                // Send the JSON response to the client
-                res.json(results);
-
-                // Save products to the database asynchronously
-                try {
-                    await saveProductsToDatabase(results);
-                } catch (error) {
-                    console.error(error.message);
-                }
-
-                resolve(); // Resolve the promise when the stream ends
-            })
-            .on('error', (error) => {
-                reject(error); // Reject the promise if there's an error
-            });
+        const rl = readline.createInterface({
+            input: fs.createReadStream(csvFile, { encoding: 'utf8' }),
+            crlfDelay: Infinity
         });
 
+        for await (const line of rl) {
+            if (!keys.length) {
+                // La primera línea contiene los nombres de las claves
+                keys = line.split('\t');
+            } else {
+                // Las siguientes líneas contienen los valores
+                const values = line.split('\t');
+                const obj = {};
+                keys.forEach((key, index) => {
+                    obj[key] = values[index];
+                });
+                results.push(obj);
+            }
+        }
+
+        // Aquí puedes agregar el código para guardar los productos en la base de datos
+        try {
+            await saveProductsToDatabase(results);
+        } catch (error) {
+            console.error(error.message);
+        }
+
+        res.json(results);
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Internal Server Error');
@@ -200,3 +205,4 @@ async function saveProductsToDatabase(inventorySummaries) {
 //3- If yes, check if ASIN, product_name, product_cost, seller_sku, FBA_available_inventory, FC_transfer, Inbound_to_FBA are the same
 //4- If not, update the DB item with the new values
 //5- If yes, do nothing
+
