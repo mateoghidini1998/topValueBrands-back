@@ -8,7 +8,7 @@ const csv = require('csv-parser');
 const { Readable } = require('stream');
 const readline = require('readline/promises');
 
-dotenv.config({path: './.env'});
+dotenv.config({ path: './.env' });
 
 let reportId = ''
 
@@ -29,7 +29,7 @@ exports.createReport = asyncHandler(async (req, res, next) => {
     const response = await axios.post(url, requestBody, {
         headers: {
             'Content-Type': 'application/json',
-            'x-amz-access-token': req.headers['x-amz-access-token'] 
+            'x-amz-access-token': req.headers['x-amz-access-token']
         }
     });
     // Return the reportId instead of sending a response
@@ -51,7 +51,7 @@ const pollReportStatus = async (reportId, accessToken) => {
         console.log(reportStatus)
         // Wait for a short period before polling again to avoid hitting rate limits
         await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds
-        
+
     }
     return reportStatus;
 };
@@ -110,7 +110,7 @@ exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
 
         let responseData = response.data;
 
-        if(responseData.compressionAlgorithm) {
+        if (responseData.compressionAlgorithm) {
             try {
                 responseData = require('zlib').gunzipSync(responseData);
             } catch (error) {
@@ -168,19 +168,101 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
         }
 
         // Aquí puedes agregar el código para guardar los productos en la base de datos
-        try {
-            await saveProductsToDatabase(results);
-        } catch (error) {
-            console.error(error.message);
-        }
+        // try {
+        //     await saveProductsToDatabase(results);
+        // } catch (error) {
+        //     console.error(error.message);
+        // }
 
-        res.json(results);
+        // res.json(results);
+        return results;
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Internal Server Error');
     }
 });
 
+exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
+    try {
+        // Call createReport and get the reportId
+        const report = await this.sendCSVasJSON(req, res, next);
+
+        // Continue with the rest of the code after sendCSVasJSON has completed
+        const newSync  = await processReport(report);
+        
+        res.json(newSync);
+        // return report; // Returning the report
+        return newSync;
+        
+    } catch (error) {
+        // Handle any errors
+        next(error);
+    }
+});
+
+const processReport = async (productsArray) => {
+    try {
+        const updatedProducts = []; // Variable para almacenar los productos agregados y actualizados
+
+        // Obtener todos los productos existentes en la base de datos
+        const existingProducts = await Product.findAll();
+
+        // Convertir los productos existentes a un objeto para facilitar la búsqueda
+        const existingProductsMap = existingProducts.reduce((acc, product) => {
+            acc[product.seller_sku] = product;
+            return acc;
+        }, {});
+
+        // Iterar sobre el array de productos recibidos
+        for (const product of productsArray) {
+            const existingProduct = existingProductsMap[product.sku];
+
+            if (!existingProduct) {
+                // Si el producto no existe en la base de datos, crearlo
+                // Asignar un valor predeterminado si 'your-price' es una cadena vacía
+                if (product["your-price"] === "") {
+                    product["your-price"] = "0.00";
+                }
+
+                await Product.create({
+                    ASIN: product.asin,
+                    product_name: product["product-name"],
+                    product_cost: product["your-price"],
+                    seller_sku: product.sku,
+                    FBA_available_inventory: product["afn-fulfillable-quantity"],
+                    FC_transfer: product["afn-reserved-quantity"],
+                    Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
+                });
+
+                // Agregar el producto creado a la lista de productos actualizados
+                updatedProducts.push(product);
+            } else {
+                // Si el producto existe, verificar si hay cambios y actualizar si es necesario
+                const updates = {};
+                if (existingProduct.product_name !== product["product-name"]) updates.product_name = product["product-name"];
+                // Asignar un valor predeterminado si 'your-price' es una cadena vacía
+                if (product["your-price"] === "") {
+                    product["your-price"] = "0.00";
+                }
+                if (existingProduct.product_cost !== parseFloat(product["your-price"])) {
+                    updates.product_cost = product["your-price"];
+                }
+                // Agregar más campos a verificar según sea necesario
+
+                if (Object.keys(updates).length > 0) {
+                    await Product.update(updates, {
+                        where: { seller_sku: product.sku }
+                    });
+                }
+            }
+        }
+        // Retornar la lista de productos actualizados
+        return updatedProducts;
+    } catch (error) {
+        console.error('Error al actualizar o crear productos:', error);
+        throw error; // Propagar el error para manejarlo en un nivel superior si es necesario
+    }
+};
 
 
 async function saveProductsToDatabase(inventorySummaries) {
@@ -191,7 +273,7 @@ async function saveProductsToDatabase(inventorySummaries) {
             product_name: product["product-name"],
             product_cost: product["your-price"],
             seller_sku: product.sku,
-            FBA_available_inventory:product["afn-fulfillable-quantity"],
+            FBA_available_inventory: product["afn-fulfillable-quantity"],
             FC_transfer: product["afn-reserved-quantity"],
             Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
         });

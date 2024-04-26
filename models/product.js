@@ -18,7 +18,10 @@ module.exports = (sequelize, DataTypes) => {
     Inbound_to_FBA: DataTypes.INTEGER,
     supplier_name: DataTypes.STRING,
     supplier_item_number: DataTypes.STRING,
-    product_cost: DataTypes.FLOAT,
+    product_cost: {
+      type: DataTypes.DECIMAL(10, 2), // Ajusta la precisión y escala según sea necesario
+      allowNull: false
+     },
     pack_type: DataTypes.STRING
  }, {
     sequelize,
