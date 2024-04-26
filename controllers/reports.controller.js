@@ -20,7 +20,7 @@ exports.createReport = asyncHandler(async (req, res, next) => {
     const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
 
     const requestBody = {
-        "reportType": "GET_MERCHANT_LISTINGS_ALL_DATA",
+        "reportType": "GET_FBA_MYI_ALL_INVENTORY_DATA",
         "marketplaceIds": [`${process.env.MARKETPLACE_US_ID}`],
         "custom": true
     };
@@ -148,7 +148,7 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
         const products = await new Promise((resolve, reject) => {
             fs.createReadStream(csvFile)
             .pipe(csv({ 
-                separator: '\ts',
+                separator: '\t\t',
                 encoding: 'utf8',
              }))
             .on('data', (data) => results.push(data))
@@ -157,11 +157,11 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
                 res.json(results);
 
                 // Save products to the database asynchronously
-                /* try {
+                try {
                     await saveProductsToDatabase(results);
                 } catch (error) {
                     console.error(error.message);
-                } */
+                }
 
                 resolve(); // Resolve the promise when the stream ends
             })
