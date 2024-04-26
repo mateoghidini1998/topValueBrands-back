@@ -1,6 +1,8 @@
 const asyncHandler = require('../middlewares/async')
 const dotenv = require('dotenv');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 dotenv.config({path: './.env'});
 
@@ -85,10 +87,17 @@ exports.generateReport = asyncHandler(async (req, res, next) => {
             'x-amz-access-token': req.headers['x-amz-access-token']
         }
     });
-
     let documentUrl = response.data.url;
 
-    res.status(200).json({ documentUrl });
+    return documentUrl;
 });
+
+exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+})
 
 
