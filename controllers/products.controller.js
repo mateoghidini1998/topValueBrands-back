@@ -32,7 +32,7 @@ exports.getInventorySummary = asyncHandler(async (req, res) => {
         //         product_name: product.productName,
         //         seller_sku: product.sellerSku,
         //         FBA_available_inventory: product.inventoryDetails.fulfillableQuantity,
-        //         FC_transfer: product.inventoryDetails.pendingTransshipmentQuantity,
+        //         reserved_quantity: product.inventoryDetails.pendingTransshipmentQuantity,
         //         Inbound_to_FBA: product.inventoryDetails.inboundShippedQuantity
         //     });
         // }));
