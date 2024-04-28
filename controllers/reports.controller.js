@@ -7,6 +7,7 @@ const path = require('path');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 const readline = require('readline/promises');
+const inventory = require('../data/NewInventory.json')
 
 dotenv.config({ path: './.env' });
 
@@ -143,7 +144,7 @@ exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
 
 exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
     try {
-        const csvFile = './reports/report_1714151134866.csv';
+        const csvFile = './reports/report_1714251644781.csv' /* await this.downloadCSVReport(req,res,next); */
         const results = [];
         let keys = [];
 
@@ -168,13 +169,13 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
         }
 
         // Aquí puedes agregar el código para guardar los productos en la base de datos
-        // try {
-        //     await saveProductsToDatabase(results);
-        // } catch (error) {
-        //     console.error(error.message);
-        // }
+         try {
+             /* await saveProductsToDatabase(results); */
+         } catch (error) {
+             console.error(error.message);
+        }
 
-        // res.json(results);
+        res.json({count: results.length, items: results});
         return results;
     } catch (error) {
         console.error(error.message);
@@ -218,19 +219,13 @@ const processReport = async (productsArray) => {
             const existingProduct = existingProductsMap[product.sku];
 
             if (!existingProduct) {
-                // Si el producto no existe en la base de datos, crearlo
-                // Asignar un valor predeterminado si 'your-price' es una cadena vacía
-                if (product["your-price"] === "") {
-                    product["your-price"] = "0.00";
-                }
-
+                
                 await Product.create({
                     ASIN: product.asin,
                     product_name: product["product-name"],
-                    product_cost: product["your-price"],
                     seller_sku: product.sku,
                     FBA_available_inventory: product["afn-fulfillable-quantity"],
-                    FC_transfer: product["afn-reserved-quantity"],
+                    reserved_quantity: product["afn-reserved-quantity"],
                     Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
                 });
 
@@ -240,13 +235,7 @@ const processReport = async (productsArray) => {
                 // Si el producto existe, verificar si hay cambios y actualizar si es necesario
                 const updates = {};
                 if (existingProduct.product_name !== product["product-name"]) updates.product_name = product["product-name"];
-                // Asignar un valor predeterminado si 'your-price' es una cadena vacía
-                if (product["your-price"] === "") {
-                    product["your-price"] = "0.00";
-                }
-                if (existingProduct.product_cost !== parseFloat(product["your-price"])) {
-                    updates.product_cost = product["your-price"];
-                }
+                
                 // Agregar más campos a verificar según sea necesario
                 // Convertir otros valores numéricos a números antes de comparar
                 const newFBAInventory = parseFloat(product["afn-fulfillable-quantity"]);
@@ -254,9 +243,9 @@ const processReport = async (productsArray) => {
                     updates.FBA_available_inventory = newFBAInventory;
                 }
 
-                const newFCTransfer = parseFloat(product["afn-reserved-quantity"]);
-                if (existingProduct.FC_transfer !== newFCTransfer) {
-                    updates.FC_transfer = newFCTransfer;
+                const newReservedQuantity = parseFloat(product["afn-reserved-quantity"]);
+                if (existingProduct.reserved_quantity !== newReservedQuantity) {
+                    updates.reserved_quantity = newReservedQuantity;
                 }
 
                 const newInboundToFBa = parseFloat(product["afn-inbound-shipped-quantity"]);
@@ -287,20 +276,42 @@ async function saveProductsToDatabase(inventorySummaries) {
         return Product.create({
             ASIN: product.asin,
             product_name: product["product-name"],
-            product_cost: product["your-price"],
             seller_sku: product.sku,
             FBA_available_inventory: product["afn-fulfillable-quantity"],
-            FC_transfer: product["afn-reserved-quantity"],
+            reserved_quantity: product["afn-reserved-quantity"],
             Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
         });
     }));
     return products;
 }
 
+exports.importJSON = asyncHandler(async (req, res, next) => {
+    try {
+        for (const item of inventory) {
+          await Product.update(
+            {
+              supplier_item_number: item.MPN,
+              supplier_name: item.Supplier,
+              product_cost: item['Cost '][ 'Unit'],
+            },
+            {
+              where: {
+                seller_sku: item.SKU,
+              },
+            }
+          );
+          console.log(`Actualizado el producto con ASIN: ${item.SKU}`);
+        }
+        return res.status(200).json({ message: 'Productos actualizados correctamente' });
+     } catch (error) {
+        console.error('Error al actualizar los productos:', error);
+    }
+});
+
 //Function to compare DB to new JSON Report
 //1- Validate if JSON Report item SKU is in DB
 //2- If not, add it to DB
-//3- If yes, check if ASIN, product_name, product_cost, seller_sku, FBA_available_inventory, FC_transfer, Inbound_to_FBA are the same
+//3- If yes, check if ASIN, product_name, product_cost, seller_sku, FBA_available_inventory, reserved_quantity, Inbound_to_FBA are the same
 //4- If not, update the DB item with the new values
 //5- If yes, do nothing
 
