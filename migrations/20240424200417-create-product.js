@@ -31,7 +31,7 @@ module.exports = {
         allowNull: true,
         defaultValue: 0
       },
-      FC_transfer: {
+      reserved_quantity: {
         type: Sequelize.INTEGER,
         allowNull: true,
         defaultValue: 0
