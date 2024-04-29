@@ -144,7 +144,7 @@ exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
 
 exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
     try {
-        const csvFile = './reports/report_1714251644781.csv' /* await this.downloadCSVReport(req,res,next); */
+        const csvFile =await this.downloadCSVReport(req,res,next); /* './reports/report_1714251644781.csv' */ 
         const results = [];
         let keys = [];
 
