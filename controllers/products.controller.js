@@ -219,6 +219,7 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
     // Get user role to restrict access
     const user = await User.findOne({ where: { id: req.user.id } });
+    console.log(user);
     if (user.role !== 'admin') {
         return res.status(401).json({ msg: 'Unauthorized' });
     }
