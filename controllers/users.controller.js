@@ -45,10 +45,12 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 
 exports.updateUserRole = asyncHandler(async (req, res, next) => {
     const loggedInUser = req.user;
+    console.log(loggedInUser)
+    
     const user = await User.findByPk(req.params.id);
    
     console.log('Role:' , loggedInUser.role)
-   
+    console.log(user)
     if(loggedInUser.role !== 'admin') {
        return res.status(401).json({ errors: [{ msg: 'User has no clearance to modify this user' }] });
     }
@@ -56,8 +58,9 @@ exports.updateUserRole = asyncHandler(async (req, res, next) => {
     if(!user) {
        return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
-   
+    
     const { role } = req.body;
+    
     const validRoles = ['admin', 'user']; 
 
     const lowerCaseRole = role.toLowerCase();
