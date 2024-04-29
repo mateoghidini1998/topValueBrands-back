@@ -1,10 +1,11 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
-const dotenv = require('dotenv');
+const { User } = require('../models');
 const { Product } = require('../models');
 const fs = require('fs')
 const path = require('path')
+const dotenv = require('dotenv');
 
 dotenv.config({
     path: './.env'
@@ -211,5 +212,30 @@ exports.getReport = asyncHandler(async (req, res, next) => {
     }
 });
 
+
+// Create a function to Update the is_active as a toggle field of products looking the product by ASIN and seller_sku
+
+exports.toggleShowProduct = asyncHandler(async (req, res) => {
+
+    // Get user role to restrict access
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    // Get the product by ASIN and seller_sku to check if the product exists
+    const product = await Product.findOne({ where: { ASIN: req.body.ASIN, seller_sku: req.body.seller_sku } });
+    if (!product) {
+        return res.status(404).json({ msg: 'Product not found' });
+    }
+
+    try {
+        product.is_active = !product.is_active;
+        await product.save();
+        res.status(200).json(product);
+    } catch (error) {
+        console.error({ msg: error.message })
+    }
+})
 
 
