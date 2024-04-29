@@ -22,7 +22,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 2), // Ajusta la precisión y escala según sea necesario
       allowNull: true
      },
-    pack_type: DataTypes.STRING
+    pack_type: DataTypes.STRING,
+    is_active: DataTypes.BOOLEAN
  }, {
     sequelize,
     modelName: 'Product',
