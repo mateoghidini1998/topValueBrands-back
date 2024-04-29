@@ -5,6 +5,7 @@ const inventory = require('../data/NewInventory.json');
 const asyncHandler = require('../middlewares/async')
 const path = require('path');
 const dotenv = require('dotenv');
+const { Product } = require('../models');
 
 dotenv.config({ path: './.env' });
 
@@ -171,7 +172,7 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
   Extra funcitons
 */
 
-const importJSON = asyncHandler(async (req, res, next) => {
+exports.importJSON = asyncHandler(async (req, res, next) => {
   try {
     for (const item of inventory) {
       await Product.update(

@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     ASIN: DataTypes.STRING,
     product_image: DataTypes.STRING,
     product_name: DataTypes.STRING,
-    seller_sku: DataTypes.STRING,
+    seller_sku: DataTypes.STRING.BINARY,
     FBA_available_inventory: DataTypes.INTEGER,
     reserved_quantity: DataTypes.INTEGER,
     Inbound_to_FBA: DataTypes.INTEGER,

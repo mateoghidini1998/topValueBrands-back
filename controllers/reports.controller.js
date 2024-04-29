@@ -25,7 +25,8 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
 const processReport = async (productsArray) => {
     try {
-        const updatedProducts = []; // Variable para almacenar los productos agregados y actualizados
+        const updatedProducts = [];
+        const newProducts = [];
 
         // Obtener todos los productos existentes en la base de datos
         const existingProducts = await Product.findAll();
@@ -52,7 +53,7 @@ const processReport = async (productsArray) => {
                 });
 
                 // Agregar el producto creado a la lista de productos actualizados
-                updatedProducts.push(product);
+                newProducts.push(product);
             } else {
                 // Si el producto existe, verificar si hay cambios y actualizar si es necesario
                 const updates = {};
@@ -84,7 +85,7 @@ const processReport = async (productsArray) => {
             }
         }
         // Retornar la lista de productos actualizados
-        return { newSyncQuantity: updatedProducts.length, newSyncData: updatedProducts };
+        return { newSyncProductsQuantity: newProducts.length, newSyncQuantity: updatedProducts.length, newSyncProducts: newProducts, newSyncData: updatedProducts };
     } catch (error) {
         console.error('Error al actualizar o crear productos:', error);
         throw error; // Propagar el error para manejarlo en un nivel superior si es necesario
