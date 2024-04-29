@@ -292,7 +292,7 @@ exports.importJSON = asyncHandler(async (req, res, next) => {
             {
               supplier_item_number: item.MPN,
               supplier_name: item.Supplier,
-              product_cost: item['Cost '][ 'Unit'],
+              product_cost: item['Cost '][' Unit'],
             },
             {
               where: {
