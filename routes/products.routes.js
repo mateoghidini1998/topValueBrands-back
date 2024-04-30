@@ -6,7 +6,10 @@ const {
     addExtraInfoToProduct,
     toggleShowProduct,
     getProducts,
+    addImageToAllProducts,
+    addImageToNewProducts,
 } = require('../controllers/products.controller');
+const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 /**
  * @openapi
@@ -290,5 +293,9 @@ router.patch('/addExtraInfoToProduct', protect, authorize("admin"), addExtraInfo
  *                   example: Not authorized to access this route
  */
 router.patch('/disable', protect, authorize("admin"), toggleShowProduct);
+
+router.patch('/addImage', addAccessTokenHeader, addImageToAllProducts)
+
+router.patch('/syncImages',protect, authorize("admin"), addAccessTokenHeader, addImageToNewProducts)
 
 module.exports = router;

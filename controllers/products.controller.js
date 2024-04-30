@@ -19,7 +19,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     }
 
     // check if the product exists
-    const product = await Product.findOne({ where: { seller_sku: req.body.seller_sku} });
+    const product = await Product.findOne({ where: { seller_sku: req.body.seller_sku } });
     if (!product) {
         return res.status(404).json({ msg: 'Product not found' });
     }
@@ -80,4 +80,143 @@ exports.getProducts = asyncHandler(async (req, res) => {
         data: products
     })
 })
+
+
+
+/*
+Sync Product Images on Database
+*/
+
+// Function to add images to all products
+exports.addImageToAllProducts = asyncHandler(async (req, res) => {
+    const products = await Product.findAll();
+    const delay = 2000; // Delay between requests in milliseconds
+    const maxRequests = 5; // Maximum number of requests
+    let index = 1000;
+    const accessToken = req.headers['x-amz-access-token'];
+
+    const fetchProductImage = async () => {
+        const remainingProducts = products.slice(index, index + maxRequests);
+        for (const product of remainingProducts) {
+            const { ASIN } = product;
+            const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=ATVPDKIKX0DER&includedData=images`;
+
+            try {
+                const response = await axios.get(urlImage, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-amz-access-token': accessToken
+                    }
+                });
+                const imageLink = response.data.images[0].images[0].link;
+                const imageLinks = response.data.images[0].images;
+
+                // Get the image from imageLinks where the width or the height is = 75;
+                const image = imageLinks.find(image => image.width === 75 || image.height === 75) || imageLinks[0];
+
+                console.log(image.link);
+                Product.update({ product_image: image.link }, { where: { ASIN: ASIN } })
+            } catch (error) {
+                console.error({ msg: error.message });
+            }
+            index++;
+        }
+
+        if (index < products.length) {
+            // Log the number of requests made
+            console.log(`Se han realizado ${index} peticiones`);
+            setTimeout(fetchProductImage, delay);
+        } else {
+            res.json(products);
+        }
+    };
+
+    fetchProductImage();
+});
+
+
+// Function to add images to new products
+exports.addImageToNewProducts = asyncHandler(async (req, res) => {
+
+    // Get user role to restrict access
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    // Get products where product_image is NULL
+    const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
+    console.log({ newProducts: newProducts.length });
+    const delay = 2000; // Delay between requests in milliseconds
+    const maxRequests = 5; // Maximum number of requests
+    let index = 0;
+    const accessToken = req.headers['x-amz-access-token'];
+
+    const productsWithoutImage = [];
+    let errorCount = 0;
+    let error429Count = 0;
+    let error403Count = 0;
+
+    const fetchProductImage = async () => {
+        const remainingProducts = newProducts.slice(index, index + maxRequests);
+
+        for (const product of remainingProducts) {
+            const { ASIN } = product;
+            const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=${'ATVPDKIKX0DER'}&includedData=images`;
+
+            try {
+                const response = await axios.get(urlImage, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-amz-access-token': accessToken
+                    }
+                });
+                const imageLinks = response.data.images[0].images;
+                const image = imageLinks.find(image => image.width === 75 || image.height === 75) || imageLinks[0];
+
+                console.log(image.link);
+                await Product.update({ product_image: image.link }, { where: { ASIN: ASIN } });
+
+            } catch (error) {
+                errorCount++;
+
+                switch (error.response.status) {
+                    case 404:
+                        console.log(`El producto ${ASIN} no tiene imagen`);
+                        break;
+                    case 403:
+                        console.log(`Acceso denegado para el producto ${ASIN}`);
+                        error403Count++;
+                        break;
+                    case 429:
+                        console.log(`Se ha superado el límite de peticiones para el producto ${ASIN}`);
+                        error429Count++;
+                        break;
+                    default:
+                        console.error({ msg: error.message });
+                        break;
+                }
+
+                productsWithoutImage.push(product);
+            }
+            index++;
+        }
+
+        if (index < newProducts.length) {
+            // Log the number of requests made
+            console.log(`Se han realizado ${index} peticiones`);
+            setTimeout(fetchProductImage, delay);
+        } else {
+            res.json({
+                addedSuccessfully: newProducts.length - errorCount,
+                error404: productsWithoutImage.length,
+                error403: error403Count,
+                error429: error429Count,
+                productsWithoutImage: productsWithoutImage
+            });
+        }
+    };
+
+    fetchProductImage();
+});
 
