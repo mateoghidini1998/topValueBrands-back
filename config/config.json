@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "$Htazzxs101",
+    "password": null,
     "database": "top_value_brands",
     "host": "127.0.0.1",
     "dialect": "mysql"
