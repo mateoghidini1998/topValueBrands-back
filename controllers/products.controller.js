@@ -5,8 +5,8 @@ const { User } = require('../models');
 const { Product } = require('../models');
 const fs = require('fs')
 const path = require('path')
-const dotenv = require('dotenv');
 const { productService } = require('../services/products.service');
+const dotenv = require('dotenv');
 
 dotenv.config({
     path: './.env'
@@ -44,7 +44,7 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
     // Get user role to restrict access
     const user = await User.findOne({ where: { id: req.user.id } });
-    console.log(user);
+    // console.log(user);
     if (user.role !== 'admin') {
         return res.status(401).json({ msg: 'Unauthorized' });
     }
@@ -105,7 +105,6 @@ exports.getProductsByPage = asyncHandler(async (req, res,next) => {
 
     } catch (error) {
         console.error({ msg: error.message });
-        next(error);
     }
 
 })
@@ -141,7 +140,7 @@ exports.addImageToAllProducts = asyncHandler(async (req, res) => {
                 // Get the image from imageLinks where the width or the height is = 75;
                 const image = imageLinks.find(image => image.width === 75 || image.height === 75) || imageLinks[0];
 
-                console.log(image.link);
+                // console.log(image.link);
                 Product.update({ product_image: image.link }, { where: { ASIN: ASIN } })
             } catch (error) {
                 console.error({ msg: error.message });
@@ -151,7 +150,7 @@ exports.addImageToAllProducts = asyncHandler(async (req, res) => {
 
         if (index < products.length) {
             // Log the number of requests made
-            console.log(`Se han realizado ${index} peticiones`);
+            // console.log(`Se han realizado ${index} peticiones`);
             setTimeout(fetchProductImage, delay);
         } else {
             res.json(products);
@@ -173,7 +172,7 @@ exports.addImageToNewProducts = asyncHandler(async (req, res) => {
 
     // Get products where product_image is NULL
     const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
-    console.log({ newProducts: newProducts.length });
+    // console.log({ newProducts: newProducts.length });
     const delay = 2000; // Delay between requests in milliseconds
     const maxRequests = 5; // Maximum number of requests
     let index = 0;
@@ -201,7 +200,7 @@ exports.addImageToNewProducts = asyncHandler(async (req, res) => {
                 const imageLinks = response.data.images[0].images;
                 const image = imageLinks.find(image => image.width === 75 || image.height === 75) || imageLinks[0];
 
-                console.log(image.link);
+                // console.log(image.link);
                 await Product.update({ product_image: image.link }, { where: { ASIN: ASIN } });
 
             } catch (error) {
@@ -209,14 +208,14 @@ exports.addImageToNewProducts = asyncHandler(async (req, res) => {
 
                 switch (error.response.status) {
                     case 404:
-                        console.log(`El producto ${ASIN} no tiene imagen`);
+                        // console.log(`El producto ${ASIN} no tiene imagen`);
                         break;
                     case 403:
-                        console.log(`Acceso denegado para el producto ${ASIN}`);
+                        // console.log(`Acceso denegado para el producto ${ASIN}`);
                         error403Count++;
                         break;
                     case 429:
-                        console.log(`Se ha superado el límite de peticiones para el producto ${ASIN}`);
+                        // console.log(`Se ha superado el límite de peticiones para el producto ${ASIN}`);
                         error429Count++;
                         break;
                     default:
@@ -231,7 +230,7 @@ exports.addImageToNewProducts = asyncHandler(async (req, res) => {
 
         if (index < newProducts.length) {
             // Log the number of requests made
-            console.log(`Se han realizado ${index} peticiones`);
+            // console.log(`Se han realizado ${index} peticiones`);
             setTimeout(fetchProductImage, delay);
         } else {
             res.json({
