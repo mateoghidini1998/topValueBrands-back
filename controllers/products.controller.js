@@ -6,6 +6,7 @@ const { Product } = require('../models');
 const fs = require('fs')
 const path = require('path')
 const dotenv = require('dotenv');
+const { productService } = require('../services/products.service');
 
 dotenv.config({
     path: './.env'
@@ -81,7 +82,33 @@ exports.getProducts = asyncHandler(async (req, res) => {
     })
 })
 
+// Create a function to get products by page
+exports.getProductsByPage = asyncHandler(async (req, res,next) => {
 
+    // Get user role to restrict access
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    try {
+        const { page=  1, limit = 10, orderBy = 'id', sortBy = 'asc', keyword } = req.query;
+        const data = await productService.findAll({
+            page: +page ? +page : 1,
+            limit: +limit ? +limit : 3,
+            orderBy,
+            sortBy,
+            keyword
+            // where: { name: { [Op.like]: `%${keyword}%` } }
+        })
+        return res.json({success: true, data})
+
+    } catch (error) {
+        console.error({ msg: error.message });
+        next(error);
+    }
+
+})
 
 /*
 Sync Product Images on Database
