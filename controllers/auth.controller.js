@@ -42,7 +42,7 @@ exports.login = asyncHandler(async(req, res, next) => {
     let user = await User.findOne({ where: { email: email }});
 
     if(!user){
-        return res.status(400).json({ errors: [{ msg: 'User not found' }] });
+        return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
 
     const isMatch = await user.matchPassword(password);
@@ -50,7 +50,7 @@ exports.login = asyncHandler(async(req, res, next) => {
         return res.status(401).json({ errors: [{ msg: 'Invalid credentials' }] })
     }
 
-    sendTokenResponse(user, 200, res);
+    this.sendTokenResponse(user, 200, res);
 })
 
 // @desc   Get current logged in user
@@ -68,7 +68,7 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 });
 
 //Get Token from model, create a cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+exports.sendTokenResponse = (user, statusCode, res) => {
     // Create token
      const token = user.getSignedJwtToken();
    

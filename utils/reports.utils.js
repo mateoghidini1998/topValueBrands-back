@@ -24,7 +24,7 @@ const createReport = asyncHandler(async (req, res, next) => {
       'x-amz-access-token': req.headers['x-amz-access-token']
     }
   });
-  console.log('Reporte Generado...')
+  // console.log('Reporte Generado...')
   return response.data.reportId;
 });
 
@@ -40,7 +40,7 @@ const pollReportStatus = async (reportId, accessToken) => {
       }
     });
     reportStatus = response.data.processingStatus;
-    console.log(reportStatus)
+    // console.log(reportStatus)
     // Wait for a short period before polling again to avoid hitting rate limits
     await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds
 
@@ -58,7 +58,7 @@ const getReportById = asyncHandler(async (req, res, next) => {
     await pollReportStatus(reportId, accessToken);
 
     const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-    console.log('URL: ', url);
+    // console.log('URL: ', url);
 
     const reportResponse = await axios.get(url, {
       headers: {
@@ -68,10 +68,10 @@ const getReportById = asyncHandler(async (req, res, next) => {
     });
 
     // Send the report response
-    console.log('Obtuvimos el reporte')
+    // console.log('Obtuvimos el reporte')
     return reportResponse.data
   } catch (error) {
-    console.error('Error fetching report:', error);
+    // console.error('Error fetching report:', error);
     // Send an error response
     res.status(500).json({ message: 'Error fetching report' });
   }
@@ -87,7 +87,7 @@ const generateReport = asyncHandler(async (req, res, next) => {
     }
   });
   let documentUrl = response.data.url;
-  console.log('Se genero el documento del reporte')
+  // console.log('Se genero el documento del reporte')
   return documentUrl;
 });
 
@@ -105,7 +105,7 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
       try {
         responseData = require('zlib').gunzipSync(responseData);
       } catch (error) {
-        console.error(error.message);
+        // console.error(error.message);
         return res.status(500).send('Error while decompressing data');
       }
     }
@@ -123,11 +123,11 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
     // Write CSV data to file
     fs.writeFileSync(csvFilePath, responseData);
 
-    console.log('Se descargo el documento como CSV')
+    // console.log('Se descargo el documento como CSV')
     return csvFilePath
 
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return res.status(500).send('Internal Server Error');
   }
 });
@@ -163,7 +163,7 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
     // res.json({ count: results.length, items: results });
     return results;
   } catch (error) {
-    console.error(error.message);
+    // console.error(error.message);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -187,11 +187,11 @@ exports.importJSON = asyncHandler(async (req, res, next) => {
           },
         }
       );
-      console.log(`Actualizado el producto con ASIN: ${item.SKU}`);
+      // console.log(`Actualizado el producto con ASIN: ${item.SKU}`);
     }
     return res.status(200).json({ message: 'Productos actualizados correctamente' });
   } catch (error) {
-    console.error('Error al actualizar los productos:', error);
+    // console.error('Error al actualizar los productos:', error);
   }
 });
 
