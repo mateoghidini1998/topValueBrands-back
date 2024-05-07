@@ -28,16 +28,13 @@ const processReport = async (productsArray) => {
         const updatedProducts = [];
         const newProducts = [];
 
-        // Obtener todos los productos existentes en la base de datos
         const existingProducts = await Product.findAll();
 
-        // Convertir los productos existentes a un objeto para facilitar la búsqueda
         const existingProductsMap = existingProducts.reduce((acc, product) => {
             acc[product.seller_sku] = product;
             return acc;
         }, {});
 
-        // Iterar sobre el array de productos recibidos
         for (const product of productsArray) {
             const existingProduct = existingProductsMap[product.sku];
 
@@ -52,15 +49,11 @@ const processReport = async (productsArray) => {
                     Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
                 });
 
-                // Agregar el producto creado a la lista de productos actualizados
                 newProducts.push(product);
             } else {
-                // Si el producto existe, verificar si hay cambios y actualizar si es necesario
                 const updates = {};
                 if (existingProduct.product_name !== product["product-name"]) updates.product_name = product["product-name"];
 
-                // Agregar más campos a verificar según sea necesario
-                // Convertir otros valores numéricos a números antes de comparar
                 const newFBAInventory = parseFloat(product["afn-fulfillable-quantity"]);
                 if (existingProduct.FBA_available_inventory !== newFBAInventory) {
                     updates.FBA_available_inventory = newFBAInventory;
@@ -84,11 +77,10 @@ const processReport = async (productsArray) => {
                 }
             }
         }
-        // Retornar la lista de productos actualizados
         return { newSyncProductsQuantity: newProducts.length, newSyncQuantity: updatedProducts.length, newSyncProducts: newProducts, newSyncData: updatedProducts };
     } catch (error) {
         console.error('Error al actualizar o crear productos:', error);
-        throw error; // Propagar el error para manejarlo en un nivel superior si es necesario
+        throw error; 
     }
 };
 

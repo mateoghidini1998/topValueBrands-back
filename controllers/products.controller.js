@@ -72,18 +72,15 @@ exports.getProducts = asyncHandler(async (req, res) => {
         return res.status(401).json({ msg: 'Unauthorized' });
     }
 
-    // Parámetros de paginación
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // Consulta con paginación
     const products = await Product.findAll({
         offset: offset,
         limit: limit
     });
 
-    // Obtener el total de productos para calcular el número total de páginas
     const totalProducts = await Product.count();
     const totalPages = Math.ceil(totalProducts / limit);
 
