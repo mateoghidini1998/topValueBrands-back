@@ -65,7 +65,6 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 })
 
 exports.getProducts = asyncHandler(async (req, res) => {
-
     // Get user role to restrict access
     const user = await User.findOne({ where: { id: req.user.id } });
 
@@ -73,42 +72,30 @@ exports.getProducts = asyncHandler(async (req, res) => {
         return res.status(401).json({ msg: 'Unauthorized' });
     }
 
-    const products = await Product.findAll();
+    // Parámetros de paginación
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Consulta con paginación
+    const products = await Product.findAll({
+        offset: offset,
+        limit: limit
+    });
+
+    // Obtener el total de productos para calcular el número total de páginas
+    const totalProducts = await Product.count();
+    const totalPages = Math.ceil(totalProducts / limit);
 
     return res.status(200).json({
         success: true,
-        total: products.length,
+        total: totalProducts,
+        pages: totalPages,
+        currentPage: page,
         data: products
-    })
-})
+    });
+});
 
-// Create a function to get products by page
-exports.getProductsByPage = asyncHandler(async (req, res,next) => {
-
-    // Get user role to restrict access
-    const user = await User.findOne({ where: { id: req.user.id } });
-    if (user.role !== 'admin') {
-        return res.status(401).json({ msg: 'Unauthorized' });
-    }
-
-    try {
-        const { page=  1, limit = 10, orderBy = 'id', sortBy = 'asc', keyword } = req.query;
-        const data = await productService.findAll({
-            page: +page ? +page : 1,
-            limit: +limit ? +limit : 3,
-            orderBy,
-            sortBy,
-            keyword
-            // where: { name: { [Op.like]: `%${keyword}%` } }
-        })
-        return res.json({success: true, data})
-
-    } catch (error) {
-        console.error({ msg: error.message });
-        next(error);
-    }
-
-})
 
 /*
 Sync Product Images on Database

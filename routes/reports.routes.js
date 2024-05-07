@@ -6,6 +6,7 @@ const {
     syncDBWithAmazon,
 } = require('../controllers/reports.controller');
 
+
 /**
  * @swagger
  * /api/v1/reports/sync:

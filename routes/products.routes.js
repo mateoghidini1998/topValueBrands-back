@@ -8,7 +8,6 @@ const {
     getProducts,
     addImageToAllProducts,
     addImageToNewProducts,
-    getProductsByPage,
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
@@ -99,11 +98,7 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/', protect, authorize("admin"), getProducts);
-
-// Get Products by Page
-router.get('/byPage', protect, authorize("admin"), getProductsByPage);
-
+router.get('/',  protect, authorize("admin"), getProducts);
 
 /**
  * @openapi
