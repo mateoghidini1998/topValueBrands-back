@@ -1,153 +1,31 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
-const dotenv = require('dotenv');
+const { User } = require('../models');
 const { Product } = require('../models');
 const fs = require('fs')
 const path = require('path')
+const { productService } = require('../services/products.service');
+const dotenv = require('dotenv');
 
 dotenv.config({
     path: './.env'
 })
 
-
-
-//Function to getInventorySummary
-exports.getInventorySummary = asyncHandler(async (req, res) => {
-    try {
-        const url = `${'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries'}?granularityType=${process.env.GRANULARITY_TYPE}&granularityId=${process.env.GRANULARITY_US_ID}&marketplaceIds=${process.env.MARKETPLACE_US_ID}&details=true`;
-        const response = await axios.get(url,
-            {
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
-                    "x-amz-access-token": req.headers['x-amz-access-token']
-                }
-            });
-        const inventorySummaries = response.data.payload.inventorySummaries;
-        // console.log(inventorySummaries);
-
-        // const products = await Promise.all(inventorySummaries.map(product => {
-        //     return Product.create({
-        //         ASIN: product.asin,
-        //         product_name: product.productName,
-        //         seller_sku: product.sellerSku,
-        //         FBA_available_inventory: product.inventoryDetails.fulfillableQuantity,
-        //         FC_transfer: product.inventoryDetails.pendingTransshipmentQuantity,
-        //         Inbound_to_FBA: product.inventoryDetails.inboundShippedQuantity
-        //     });
-        // }));
-
-        res.status(200).json(inventorySummaries);
-    } catch (error) {
-        console.error({ msg: error.message })
-    }
-});
-
-
-exports.getAllInventorySummary = asyncHandler(async (req, res) => {
-    try {
-        let nextToken = null;
-
-        let allInventorySummaries = [];
-        let requestCount = 0; // Contador de solicitudes
-
-        let fechaActual = new Date();
-
-        // Resta 18 meses a la fecha actual
-        fechaActual.setMonth(fechaActual.getMonth() - 18);
-
-        // Formatea la fecha resultante en ISO8601
-        let fecha18MesesAtras = fechaActual.toISOString();
-
-        do {
-            // Parámetros de consulta
-            const queryParams = {
-                granularityType: process.env.GRANULARITY_TYPE,
-                granularityId: process.env.GRANULARITY_US_ID,
-                marketplaceIds: process.env.MARKETPLACE_US_ID,
-                details: true,
-                includedInactive: false,
-                nextToken: nextToken || '',
-                startDateTime: fecha18MesesAtras,
-                // sellerSkus:'5N-YZ9X-ZK1S'
-            };
-
-            // URL de la API con los parámetros de consulta
-            const url = 'https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries';
-
-            // Configuración de la solicitud
-            const config = {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
-                    'x-amz-access-token': req.headers['x-amz-access-token']
-                },
-                params: queryParams
-            };
-
-            // Hacer la solicitud a la API de Amazon SP-API
-            const response = await axios.get(url, config);
-
-            // Añade los resúmenes de inventario de la página actual al arreglo total
-            allInventorySummaries = allInventorySummaries.concat(response.data.payload.inventorySummaries);
-            // allInventorySummaries = [...response.data.payload.inventorySummaries]
-
-            // Verifica si hay un nextToken en la respuesta
-            nextToken = response.data.pagination ? response.data.pagination.nextToken : false;
-
-            // Incrementa el contador de solicitudes
-            requestCount++;
-
-
-
-            // Aplica un retraso de 3.5 segundos después de 2 solicitudes
-            if (requestCount % 5 === 0) {
-                console.log('Aplicando retraso de 3.5 segundos...');
-                console.log('Solicitudes realizadas:', requestCount);
-                await new Promise(resolve => setTimeout(resolve, 3500));
-            }
-
-            if (!nextToken) {
-                console.log('Guardando productos en la base de datos...');
-                await saveProductsToDatabase(allInventorySummaries);
-                console.log('Saved data successfully');
-                allInventorySummaries = [];
-                console.log('Reset allInventorySummaries');
-                console.log(allInventorySummaries);
-            }
-
-            console.log("NextToken:", nextToken);
-            console.log(response.data);
-
-        } while (nextToken);
-
-
-        return res.status(200).json({ allInventorySummaries, cantidad: allInventorySummaries.length });
-    } catch (error) {
-        console.error({ msg: error.message });
-    }
-});
-
-// Función auxiliar para guardar productos en la base de datos
-async function saveProductsToDatabase(inventorySummaries) {
-    const products = await Promise.all(inventorySummaries.map(product => {
-        return Product.create({
-            ASIN: product.asin,
-            product_name: product.productName,
-            seller_sku: product.sellerSku,
-            FBA_available_inventory: product.inventoryDetails.fulfillableQuantity,
-            FC_transfer: product.inventoryDetails.reservedQuantity.pendingTransshipmentQuantity,
-            Inbound_to_FBA: product.inventoryDetails.inboundShippedQuantity
-        });
-    }));
-    return products;
-}
-
-
 // Create a function to Update the products
 exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
+    // check if the user is admin
+    if (req.user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    // check if the product exists
+    const product = await Product.findOne({ where: { seller_sku: req.body.seller_sku } });
+    if (!product) {
+        return res.status(404).json({ msg: 'Product not found' });
+    }
+
     try {
-        // get the product by ASIN
-        const product = await Product.findOne({ where: { ASIN: req.body.ASIN } });
         // add the supplier info to the product
         product.supplier_name = req.body.supplier_name;
         product.supplier_item_number = req.body.supplier_item_number;
@@ -161,55 +39,195 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     }
 })
 
+// Create a function to Update the is_active as a toggle field of products looking the product by ASIN and seller_sku
+exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
-exports.getReport = asyncHandler(async (req, res, next) => {
-    const rptId = 'amzn1.spdoc.1.4.na.d71d9464-63c2-4ec1-964b-2c2397dd9d7a.TYE9C6AV67LAT.300';
-    try {
-        const apiResponse = await axios.get(`https://sellingpartnerapi-na.amazon.com/reports/2021-06-30/documents/${rptId}`, {
-            headers: {
-                'x-amz-access-token': req.headers['x-amz-access-token']
-            }
-        });
-
-        const responseData = apiResponse.data; // Accessing response data
-        if (responseData.url) {
-            const url = responseData.url;
-            console.log(url);
-            const resp = await axios.get(url, { responseType: 'arraybuffer' });
-            let respData = resp.data;
-
-            if (responseData.compressionAlgorithm) {
-                try {
-                    respData = require('zlib').gunzipSync(respData);
-                } catch (e) {
-                    console.error(e);
-                    return res.status(500).send('Error while decompressing data');
-                }
-            }
-
-            // Define directory to save CSV files
-            const csvDirectory = path.resolve('./reports');
-            if (!fs.existsSync(csvDirectory)) {
-                fs.mkdirSync(csvDirectory);
-            }
-
-            // Generate unique filename for CSV file
-            const timestamp = Date.now();
-            const csvFilename = `report_${timestamp}.csv`;
-            const csvFilePath = path.join(csvDirectory, csvFilename);
-
-            // Write CSV data to file
-            fs.writeFileSync(csvFilePath, respData);
-
-            return res.send(`CSV file saved: ${csvFilePath}`);
-        } else {
-            return res.status(404).send('Report URL not found');
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send('Internal Server Error');
+    // Get user role to restrict access
+    const user = await User.findOne({ where: { id: req.user.id } });
+    // console.log(user);
+    if (user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
     }
+
+    // Get the product by seller_sku to check if the product exists
+    const product = await Product.findOne({ where: { seller_sku: req.body.seller_sku } });
+    if (!product) {
+        return res.status(404).json({ msg: 'Product not found' });
+    }
+
+    try {
+        product.is_active = !product.is_active;
+        await product.save();
+        res.status(200).json(product);
+    } catch (error) {
+        console.error({ msg: error.message })
+    }
+})
+
+exports.getProducts = asyncHandler(async (req, res) => {
+    // Get user role to restrict access
+    const user = await User.findOne({ where: { id: req.user.id } });
+
+    if (user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const products = await Product.findAll({
+        offset: offset,
+        limit: limit
+    });
+
+    const totalProducts = await Product.count();
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    return res.status(200).json({
+        success: true,
+        total: totalProducts,
+        pages: totalPages,
+        currentPage: page,
+        data: products
+    });
 });
 
 
+/*
+Sync Product Images on Database
+*/
+
+// Function to add images to all products
+exports.addImageToAllProducts = asyncHandler(async (req, res) => {
+    const products = await Product.findAll();
+    const delay = 2000; // Delay between requests in milliseconds
+    const maxRequests = 5; // Maximum number of requests
+    let index = 1000;
+    const accessToken = req.headers['x-amz-access-token'];
+
+    const fetchProductImage = async () => {
+        const remainingProducts = products.slice(index, index + maxRequests);
+        for (const product of remainingProducts) {
+            const { ASIN } = product;
+            const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=ATVPDKIKX0DER&includedData=images`;
+
+            try {
+                const response = await axios.get(urlImage, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-amz-access-token': accessToken
+                    }
+                });
+                const imageLink = response.data.images[0].images[0].link;
+                const imageLinks = response.data.images[0].images;
+
+                // Get the image from imageLinks where the width or the height is = 75;
+                const image = imageLinks.find(image => image.width === 75 || image.height === 75) || imageLinks[0];
+
+                // console.log(image.link);
+                Product.update({ product_image: image.link }, { where: { ASIN: ASIN } })
+            } catch (error) {
+                console.error({ msg: error.message });
+            }
+            index++;
+        }
+
+        if (index < products.length) {
+            // Log the number of requests made
+            // console.log(`Se han realizado ${index} peticiones`);
+            setTimeout(fetchProductImage, delay);
+        } else {
+            res.json(products);
+        }
+    };
+
+    fetchProductImage();
+});
+
+
+// Function to add images to new products
+exports.addImageToNewProducts = asyncHandler(async (req, res) => {
+
+    // Get user role to restrict access
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (user.role !== 'admin') {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    // Get products where product_image is NULL
+    const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
+    // console.log({ newProducts: newProducts.length });
+    const delay = 2000; // Delay between requests in milliseconds
+    const maxRequests = 5; // Maximum number of requests
+    let index = 0;
+    const accessToken = req.headers['x-amz-access-token'];
+
+    const productsWithoutImage = [];
+    let errorCount = 0;
+    let error429Count = 0;
+    let error403Count = 0;
+
+    const fetchProductImage = async () => {
+        const remainingProducts = newProducts.slice(index, index + maxRequests);
+
+        for (const product of remainingProducts) {
+            const { ASIN } = product;
+            const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=${'ATVPDKIKX0DER'}&includedData=images`;
+
+            try {
+                const response = await axios.get(urlImage, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-amz-access-token': accessToken
+                    }
+                });
+                const imageLinks = response.data.images[0].images;
+                const image = imageLinks.find(image => image.width === 75 || image.height === 75) || imageLinks[0];
+
+                // console.log(image.link);
+                await Product.update({ product_image: image.link }, { where: { ASIN: ASIN } });
+
+            } catch (error) {
+                errorCount++;
+
+                switch (error.response.status) {
+                    case 404:
+                        // console.log(`El producto ${ASIN} no tiene imagen`);
+                        break;
+                    case 403:
+                        // console.log(`Acceso denegado para el producto ${ASIN}`);
+                        error403Count++;
+                        break;
+                    case 429:
+                        // console.log(`Se ha superado el límite de peticiones para el producto ${ASIN}`);
+                        error429Count++;
+                        break;
+                    default:
+                        console.error({ msg: error.message });
+                        break;
+                }
+
+                productsWithoutImage.push(product);
+            }
+            index++;
+        }
+
+        if (index < newProducts.length) {
+            // Log the number of requests made
+            // console.log(`Se han realizado ${index} peticiones`);
+            setTimeout(fetchProductImage, delay);
+        } else {
+            res.json({
+                addedSuccessfully: newProducts.length - errorCount,
+                error404: productsWithoutImage.length,
+                error403: error403Count,
+                error429: error429Count,
+                productsWithoutImage: productsWithoutImage
+            });
+        }
+    };
+
+    fetchProductImage();
+});
 

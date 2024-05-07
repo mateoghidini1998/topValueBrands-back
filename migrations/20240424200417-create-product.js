@@ -23,15 +23,16 @@ module.exports = {
         allowNull: true
       },
       seller_sku: {
-        type: Sequelize.STRING,
-        allowNull: true
+        type: Sequelize.STRING.BINARY,
+        allowNull: true,
+        collate: 'utf8_bin',
       },
       FBA_available_inventory: {
         type: Sequelize.INTEGER,
         allowNull: true,
         defaultValue: 0
       },
-      FC_transfer: {
+      reserved_quantity: {
         type: Sequelize.INTEGER,
         allowNull: true,
         defaultValue: 0
@@ -58,6 +59,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      is_active: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
+      },
       createdAt: {
         allowNull: true,
         type: Sequelize.DATE
@@ -65,7 +71,7 @@ module.exports = {
       updatedAt: {
         allowNull: true,
         type: Sequelize.DATE
-      }
+      },
     });
   },
   async down(queryInterface, Sequelize) {

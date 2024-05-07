@@ -15,6 +15,7 @@ const auth = require('./routes/auth.routes');
 const products = require('./routes/products.routes');
 const reports = require('./routes/reports.routes');
 const users = require('./routes/users.routes');
+const { swaggerDoc } = require('./routes/swagger.routes');
 
 //Mount routers
 app.use('/api/v1/auth', auth);
@@ -31,4 +32,5 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(3000, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+    swaggerDoc(app, PORT);
 })

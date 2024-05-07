@@ -1,162 +1,88 @@
-const asyncHandler = require('../middlewares/async')
-const { Product } = require('../models/')
-const dotenv = require('dotenv');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
-const { Readable } = require('stream');
-
-dotenv.config({path: './.env'});
-
-let reportId = ''
+const asyncHandler = require('../middlewares/async');
+const { Product } = require('../models');
+const { sendCSVasJSON } = require('../utils/reports.utils');
 
 //@route   POST api/reports
 //@desc    Generate new report
 //@access  private
+exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
+    try {
+        // Call createReport and get the reportId
+        const report = await sendCSVasJSON(req, res, next);
 
-// Refactor createReport to return the reportId without sending a response
-exports.createReport = asyncHandler(async (req, res, next) => {
-    const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
+        // Continue with the rest of the code after sendCSVasJSON has completed
+        const newSync = await processReport(report);
 
-    const requestBody = {
-        "reportType": "GET_FBA_MYI_ALL_INVENTORY_DATA",
-        "marketplaceIds": [`${process.env.MARKETPLACE_US_ID}`],
-        "custom": true
-    };
+        res.json(newSync);
+        // return report; // Returning the report
+        return newSync;
 
-    const response = await axios.post(url, requestBody, {
-        headers: {
-            'Content-Type': 'application/json',
-            'x-amz-access-token': req.headers['x-amz-access-token'] 
-        }
-    });
-    // Return the reportId instead of sending a response
-    console.log('Reporte Generado...')
-    return response.data.reportId;
+    } catch (error) {
+        // Handle any errors
+        next(error);
+    }
 });
 
-const pollReportStatus = async (reportId, accessToken) => {
-    const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-    let reportStatus = '';
-    while (reportStatus !== 'DONE') {
-        const response = await axios.get(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                'x-amz-access-token': accessToken
+const processReport = async (productsArray) => {
+    try {
+        const updatedProducts = [];
+        const newProducts = [];
+
+        const existingProducts = await Product.findAll();
+
+        const existingProductsMap = existingProducts.reduce((acc, product) => {
+            acc[product.seller_sku] = product;
+            return acc;
+        }, {});
+
+        for (const product of productsArray) {
+            const existingProduct = existingProductsMap[product.sku];
+
+            if (!existingProduct) {
+
+                await Product.create({
+                    ASIN: product.asin,
+                    product_name: product["product-name"],
+                    seller_sku: product.sku,
+                    FBA_available_inventory: product["afn-fulfillable-quantity"],
+                    reserved_quantity: product["afn-reserved-quantity"],
+                    Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
+                });
+
+                newProducts.push(product);
+            } else {
+                const updates = {};
+                if (existingProduct.product_name !== product["product-name"]) updates.product_name = product["product-name"];
+
+                const newFBAInventory = parseFloat(product["afn-fulfillable-quantity"]);
+                if (existingProduct.FBA_available_inventory !== newFBAInventory) {
+                    updates.FBA_available_inventory = newFBAInventory;
+                }
+
+                const newReservedQuantity = parseFloat(product["afn-reserved-quantity"]);
+                if (existingProduct.reserved_quantity !== newReservedQuantity) {
+                    updates.reserved_quantity = newReservedQuantity;
+                }
+
+                const newInboundToFBa = parseFloat(product["afn-inbound-shipped-quantity"]);
+                if (existingProduct.Inbound_to_FBA !== newInboundToFBa) {
+                    updates.Inbound_to_FBA = newInboundToFBa;
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    await Product.update(updates, {
+                        where: { seller_sku: product.sku }
+                    });
+                    updatedProducts.push(product);
+                }
             }
-        });
-        reportStatus = response.data.processingStatus;
-        console.log(reportStatus)
-        // Wait for a short period before polling again to avoid hitting rate limits
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds
+        }
+        return { newSyncProductsQuantity: newProducts.length, newSyncQuantity: updatedProducts.length, newSyncProducts: newProducts, newSyncData: updatedProducts };
+    } catch (error) {
+        console.error('Error al actualizar o crear productos:', error);
+        throw error; 
     }
-    return reportStatus;
 };
 
-// Use the reportId in getReportById to fetch and send the report
-exports.getReportById = asyncHandler(async (req, res, next) => {
-    // Call createReport and get the reportId
-    const reportId = await this.createReport(req, res, next);
-    const accessToken = req.headers['x-amz-access-token'];
-
-    try {
-        // Poll the report status until it's DONE
-        await pollReportStatus(reportId, accessToken);
-
-        const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-        console.log('URL: ', url);
-
-        const reportResponse = await axios.get(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                'x-amz-access-token': accessToken
-            }
-        });
-
-        // Send the report response
-        console.log('Obtuvimos el reporte')
-        return reportResponse.data
-    } catch (error) {
-        console.error('Error fetching report:', error);
-        // Send an error response
-        res.status(500).json({ message: 'Error fetching report' });
-    }
-});
-
-exports.generateReport = asyncHandler(async (req, res, next) => {
-    reportId = await this.getReportById(req, res, next);
-    let documentId = reportId.reportDocumentId;
-    const response = await axios.get(`${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            'x-amz-access-token': req.headers['x-amz-access-token']
-        }
-    });
-    let documentUrl = response.data.url;
-    console.log('Se genero el documento del reporte')
-    return documentUrl;
-});
-
-exports.downloadCSVReport = asyncHandler(async (req, res, next) => {
-    try {
-        let documentUrl = await this.generateReport(req, res, next);
-
-        const response = await axios.get(documentUrl, {
-            responseType: 'arraybuffer'
-        });
-
-        let responseData = response.data;
-
-        if(responseData.compressionAlgorithm) {
-            try {
-                responseData = require('zlib').gunzipSync(responseData);
-            } catch (error) {
-                console.error(error.message);
-                return res.status(500).send('Error while decompressing data');
-            }
-        }
-
-        const csvDirectory = path.resolve('./reports');
-        if (!fs.existsSync(csvDirectory)) {
-            fs.mkdirSync(csvDirectory);
-        }
-
-        // Generate unique filename for CSV file
-        const timestamp = Date.now();
-        const csvFilename = `report_${timestamp}.csv`;
-        const csvFilePath = path.join(csvDirectory, csvFilename);
-
-        // Write CSV data to file
-        fs.writeFileSync(csvFilePath, responseData);
-
-        console.log('Se descargo el documento como CSV')
-        return csvFilePath
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send('Internal Server Error');
-    }
-});
-
-exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
-    try {
-        const csvFile = await this.downloadCSVReport(req, res, next)
-        const results = [];
-
-        fs.createReadStream(csvFile)
-        .pipe(csv({ separator: '\t' }))
-        .on('data', (data) => results.push(data))
-        .on('end', () => {     
-            res.json(results);
-        });
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Internal Server Error');
-    }
-});
 
 
-exports.saveProducts = asyncHandler(async (req, res, next) => {
-    
-});

@@ -11,11 +11,11 @@ function CreateReport(rptType, rptId=""){
   if (Validate()==true)
   {   
     var reqparam = {"reportType": rptType,"marketplaceIds":[MktID], "reportOptions": {"custom":"true"} };    
-    console.log(JSON.stringify(reqparam))
+    // console.log(JSON.stringify(reqparam))
     if(rptId==""){
       //Call API with provided query
       var apiResponse = Amazon_SP_API_Service("POST","/reports/2021-06-30/reports","",JSON.stringify(reqparam));
-      console.log(apiResponse.getResponseCode())
+      // console.log(apiResponse.getResponseCode())
       // console.log(apiResponse.getContentText())
       if(apiResponse.getResponseCode()==202 || apiResponse.getResponseCode()==200){
         var js = JSON.parse(apiResponse); 
@@ -87,7 +87,7 @@ function GetReportIDData(rptId){
       js = JSON.parse(apiResponse)      
       if(js.url){
         var url =js.url;
-        console.log(url)
+        // console.log(url)
         var resp = UrlFetchApp.fetch(url, {muteHttpExceptions: true});
         if(js.compressionAlgorithm){ 
           try{           
@@ -109,7 +109,7 @@ function GetReportIDData(rptId){
 
 function GetReports(){  
   var reqparam = {"reportType": "GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE_V2","marketplaceIds":[MktID] };    
-    console.log(JSON.stringify(reqparam))
+    // console.log(JSON.stringify(reqparam))
   //Check the report status and get report Document ID
   apiResponse = Amazon_SP_API_Service("GET","/reports/2021-06-30/reports","",JSON.stringify(reqparam));
   Logger.log(apiResponse)
@@ -142,7 +142,7 @@ function GetReports(){
       js = JSON.parse(apiResponse)      
       if(js.url){
         var url =js.url;
-        console.log(url)
+        // console.log(url)
         var resp = UrlFetchApp.fetch(url, {muteHttpExceptions: true});
         if(js.compressionAlgorithm){ 
           try{           
