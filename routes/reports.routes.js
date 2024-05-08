@@ -5,6 +5,7 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const {
     syncDBWithAmazon,
 } = require('../controllers/reports.controller');
+const { protect, authorize } = require('../middlewares/auth');
 
 
 /**
@@ -44,7 +45,7 @@ const {
  *                   type: string
  *                   example: "An error occurred."
  */
-router.get('/sync', addAccessTokenHeader, syncDBWithAmazon);
+router.get('/sync', protect,authorize("admin"),addAccessTokenHeader, syncDBWithAmazon);
 
 
 module.exports = router;

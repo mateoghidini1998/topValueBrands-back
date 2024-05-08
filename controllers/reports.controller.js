@@ -1,11 +1,27 @@
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
 const { sendCSVasJSON } = require('../utils/reports.utils');
+const { toggleShowProduct } = require('./products.controller');
+const { User } = require('../models');
+const { json } = require('sequelize');
 
 //@route   POST api/reports
 //@desc    Generate new report
 //@access  private
 exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
+
+    // Get user role to restrict access
+    try {
+        const user = await User.findOne({ where: { id: req.user.id } });
+        console.log(user);
+
+        if (user.role !== 'admin') {
+            return res.status(401).json({ msg: 'Unauthorized' });
+        }
+    } catch (error) {
+        console.error({ msg: error.message })
+    }
+
     try {
         // Call createReport and get the reportId
         const report = await sendCSVasJSON(req, res, next);
@@ -27,6 +43,7 @@ const processReport = async (productsArray) => {
     try {
         const updatedProducts = [];
         const newProducts = [];
+        const deletedProducts = []
 
         const existingProducts = await Product.findAll();
 
@@ -77,10 +94,42 @@ const processReport = async (productsArray) => {
                 }
             }
         }
-        return { newSyncProductsQuantity: newProducts.length, newSyncQuantity: updatedProducts.length, newSyncProducts: newProducts, newSyncData: updatedProducts };
+        // Toggle products that exist in the database but not in the new array
+        for (const existingProduct of existingProducts) {
+            if (!productsArray.some(product => product.sku === existingProduct.seller_sku)) {
+
+                // Get the product by seller_sku to check if the product exists
+                const product = await Product.findOne({ where: { seller_sku: existingProduct.seller_sku } });
+                if (!product) {
+                    throw new Error(`Product with seller_sku ${existingProduct.seller_sku} not found`);
+                }
+
+                try {
+                    if (product.is_active) {
+                        product.is_active = !product.is_active;
+                        deletedProducts.push(existingProduct.seller_sku);
+                        await product.save();
+                    }
+                } catch (error) {
+                    console.error({ msg: error.message })
+                }
+
+                
+            }
+        }
+
+        return {
+            newSyncProductsQuantity: newProducts.length,
+            newSyncQuantity: updatedProducts.length,
+            deletedProductsCount: deletedProducts.length, // Count of productsdeleted
+            newSyncProducts: newProducts,
+            newSyncData: updatedProducts,
+            deletedProducts: deletedProducts // Array of toggled seller_skus
+        };
+
     } catch (error) {
         console.error('Error al actualizar o crear productos:', error);
-        throw error; 
+        throw error;
     }
 };
 
