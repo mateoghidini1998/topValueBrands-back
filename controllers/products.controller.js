@@ -7,6 +7,7 @@ const fs = require('fs')
 const path = require('path')
 const { productService } = require('../services/products.service');
 const dotenv = require('dotenv');
+const { where } = require('sequelize');
 
 dotenv.config({
     path: './.env'
@@ -78,7 +79,9 @@ exports.getProducts = asyncHandler(async (req, res) => {
 
     const products = await Product.findAll({
         offset: offset,
-        limit: limit
+        limit: limit,
+        order: [['supplier_item_number', 'ASC']],
+        where: { is_active: true }
     });
 
     const totalProducts = await Product.count();
