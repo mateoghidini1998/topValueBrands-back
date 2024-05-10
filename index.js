@@ -32,9 +32,9 @@ dotenv.config({
     path: './.env'
 })
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(3000, () => {
+app.listen(5000, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
     swaggerDoc(app, PORT);
 })
