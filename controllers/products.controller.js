@@ -81,8 +81,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
 
     if (keyword) {
         products = await Product.findAll({
-            offset: offset,
-            limit: limit,
+            // offset: offset,
+            // limit: limit,
             order: [['supplier_item_number', 'ASC'],
             ['product_cost', 'ASC'], // Luego por costo
             ['supplier_name', 'ASC'], // Luego por nombre del proveedor
@@ -133,31 +133,31 @@ exports.getProducts = asyncHandler(async (req, res) => {
         })
     } else {
         products = await Product.findAll({
-                offset: offset,
-                limit: limit,
-                order: [['supplier_item_number', 'ASC'],
-                ['product_cost', 'ASC'], // Luego por costo
-                ['supplier_name', 'ASC'], // Luego por nombre del proveedor
-                ['supplier_item_number', 'ASC'], // Luego por número de ítem del proveedor
-                ['pack_type', 'ASC'] // Finalmente por tipo de paquete
-                ],
-                where: { is_active: true }
-            });
+            offset: offset,
+            limit: limit,
+            order: [['supplier_item_number', 'ASC'],
+            ['product_cost', 'ASC'],
+            ['supplier_name', 'ASC'],
+            ['supplier_item_number', 'ASC'],
+            ['pack_type', 'ASC']
+            ],
+            where: { is_active: true }
+        });
     }
 
 
 
-        const totalProducts =  keyword !== '' ? products.length : await Product.count();
-        const totalPages = Math.ceil(totalProducts / limit);
+    const totalProducts = keyword !== '' ? products.length : await Product.count();
+    const totalPages = Math.ceil(totalProducts / limit);
 
-        return res.status(200).json({
-            success: true,
-            total: totalProducts,
-            pages: totalPages,
-            currentPage: page,
-            data: products
-        });
+    return res.status(200).json({
+        success: true,
+        total: totalProducts,
+        pages: totalPages,
+        currentPage: page,
+        data: products
     });
+});
 
 
 /*
