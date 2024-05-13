@@ -7,7 +7,7 @@ const fs = require('fs')
 const path = require('path')
 const { productService } = require('../services/products.service');
 const dotenv = require('dotenv');
-const { where } = require('sequelize');
+const { where, Op } = require('sequelize');
 
 dotenv.config({
     path: './.env'
@@ -76,26 +76,88 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    // const keyword = req.query.keyword;
+    const keyword = req.query.keyword || '';
+    let products = [];
 
-    const products = await Product.findAll({
-        offset: offset,
-        limit: limit,
-        order: [['supplier_item_number', 'ASC']],
-        where: { is_active: true }
+    if (keyword) {
+        products = await Product.findAll({
+            offset: offset,
+            limit: limit,
+            order: [['supplier_item_number', 'ASC'],
+            ['product_cost', 'ASC'], // Luego por costo
+            ['supplier_name', 'ASC'], // Luego por nombre del proveedor
+            ['supplier_item_number', 'ASC'], // Luego por número de ítem del proveedor
+            ['pack_type', 'ASC'] // Finalmente por tipo de paquete
+            ],
+            where: {
+                [Op.or]: [
+                    {
+                        supplier_item_number: {
+                            [Op.like]: `${keyword}%`
+                        }
+                    },
+                    {
+                        supplier_name: {
+                            [Op.like]: `${keyword}%`
+                        }
+                    },
+                    {
+                        pack_type: {
+                            [Op.like]: `%${keyword}%`
+                        }
+                    },
+                    {
+                        product_cost: {
+                            [Op.like]: `${keyword}%`
+                        }
+                    },
+                    {
+                        seller_sku: {
+                            [Op.like]: `${keyword}%`
+                        }
+                    },
+                    {
+                        ASIN: {
+                            [Op.like]: `${keyword}%`
+                        }
+                    },
+                    {
+                        product_name: {
+                            [Op.like]: `${keyword}%`
+                        }
+                    }
+
+                ]
+            }
+
+        })
+    } else {
+        products = await Product.findAll({
+                offset: offset,
+                limit: limit,
+                order: [['supplier_item_number', 'ASC'],
+                ['product_cost', 'ASC'], // Luego por costo
+                ['supplier_name', 'ASC'], // Luego por nombre del proveedor
+                ['supplier_item_number', 'ASC'], // Luego por número de ítem del proveedor
+                ['pack_type', 'ASC'] // Finalmente por tipo de paquete
+                ],
+                where: { is_active: true }
+            });
+    }
+
+
+
+        const totalProducts =  keyword !== '' ? products.length : await Product.count();
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        return res.status(200).json({
+            success: true,
+            total: totalProducts,
+            pages: totalPages,
+            currentPage: page,
+            data: products
+        });
     });
-
-    const totalProducts = await Product.count();
-    const totalPages = Math.ceil(totalProducts / limit);
-
-    return res.status(200).json({
-        success: true,
-        total: totalProducts,
-        pages: totalPages,
-        currentPage: page,
-        data: products
-    });
-});
 
 
 /*
