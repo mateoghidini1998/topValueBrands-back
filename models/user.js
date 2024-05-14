@@ -42,7 +42,14 @@ module.exports = (sequelize, DataTypes) => {
     hooks: {
       beforeCreate: async (user, options) => {
         // console.log(user)
-        if(user.password){
+        if (user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+      beforeUpdate: async (user, options) => {
+        // Check if password was changed
+        if (options.fields.includes('password')) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
         }
