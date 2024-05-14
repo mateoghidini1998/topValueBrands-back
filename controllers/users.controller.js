@@ -76,3 +76,63 @@ exports.updateUserRole = asyncHandler(async (req, res, next) => {
     })
 });
 
+//@route    PATCH api/users/update/:id -> of the user being updated
+//@desc     Update user information
+//@access   Private
+
+exports.updateUser = asyncHandler(async (req, res, next) => {
+    const loggedInUser = req.user;
+    console.log(loggedInUser)
+    const user = await User.findByPk(req.params.id);
+    if(loggedInUser.role !== 'admin' && loggedInUser.id !== user.id) {
+       return res.status(401).json({ errors: [{ msg: 'User has no clearance to modify this user' }] });
+    }
+    if(!user) {
+       return res.status(404).json({ errors: [{ msg: 'User not found' }] });
+   }
+   
+   // Check if user exists by email
+   const { firstName, lastName, email } = req.body;
+   const userExists = await User.findOne({ where: { email } });
+   if (userExists && userExists.id !== user.id) {
+       return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
+   }
+
+    await user.update({firstName, lastName, email})
+    return res.status(200).json({
+       success: true,
+       data: user
+    })
+})
+
+
+//@route    PATCH api/users/changePassword/:id -> of the user being updated
+//@desc     Modify user password
+//@access   Private
+
+exports.changePassword = asyncHandler(async (req, res, next) => {
+   const loggedInUser = req.user;
+   console.log(loggedInUser)
+   const user = await User.findByPk(req.params.id);
+
+   if(loggedInUser.role !== 'admin' && loggedInUser.id !== user.id) {
+      return res.status(401).json({ errors: [{ msg: 'User has no clearance to modify this user' }] });
+   }
+
+   if(!user) {
+      return res.status(404).json({ errors: [{ msg: 'User not found' }] });
+   }
+
+   const { password, repeatPassword } = req.body;
+
+   if(password !== repeatPassword) {
+      return res.status(400).json({ errors: [{ msg: 'Passwords do not match' }] });
+   }
+
+   await user.update({ password })
+   
+   return res.status(200).json({
+      success: true,
+      data: user
+   })
+})
