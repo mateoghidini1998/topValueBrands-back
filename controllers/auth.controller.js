@@ -5,8 +5,12 @@ const asyncHandler = require('../middlewares/async')
 //@route    POST api/auth/register
 //@desc     Register a user
 //@access   Private
+
+// Create role options
+const userRoleOptions = ['admin', 'user'];
+
 exports.register = asyncHandler(async(req, res, next) => {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, confirmPassword ,role } = req.body;
 
     if(req.user.role !== 'admin'){
         return res.status(401).json({ errors: [{ msg: `User ${req.user.firstName} ${req.user.lastName} has no clearance to create a new user` }] });
@@ -17,10 +21,18 @@ exports.register = asyncHandler(async(req, res, next) => {
     //Check if user exists
     if(user){
         return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
+  }
+  
+    if(!userRoleOptions.includes(role)){
+        return res.status(400).json({ errors: [{ msg: 'User role must be admin or user' }] });
+  }
+  
+    if(password !== confirmPassword){
+        return res.status(400).json({ errors: [{ msg: 'Passwords do not match' }] });
     }
 
     //Create user
-    user = await User.create({firstName, lastName, email, password})
+    user = await User.create({firstName, lastName, email, password, role})
 
     return res.status(201).json({
         success: true,
