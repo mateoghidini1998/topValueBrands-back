@@ -84,10 +84,10 @@ exports.getProducts = asyncHandler(async (req, res) => {
             // offset: offset,
             // limit: limit,
             order: [['supplier_item_number', 'ASC'],
-            ['product_cost', 'ASC'], // Luego por costo
-            ['supplier_name', 'ASC'], // Luego por nombre del proveedor
-            ['supplier_item_number', 'ASC'], // Luego por número de ítem del proveedor
-            ['pack_type', 'ASC'] // Finalmente por tipo de paquete
+            ['product_cost', 'ASC'], 
+            ['supplier_name', 'ASC'],
+            ['supplier_item_number', 'ASC'], 
+            ['pack_type', 'ASC']
             ],
             where: {
                 [Op.or]: [
