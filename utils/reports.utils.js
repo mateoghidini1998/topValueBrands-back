@@ -58,7 +58,7 @@ const getReportById = asyncHandler(async (req, res, next) => {
     await pollReportStatus(reportId, accessToken);
 
     const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-    // console.log('URL: ', url);
+    console.log('URL: ', url);
 
     const reportResponse = await axios.get(url, {
       headers: {
@@ -68,7 +68,7 @@ const getReportById = asyncHandler(async (req, res, next) => {
     });
 
     // Send the report response
-    // console.log('Obtuvimos el reporte')
+    console.log('Obtuvimos el reporte')
     return reportResponse.data
   } catch (error) {
     // console.error('Error fetching report:', error);
@@ -87,7 +87,7 @@ const generateReport = asyncHandler(async (req, res, next) => {
     }
   });
   let documentUrl = response.data.url;
-  // console.log('Se genero el documento del reporte')
+  console.log('Se genero el documento del reporte')
   return documentUrl;
 });
 
@@ -123,7 +123,7 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
     // Write CSV data to file
     fs.writeFileSync(csvFilePath, responseData);
 
-    // console.log('Se descargo el documento como CSV')
+    console.log('Se descargo el documento como CSV')
     return csvFilePath
 
   } catch (error) {
@@ -134,9 +134,9 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
 
 exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
   try {
-    // const csvFile = await downloadCSVReport(req, res, next);
+    const csvFile = await downloadCSVReport(req, res, next);
     // For testing
-    const csvFile =  './reports/report_1715617166789.csv'
+    /* const csvFile =  './reports/report_1715617166789.csv' */
 
     const results = [];
     let keys = [];
