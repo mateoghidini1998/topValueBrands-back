@@ -19,6 +19,8 @@ const auth = require('./routes/auth.routes');
 const products = require('./routes/products.routes');
 const reports = require('./routes/reports.routes');
 const users = require('./routes/users.routes');
+const pogenerator = require('./routes/pogenerator.routes')
+
 const { swaggerDoc } = require('./routes/swagger.routes');
 
 //Mount routers
@@ -26,6 +28,7 @@ app.use('/api/v1/auth', auth);
 app.use('/api/v1/products', products);
 app.use('/api/v1/reports', reports);
 app.use('/api/v1/users', users);
+app.use('/api/v1/pogenerator', pogenerator);
 
 //Load env vars
 dotenv.config({
