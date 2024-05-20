@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const {
-    getProductsTrackedData
-} = require('../controllers/pogenerator.controller');
+    generateORderReport
+} = require('../controllers/reports.controller');
 
-router.get('/', getProductsTrackedData);
+router.get('/', generateORderReport);
 
 module.exports = router;

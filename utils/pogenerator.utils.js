@@ -9,14 +9,11 @@ const { Product } = require('../models');
 
 dotenv.config({ path: './.env' });
 
-let reportId = ''
-
-//Function to generate report
 const createReport = asyncHandler(async (req, res, next) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
 
   const requestBody = {
-    "reportType": "GET_FBA_MYI_ALL_INVENTORY_DATA",
+    "reportType": "GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL",
     "marketplaceIds": [`${process.env.MARKETPLACE_US_ID}`],
     "custom": true
   };
@@ -31,8 +28,7 @@ const createReport = asyncHandler(async (req, res, next) => {
   return response.data.reportId;
 });
 
-
-//Function to verify the current report status until it is DONE
+let reportId = ''
 const pollReportStatus = async (reportId, accessToken) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
   let reportStatus = '';
@@ -52,7 +48,6 @@ const pollReportStatus = async (reportId, accessToken) => {
   return reportStatus;
 };
 
-//Function to get the report after the status is DONE
 const getReportById = asyncHandler(async (req, res, next) => {
   // Call createReport and get the reportId
   const reportId = await createReport(req, res, next);
@@ -71,13 +66,10 @@ const getReportById = asyncHandler(async (req, res, next) => {
         'x-amz-access-token': accessToken
       }
     });
-
-    // Send the report response
     console.log('Obtuvimos el reporte')
     return reportResponse.data
   } catch (error) {
-    // console.error('Error fetching report:', error);
-    // Send an error response
+
     res.status(500).json({ message: 'Error fetching report' });
   }
 });
@@ -137,7 +129,7 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
+exports.sendOrderCSVasJSON = asyncHandler(async (req, res, next) => {
   try {
     const csvFile = await downloadCSVReport(req, res, next);
     // For testing
@@ -168,34 +160,9 @@ exports.sendCSVasJSON = asyncHandler(async (req, res, next) => {
     // res.json({ count: results.length, items: results });
     return results;
   } catch (error) {
-    // console.error(error.message);
+    console.error(error.message);
     res.status(500).send('Internal Server Error');
   }
 });
 
-/*
-  Extra funcitons
-*/
 
-exports.importJSON = asyncHandler(async (req, res, next) => {
-  try {
-    for (const item of inventory) {
-      await Product.update(
-        {
-          supplier_item_number: item.MPN,
-          supplier_name: item.Supplier,
-          product_cost: item['Cost '][' Unit'],
-        },
-        {
-          where: {
-            seller_sku: item.SKU,
-          },
-        }
-      );
-      // console.log(`Actualizado el producto con ASIN: ${item.SKU}`);
-    }
-    return res.status(200).json({ message: 'Productos actualizados correctamente' });
-  } catch (error) {
-    // console.error('Error al actualizar los productos:', error);
-  }
-});
