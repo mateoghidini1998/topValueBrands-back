@@ -1,11 +1,10 @@
 const axios = require('axios');
 const fs = require('fs');
-const readline = require('readline/promises');
-const inventory = require('../data/NewInventory.json');
 const asyncHandler = require('../middlewares/async')
 const path = require('path');
 const dotenv = require('dotenv');
-const { Product } = require('../models');
+const zlib = require('zlib');
+
 
 dotenv.config({ path: './.env' });
 
@@ -15,6 +14,8 @@ const createReport = asyncHandler(async (req, res, next) => {
   const requestBody = {
     "reportType": "GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL",
     "marketplaceIds": [`${process.env.MARKETPLACE_US_ID}`],
+    "dataStartTime": "2024-04-20T00:00:00Z",
+    "dataEndTime": "2024-05-20T23:59:59Z",
     "custom": true
   };
 
@@ -24,7 +25,7 @@ const createReport = asyncHandler(async (req, res, next) => {
       'x-amz-access-token': req.headers['x-amz-access-token']
     }
   });
-  // console.log('Reporte Generado...')
+  console.log('Reporte Generado...')
   return response.data.reportId;
 });
 
@@ -40,7 +41,7 @@ const pollReportStatus = async (reportId, accessToken) => {
       }
     });
     reportStatus = response.data.processingStatus;
-    // console.log(reportStatus)
+    console.log(reportStatus)
     // Wait for a short period before polling again to avoid hitting rate limits
     await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds
 
@@ -67,102 +68,77 @@ const getReportById = asyncHandler(async (req, res, next) => {
       }
     });
     console.log('Obtuvimos el reporte')
-    return reportResponse.data
+    return reportResponse.data;
   } catch (error) {
 
     res.status(500).json({ message: 'Error fetching report' });
   }
 });
 
-const generateReport = asyncHandler(async (req, res, next) => {
-  reportId = await getReportById(req, res, next);
-  let documentId = reportId.reportDocumentId;
+exports.generateReport = asyncHandler(async (req, res, next) => {
+  const reportData = await getReportById(req, res, next);
+
+  if (!reportData || !reportData.reportDocumentId) {
+    throw new Error('Report data is invalid or missing reportDocumentId');
+  }
+
+  const documentId = reportData.reportDocumentId;
+
   const response = await axios.get(`${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`, {
     headers: {
       'Content-Type': 'application/json',
       'x-amz-access-token': req.headers['x-amz-access-token']
     }
   });
-  let documentUrl = response.data.url;
-  console.log('Se genero el documento del reporte')
-  return documentUrl;
-});
 
-const downloadCSVReport = asyncHandler(async (req, res, next) => {
-  try {
-    let documentUrl = await generateReport(req, res, next);
-
-    const response = await axios.get(documentUrl, {
-      responseType: 'arraybuffer'
-    });
-
-    let responseData = response.data;
-
-    if (responseData.compressionAlgorithm) {
-      try {
-        responseData = require('zlib').gunzipSync(responseData);
-      } catch (error) {
-        // console.error(error.message);
-        return res.status(500).send('Error while decompressing data');
-      }
-    }
-
-    const csvDirectory = path.resolve('./reports');
-    if (!fs.existsSync(csvDirectory)) {
-      fs.mkdirSync(csvDirectory);
-    }
-
-    // Generate unique filename for CSV file
-    const timestamp = Date.now();
-    const csvFilename = `report_${timestamp}.csv`;
-    const csvFilePath = path.join(csvDirectory, csvFilename);
-
-    // Write CSV data to file
-    fs.writeFileSync(csvFilePath, responseData);
-
-    console.log('Se descargo el documento como CSV')
-    return csvFilePath
-
-  } catch (error) {
-    // console.error(error);
-    return res.status(500).send('Internal Server Error');
+  if (!response.data || !response.data.url) {
+    throw new Error('Failed to retrieve document URL from response');
   }
-});
 
-exports.sendOrderCSVasJSON = asyncHandler(async (req, res, next) => {
-  try {
-    const csvFile = await downloadCSVReport(req, res, next);
-    // For testing
-    /* const csvFile =  './reports/report_1715617166789.csv' */
+  const documentUrl = response.data.url;
+  const compressionAlgorithm = response.data.compressionAlgorithm;
 
-    const results = [];
-    let keys = [];
+  // Obtener el contenido del documento desde la URL
+  const documentResponse = await axios.get(documentUrl, { responseType: 'arraybuffer' });
 
-    const rl = readline.createInterface({
-      input: fs.createReadStream(csvFile, { encoding: 'utf8' }),
-      crlfDelay: Infinity
-    });
-
-    for await (const line of rl) {
-      if (!keys.length) {
-        // La primera línea contiene los nombres de las claves
-        keys = line.split('\t');
-      } else {
-        // Las siguientes líneas contienen los valores
-        const values = line.split('\t');
-        const obj = {};
-        keys.forEach((key, index) => {
-          obj[key] = values[index];
-        });
-        results.push(obj);
-      }
-    }
-    // res.json({ count: results.length, items: results });
-    return results;
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal Server Error');
+  // Descomprimir y decodificar los datos si es necesario
+  let decodedData;
+  if (compressionAlgorithm === 'GZIP') {
+    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+  } else {
+    decodedData = Buffer.from(documentResponse.data);
   }
+
+  // Convertir los datos decodificados a string
+  const dataString = decodedData.toString('utf-8');
+
+  // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
+  if (!dataString) {
+    throw new Error('Failed to decode report data');
+  }
+
+  const jsonData = parseReportToJSON(dataString);
+
+  return res.json(jsonData);
 });
 
 
+
+const parseReportToJSON = (dataString) => {
+  const results = [];
+  const lines = dataString.split('\n');
+  const keys = lines[0].split('\t');
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split('\t');
+    if (values.length === keys.length) {
+      const obj = {};
+      keys.forEach((key, index) => {
+        obj[key] = values[index];
+      });
+      results.push(obj);
+    }
+  }
+
+  return results;
+};

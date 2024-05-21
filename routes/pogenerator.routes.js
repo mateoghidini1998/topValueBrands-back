@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const { addAccessTokenHeader } = require('../middlewares/lwa_token')
 
-const {
-    generateORderReport
-} = require('../controllers/reports.controller');
+const { 
+    generateReport
+} = require('../utils/pogenerator.utils');
 
-router.get('/', generateORderReport);
+router.get('/', addAccessTokenHeader , generateReport);
 
 module.exports = router;
