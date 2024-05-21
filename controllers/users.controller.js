@@ -30,6 +30,10 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
        return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
 
+   if (loggedInUser.id === user.id) {
+       return res.status(401).json({ errors: [{ msg: 'User cannot delete themselves' }] });
+   }
+
     await user.destroy();
 
     return res.status(200).json({
@@ -82,7 +86,7 @@ exports.updateUserRole = asyncHandler(async (req, res, next) => {
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
     const loggedInUser = req.user;
-    console.log(loggedInUser)
+   //  console.log(loggedInUser)
     const user = await User.findByPk(req.params.id);
     if(loggedInUser.role !== 'admin' && loggedInUser.id !== user.id) {
        return res.status(401).json({ errors: [{ msg: 'User has no clearance to modify this user' }] });
@@ -92,13 +96,19 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
    }
    
    // Check if user exists by email
-   const { firstName, lastName, email } = req.body;
+   const { firstName, lastName, email, password, confirmPassword, role } = req.body;
+   console.log(req.body);
+   
+   if(password !== confirmPassword) {
+      return res.status(400).json({ errors: [{ msg: 'Passwords do not match' }] });
+   }
+
    const userExists = await User.findOne({ where: { email } });
    if (userExists && userExists.id !== user.id) {
        return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
    }
 
-    await user.update({firstName, lastName, email})
+    await user.update({firstName, lastName, email, role, password})
     return res.status(200).json({
        success: true,
        data: user
