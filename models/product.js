@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     supplier_name: DataTypes.STRING,
     supplier_item_number: DataTypes.STRING,
     product_cost: {
-      type: DataTypes.DECIMAL(10, 2), // Ajusta la precisión y escala según sea necesario
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: true
      },
     pack_type: DataTypes.STRING,
