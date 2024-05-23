@@ -3,9 +3,14 @@ const router = express.Router();
 const { addAccessTokenHeader } = require('../middlewares/lwa_token')
 
 const { 
-    generateReport
-} = require('../utils/pogenerator.utils');
+    saveOrders
+} = require('../controllers/orders.controller');
 
-router.get('/', addAccessTokenHeader , generateReport);
+const { 
+    getProductsTrackedData
+} = require('../controllers/pogenerator.controller')
+
+router.get('/', addAccessTokenHeader , saveOrders);
+router.get('/getProductsRanks',  getProductsTrackedData);
 
 module.exports = router;
