@@ -27,7 +27,7 @@ exports.getProductsTrackedData = asyncHandler(async (req, res, next) => {
             keepaResponses.push(keepaDataResponse);
 
             // Espera 1.5 minutos (90,000 ms) antes de hacer la siguiente solicitud
-            await new Promise(resolve => setTimeout(resolve, 90000));
+            await new Promise(resolve => setTimeout(resolve, 65000));
         }
 
         // Procesa todas las respuestas de Keepa para formar el JSON final
