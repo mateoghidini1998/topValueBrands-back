@@ -5,7 +5,6 @@ const { User } = require('../models');
 const { Product } = require('../models');
 const fs = require('fs')
 const path = require('path')
-const { productService } = require('../services/products.service');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
 
