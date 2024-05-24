@@ -52,68 +52,38 @@ const generateReport = asyncHandler(async (req, res, next) => {
     return jsonData;
 
 });
+
 exports.saveOrders = asyncHandler(async (req, res, next) => {
-    const jsonData = await generateReport(req, res, next);
-  
-    if (!jsonData) {
-      return res.status(404).json({ errors: [{ msg: 'Failed to retrieve orders' }] });
+  const jsonData = await generateReport(req, res, next);
+
+  if (!jsonData) {
+    return res.status(404).json({ errors: [{ msg: 'Failed to retrieve orders' }] });
+  }
+
+  // Filter orders by status = Shipped and data is in between the past 30 days
+  const filteredOrders = jsonData.filter(item => item['order-status'] === 'Shipped' && new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000);
+
+  // Accumulate quantity by sku
+  const skuQuantities = {};
+  for (let item of filteredOrders) {
+    const sku = item.sku;
+    const quantity = parseInt(item.quantity, 10); // Convert quantity to a number
+    if (!skuQuantities[sku]) {
+      skuQuantities[sku] = quantity;
+    } else {
+      skuQuantities[sku] += quantity;
     }
-  
-    let newOrdersCount = 0;
-    let updatedOrdersCount = 0;
-    const orders = [];
-  
-    try {
-      for (let item of jsonData) {
-        const existingOrder = await Order.findOne({ where: { amazon_order_id: item['amazon-order-id'] } });
-        if (existingOrder) {
-          // Update the existing order if there are changes
-          const updatedFields = {};
-          if(existingOrder.purchase_date !== item['purchase-date']) updatedFields.purchase_date = item['purchase-date'];
-          if (existingOrder.order_status !== item['order-status']) updatedFields.order_status = item['order-status'];
-          if (existingOrder.sku !== item.sku) updatedFields.sku = item.sku;
-          if (existingOrder.ASIN !== item.asin) updatedFields.ASIN = item.asin;
-          if (existingOrder.quantity !== item.quantity) updatedFields.quantity = item.quantity;
-          if (existingOrder.currency !== item.currency) updatedFields.currency = item.currency;
-          if (existingOrder.price !== item['item-price']) updatedFields.price = item['item-price'];
-  
-          if (Object.keys(updatedFields).length > 0) {
-            await existingOrder.update(updatedFields);
-            updatedOrdersCount++;
-          }
-        } else {
-          // Create a new order if it doesn't exist
-          await Order.create({
-            amazon_order_id: item['amazon-order-id'],
-            purchase_date: item['purchase-date'],
-            order_status: item['order-status'],
-            sku: item.sku,
-            ASIN: item.asin,
-            quantity: item.quantity,
-            currency: item.currency,
-            price: item['item-price'],
-          });
-          newOrdersCount++;
-        }
-        orders.push({
-          amazon_order_id: item['amazon-order-id'],
-          purchase_date: item['purchase-date'],
-          order_status: item['order-status'],
-          sku: item.sku,
-          ASIN: item.asin,
-          quantity: item.quantity,
-          currency: item.currency,
-          price: item['item-price'],
-        });
-      }
-      return res.status(200).json({ 
-        message: 'Orders processed successfully.', 
-        newOrdersCount, 
-        updatedOrdersCount, 
-        orders 
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ errors: [{ msg: 'Error saving orders' }] });
-    }
+  }
+
+  // Generate json with sku and quantity
+  const finalJson = Object.entries(skuQuantities).map(([sku, quantity]) => ({
+    sku,
+    quantity,
+    velocity: quantity / 30
+  }));
+
+  return res.status(200).json({ 
+    message: 'Orders processed successfully.',
+    skuQuantities: finalJson
   });
+});
