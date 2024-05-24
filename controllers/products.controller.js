@@ -158,11 +158,6 @@ exports.getProducts = asyncHandler(async (req, res) => {
     });
 });
 
-
-/*
-Sync Product Images on Database
-*/
-
 // Function to add images to all products
 exports.addImageToAllProducts = asyncHandler(async (req, res) => {
     const products = await Product.findAll();

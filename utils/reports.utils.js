@@ -27,7 +27,7 @@ const createReport = asyncHandler(async (req, res, next) => {
       'x-amz-access-token': req.headers['x-amz-access-token']
     }
   });
-  // console.log('Reporte Generado...')
+  console.log('Reporte Generado...')
   return response.data.reportId;
 });
 

@@ -1,7 +1,6 @@
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
-const { sendCSVasJSON } = require('../utils/reports.utils');
-const { sendOrderCSVasJSON } = require('../utils/pogenerator.utils')
+const { sendCSVasJSON } = require('../utils/utils');
 
 //@route   POST api/reports
 //@desc    Generate new report
@@ -18,17 +17,6 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
         // return report; // Returning the report
         return newSync;
 
-    } catch (error) {
-        // Handle any errors
-        next(error);
-    }
-});
-
-exports.generateORderReport = asyncHandler(async (req, res, next) => {
-    try {
-        // Ensure that the response is only sent once
-        const report = await sendOrderCSVasJSON(req, res, next);
-        res.json({ report }); // Send the response here
     } catch (error) {
         // Handle any errors
         next(error);

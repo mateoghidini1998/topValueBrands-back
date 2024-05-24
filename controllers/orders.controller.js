@@ -1,60 +1,9 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async');
-const { getReportById, parseReportToJSON } = require('../utils/pogenerator.utils')
-const { Order } = require('../models/');
-const axios = require('axios');
-const zlib = require('zlib');
-
-const generateReport = asyncHandler(async (req, res, next) => {
-    const reportData = await getReportById(req, res, next);
-  
-    if (!reportData || !reportData.reportDocumentId) {
-      throw new Error('Report data is invalid or missing reportDocumentId');
-    }
-  
-    const documentId = reportData.reportDocumentId;
-  
-    const response = await axios.get(`${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token']
-      }
-    });
-  
-    if (!response.data || !response.data.url) {
-      throw new Error('Failed to retrieve document URL from response');
-    }
-  
-    const documentUrl = response.data.url;
-    const compressionAlgorithm = response.data.compressionAlgorithm;
-  
-    // Obtener el contenido del documento desde la URL
-    const documentResponse = await axios.get(documentUrl, { responseType: 'arraybuffer' });
-  
-    // Descomprimir y decodificar los datos si es necesario
-    let decodedData;
-    if (compressionAlgorithm === 'GZIP') {
-      decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
-    } else {
-      decodedData = Buffer.from(documentResponse.data);
-    }
-  
-    // Convertir los datos decodificados a string
-    const dataString = decodedData.toString('utf-8');
-  
-    // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
-    if (!dataString) {
-      throw new Error('Failed to decode report data');
-    }
-  
-    const jsonData = parseReportToJSON(dataString);
-  
-    return jsonData;
-
-});
+const { generateOrderReport } = require('../utils/utils');
 
 exports.saveOrders = asyncHandler(async (req, res, next) => {
-  const jsonData = await generateReport(req, res, next);
+  const jsonData = await generateOrderReport(req, res, next);
 
   if (!jsonData) {
     return res.status(404).json({ errors: [{ msg: 'Failed to retrieve orders' }] });
