@@ -9,6 +9,9 @@ const { Product } = require('../models');
 
 dotenv.config({ path: './.env' });
 
+let reportId = ''
+
+//Function to generate report
 const createReport = asyncHandler(async (req, res, next) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
 
@@ -24,11 +27,12 @@ const createReport = asyncHandler(async (req, res, next) => {
       'x-amz-access-token': req.headers['x-amz-access-token']
     }
   });
-  // console.log('Reporte Generado...')
+  console.log('Reporte Generado...')
   return response.data.reportId;
 });
 
-let reportId = ''
+
+//Function to verify the current report status until it is DONE
 const pollReportStatus = async (reportId, accessToken) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
   let reportStatus = '';
@@ -48,6 +52,7 @@ const pollReportStatus = async (reportId, accessToken) => {
   return reportStatus;
 };
 
+//Function to get the report after the status is DONE
 const getReportById = asyncHandler(async (req, res, next) => {
   // Call createReport and get the reportId
   const reportId = await createReport(req, res, next);
@@ -194,18 +199,3 @@ exports.importJSON = asyncHandler(async (req, res, next) => {
     // console.error('Error al actualizar los productos:', error);
   }
 });
-
-async function saveProductsToDatabase(inventorySummaries) {
-
-  const products = await Promise.all(inventorySummaries.map(product => {
-    return Product.create({
-      ASIN: product.asin,
-      product_name: product["product-name"],
-      seller_sku: product.sku,
-      FBA_available_inventory: product["afn-fulfillable-quantity"],
-      reserved_quantity: product["afn-reserved-quantity"],
-      Inbound_to_FBA: product["afn-inbound-shipped-quantity"]
-    });
-  }));
-  return products;
-}

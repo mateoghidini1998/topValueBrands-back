@@ -1,6 +1,6 @@
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
-const { sendCSVasJSON } = require('../utils/reports.utils');
+const { sendCSVasJSON } = require('../utils/utils');
 
 //@route   POST api/reports
 //@desc    Generate new report
@@ -22,6 +22,7 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
         next(error);
     }
 });
+
 
 const processReport = async (productsArray) => {
     try {
