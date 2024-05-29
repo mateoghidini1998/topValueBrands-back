@@ -9,11 +9,13 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      ASIN: {
-        type: Sequelize.STRING
-      },
-      seller_sku: {
-        type: Sequelize.STRING
+      product_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Products',
+          key: 'id'
+        }
       },
       current_rank: {
         type: Sequelize.INTEGER
