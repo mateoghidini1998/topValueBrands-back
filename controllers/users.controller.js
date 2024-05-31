@@ -5,7 +5,6 @@ const asyncHandler = require('../middlewares/async');
 //@route    GET api/users/
 //@desc     Get all users
 //@access   Private
-
 exports.getUsers = asyncHandler(async (req, res, next) => {
    const users = await User.findAll();
    return res.status(200).json({
@@ -17,7 +16,6 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
 //@route    DELETE api/users/deleteUser
 //@desc     Delete user 
 //@access   Private
-
 exports.deleteUser = asyncHandler(async (req, res, next) => {
    const loggedInUser = req.user;
    const user = await User.findByPk(req.params.id);
@@ -83,7 +81,6 @@ exports.updateUserRole = asyncHandler(async (req, res, next) => {
 //@route    PATCH api/users/update/:id -> of the user being updated
 //@desc     Update user information
 //@access   Private
-
 exports.updateUser = asyncHandler(async (req, res, next) => {
    const loggedInUser = req.user;
    //  console.log(loggedInUser)
@@ -119,7 +116,6 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
 //@route    PATCH api/users/changePassword/:id -> of the user being updated
 //@desc     Modify user password
 //@access   Private
-
 exports.changePassword = asyncHandler(async (req, res, next) => {
    const loggedInUser = req.user;
    console.log(loggedInUser)

@@ -6,7 +6,9 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: './.env' });
 
-
+//@route GET api/v1/pogenerator/trackedproducts
+//@desc  Get all tracked products
+//@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
     const trackedProducts = await TrackedProduct.findAll();
     res.status(200).json({
@@ -14,6 +16,10 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
         data: trackedProducts
     });
 });
+
+//@route GET api/v1/pogenerator/trackedproducts
+//@desc  Track products and save them into db from keepa api data and order reports from AMZ API.
+//@access Private
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   try {
     const [orderData, keepaData] = await Promise.all([
@@ -51,6 +57,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   }
 });
 
+//Function to group asins into groups of 20
 const getProductsTrackedData = async (req, res, next) => {
   try {
     const products = await Product.findAll({ limit: 40 });
@@ -89,6 +96,7 @@ const getProductsTrackedData = async (req, res, next) => {
   }
 };
 
+//Function to retrieve sales ranks from keepa API. Each request receives a group of 20 ASINs
 const getKeepaData = async (asinGroup) => {
     const apiKey = process.env.KEEPA_API_KEY;
     const url = `https://api.keepa.com/product?key=${apiKey}&domain=1&asin=${asinGroup}&stats=1`;
