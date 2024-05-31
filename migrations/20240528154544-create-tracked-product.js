@@ -2,36 +2,35 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Orders', {
+    await queryInterface.createTable('TrackedProducts', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      amazon_order_id: {
-        type: Sequelize.STRING
+      product_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Products',
+          key: 'id'
+        }
       },
-      purchase_date: {
-        type: Sequelize.DATE
-      },
-      order_status: {
-        type: Sequelize.STRING
-      },
-      sku: {
-        type: Sequelize.STRING
-      },
-      ASIN: {
-        type: Sequelize.STRING
-      },
-      quantity: {
+      current_rank: {
         type: Sequelize.INTEGER
       },
-      currency: {
-        type: Sequelize.STRING
+      thirty_days_rank: {
+        type: Sequelize.INTEGER
       },
-      price: {
-        type: Sequelize.DECIMAL
+      ninety_days_rank: {
+        type: Sequelize.INTEGER
+      },
+      units_sold: {
+        type: Sequelize.INTEGER
+      },
+      product_velocity: {
+        type: Sequelize.FLOAT
       },
       createdAt: {
         allowNull: false,
@@ -44,6 +43,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Orders');
+    await queryInterface.dropTable('TrackedProducts');
   }
 };

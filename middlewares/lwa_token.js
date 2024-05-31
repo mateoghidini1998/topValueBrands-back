@@ -25,24 +25,22 @@ async function fetchNewToken() {
     return accessToken;
 }
 
-exports.addAccessTokenHeader = asyncHandler(async(req, res, next) => {
+exports.addAccessTokenHeader = asyncHandler(async (req, res, next) => {
     try {
-        const now = new Date(Date.now());
-        if(!accessToken || !tokenExpiration  || now >= tokenExpiration ) {
+        const now = new Date();
+        if (!accessToken || now >= tokenExpiration) {
             console.log('Fetching new token...');
             accessToken = await fetchNewToken();
-            req.headers['x-amz-access-token'] = accessToken;
-            console.log(accessToken)
         } else {
-            console.log('Token is still valid...')
-            req.headers['x-amz-access-token'] = accessToken;
-            console.log(accessToken)
+            console.log('Token is still valid...');
         }
-    
+        
+        req.headers['x-amz-access-token'] = accessToken;
+        console.log(accessToken);
+
         next();
     } catch (error) {
         console.error('Error fetching access token:', error);
         next(error);
     }
-})
-
+});

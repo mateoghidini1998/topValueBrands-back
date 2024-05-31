@@ -44,6 +44,11 @@ const pollReportStatus = async (reportId, accessToken) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
   let reportStatus = '';
   while (reportStatus !== 'DONE') {
+
+    if(reportStatus === 'FATAL'){
+      return new Error('Error fetching report');
+    }
+
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -133,17 +138,21 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
 
 
 const generateInventoryReport = asyncHandler(async (req, res, next) => {
-    reportId = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
-    let documentId = reportId.reportDocumentId;
-    const response = await axios.get(`${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token']
-      }
-    });
-    let documentUrl = response.data.url;
-    console.log('Se genero el documento del reporte')
-    return documentUrl;
+  const report = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
+  if (!report || !report.reportDocumentId) {
+    throw new Error('Invalid or missing report data');
+  }
+  const documentId = report.reportDocumentId;
+  console.log("Document ID : ", documentId);
+  const response = await axios.get(`${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-amz-access-token': req.headers['x-amz-access-token']
+    }
+  });
+  let documentUrl = response.data.url;
+  console.log('Report document generated');
+  return documentUrl;
 });
 
 

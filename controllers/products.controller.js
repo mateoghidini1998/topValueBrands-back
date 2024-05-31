@@ -12,7 +12,9 @@ dotenv.config({
     path: './.env'
 })
 
-// Create a function to Update the products
+//@route    PATCH api/products/addExtraInfoToProduct
+//@desc     Update product
+//@access   Private
 exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     // check if the user is admin
     if (req.user.role !== 'admin') {
@@ -37,9 +39,11 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     } catch (error) {
         console.error({ msg: error.message })
     }
-})
+});
 
-// Create a function to Update the is_active as a toggle field of products looking the product by ASIN and seller_sku
+//@route    PATCH api/products/disable
+//@desc     Update is_active as a toggle field of products
+//@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
     // Get user role to restrict access
@@ -62,8 +66,11 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
     } catch (error) {
         console.error({ msg: error.message })
     }
-})
+});
 
+//@route    GET api/products/
+//@desc     Get products
+//@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
     // Get user role to restrict access
     const user = await User.findOne({ where: { id: req.user.id } });
