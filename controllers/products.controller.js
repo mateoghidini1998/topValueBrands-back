@@ -2,6 +2,7 @@ const express = require('express');
 const asyncHandler = require('../middlewares/async')
 const axios = require('axios');
 const { User } = require('../models');
+const { Supplier } = require('../models');
 const { Product } = require('../models');
 const fs = require('fs')
 const path = require('path')
@@ -74,96 +75,72 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 exports.getProducts = asyncHandler(async (req, res) => {
     // Get user role to restrict access
     const user = await User.findOne({ where: { id: req.user.id } });
-
+  
     if (user.role !== 'admin') {
-        return res.status(401).json({ msg: 'Unauthorized' });
+      return res.status(401).json({ msg: 'Unauthorized' });
     }
-
+  
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
     const offset = (page - 1) * limit;
     const keyword = req.query.keyword || '';
     let products = [];
-
+  
+    const includeSupplier = {
+      model: Supplier,
+      as: 'supplier',
+      attributes: ['supplier_name']
+    };
+  
     if (keyword) {
-        products = await Product.findAll({
-            // offset: offset,
-            // limit: limit,
-            order: [['supplier_item_number', 'ASC'],
-            ['product_cost', 'ASC'], 
-            ['supplier_name', 'ASC'],
-            ['supplier_item_number', 'ASC'], 
-            ['pack_type', 'ASC']
-            ],
-            where: {
-                [Op.or]: [
-                    {
-                        supplier_item_number: {
-                            [Op.like]: `${keyword}%`
-                        }
-                    },
-                    {
-                        supplier_name: {
-                            [Op.like]: `${keyword}%`
-                        }
-                    },
-                    {
-                        pack_type: {
-                            [Op.like]: `%${keyword}%`
-                        }
-                    },
-                    {
-                        product_cost: {
-                            [Op.like]: `${keyword}%`
-                        }
-                    },
-                    {
-                        seller_sku: {
-                            [Op.like]: `${keyword}%`
-                        }
-                    },
-                    {
-                        ASIN: {
-                            [Op.like]: `${keyword}%`
-                        }
-                    },
-                    {
-                        product_name: {
-                            [Op.like]: `${keyword}%`
-                        }
-                    }
-
-                ]
-            }
-
-        })
+      products = await Product.findAll({
+        order: [
+          ['supplier_item_number', 'ASC'],
+          ['product_cost', 'ASC'],
+          [{ model: Supplier, as: 'supplier' }, 'supplier_name', 'ASC'],
+          ['supplier_item_number', 'ASC'],
+          ['pack_type', 'ASC']
+        ],
+        where: {
+          [Op.or]: [
+            { supplier_item_number: { [Op.like]: `${keyword}%` } },
+            { '$supplier.supplier_name$': { [Op.like]: `${keyword}%` } },
+            { pack_type: { [Op.like]: `%${keyword}%` } },
+            { product_cost: { [Op.like]: `${keyword}%` } },
+            { seller_sku: { [Op.like]: `${keyword}%` } },
+            { ASIN: { [Op.like]: `${keyword}%` } },
+            { product_name: { [Op.like]: `${keyword}%` } }
+          ]
+        },
+        include: [includeSupplier]
+      });
     } else {
-        products = await Product.findAll({
-            offset: offset,
-            limit: limit,
-            order: [['supplier_item_number', 'ASC'],
-            ['product_cost', 'ASC'],
-            ['supplier_name', 'ASC'],
-            ['supplier_item_number', 'ASC'],
-            ['pack_type', 'ASC']
-            ],
-            where: { is_active: true }
-        });
+      products = await Product.findAll({
+        offset: offset,
+        limit: limit,
+        order: [
+          ['supplier_item_number', 'ASC'],
+          ['product_cost', 'ASC'],
+          [{ model: Supplier, as: 'supplier' }, 'supplier_name', 'ASC'],
+          ['supplier_item_number', 'ASC'],
+          ['pack_type', 'ASC']
+        ],
+        where: { is_active: true },
+        include: [includeSupplier]
+      });
     }
-
-
-
+  
     const totalProducts = keyword !== '' ? products.length : await Product.count();
     const totalPages = Math.ceil(totalProducts / limit);
-
+  
     return res.status(200).json({
-        success: true,
-        total: totalProducts,
-        pages: totalPages,
-        currentPage: page,
-        data: products
+      success: true,
+      total: totalProducts,
+      pages: totalPages,
+      currentPage: page,
+      data: products
     });
-});
+  });
 
 // Function to add images to all products
 exports.addImageToAllProducts = asyncHandler(async (req, res) => {
