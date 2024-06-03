@@ -20,6 +20,7 @@ const products = require('./routes/products.routes');
 const reports = require('./routes/reports.routes');
 const users = require('./routes/users.routes');
 const pogenerator = require('./routes/pogenerator.routes')
+const suppliers = require('./routes/suppliers.routes')
 
 const { swaggerDoc } = require('./routes/swagger.routes');
 
@@ -29,6 +30,7 @@ app.use('/api/v1/products', products);
 app.use('/api/v1/reports', reports);
 app.use('/api/v1/users', users);
 app.use('/api/v1/pogenerator', pogenerator);
+app.use('/api/v1/suppliers', suppliers);
 
 //Load env vars
 dotenv.config({
