@@ -5,6 +5,8 @@ const readline = require('readline/promises');
 const zlib = require('zlib');
 const moment = require('moment');
 const asyncHandler = require('../middlewares/async');
+const inventory = require('../data/NewInventory.json');
+const { Product } = require('../models')
 
 const createReport = asyncHandler(async (req, reportType) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
@@ -245,7 +247,6 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
           results.push(obj);
         }
       }
-      // res.json({ count: results.length, items: results });
       return results;
     } catch (error) {
       // console.error(error.message);
@@ -260,7 +261,7 @@ const importJSON = asyncHandler(async (req, res, next) => {
         await Product.update(
           {
             supplier_item_number: item.MPN,
-            supplier_name: item.Supplier,
+            supplier_id: item.Supplier,
             product_cost: item['Cost '][' Unit'],
           },
           {

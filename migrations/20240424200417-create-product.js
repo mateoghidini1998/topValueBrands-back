@@ -25,6 +25,7 @@ module.exports = {
       seller_sku: {
         type: Sequelize.STRING.BINARY,
         allowNull: true,
+        unique: true,
         collate: 'utf8_bin',
       },
       FBA_available_inventory: {
@@ -42,9 +43,13 @@ module.exports = {
         allowNull: true,
         defaultValue: 0
       },
-      supplier_name: {
-        type: Sequelize.STRING,
-        allowNull: true
+      supplier_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Suppliers',
+          key: 'id'
+        }
       },
       supplier_item_number: {
         type: Sequelize.STRING,

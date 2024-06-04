@@ -1,6 +1,7 @@
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
 const { sendCSVasJSON } = require('../utils/utils');
+const { addImageToProducts } = require('../controllers/products.controller')
 
 //@route   POST api/reports
 //@desc    Generate new report
@@ -13,15 +14,19 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
         // Continue with the rest of the code after sendCSVasJSON has completed
         const newSync = await processReport(report);
 
-        res.json(newSync);
-        // return report; // Returning the report
-        return newSync;
+        // Call addImageToProducts to add images to new products
+        const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
+        const accessToken = req.headers['x-amz-access-token'];
+        const imageSyncResult = await addImageToProducts(newProducts, accessToken);
 
+        res.json({ newSync, imageSyncResult });
+        return { newSync, imageSyncResult };
     } catch (error) {
         // Handle any errors
         next(error);
     }
 });
+
 
 
 const processReport = async (productsArray) => {

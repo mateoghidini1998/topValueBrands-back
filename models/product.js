@@ -9,6 +9,16 @@ module.exports = (sequelize, DataTypes) => {
          foreignKey: 'product_id',
          as: 'trackedproducts'
        });
+      
+      Product.belongsTo(models.Supplier, {
+        foreignKey: 'supplier_id',
+        as: 'supplier'
+      });
+
+      Product.hasMany(models.PurchaseOrderProduct, {
+        foreignKey: 'product_id',
+        as: 'purchaseorderproducts'
+      });
     }
  }
  Product.init({
@@ -19,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
     FBA_available_inventory: DataTypes.INTEGER,
     reserved_quantity: DataTypes.INTEGER,
     Inbound_to_FBA: DataTypes.INTEGER,
-    supplier_name: DataTypes.STRING,
+    supplier_id: DataTypes.INTEGER,
     supplier_item_number: DataTypes.STRING,
     product_cost: {
       type: DataTypes.DECIMAL(10, 2),
