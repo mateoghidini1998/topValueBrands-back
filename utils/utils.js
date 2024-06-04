@@ -247,7 +247,6 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
           results.push(obj);
         }
       }
-      // res.json({ count: results.length, items: results });
       return results;
     } catch (error) {
       // console.error(error.message);
