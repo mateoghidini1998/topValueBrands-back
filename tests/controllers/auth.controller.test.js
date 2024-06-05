@@ -9,7 +9,7 @@ dotenv.config({
     path: './.env'
 })
 
-// Función para eliminar el usuario después de la prueba
+
 const deleteUser = async (email) => {
   await User.destroy({ where: { email } });
 };
@@ -20,13 +20,17 @@ describe('Auth Controller', () => {
       const req = {
         user: {
           id: '1',
-          role: 'admin'
+          role: 'admin',
+          firstName: 'Mateo',
+          lastName: 'Ghidini',
         },
         body: {
-          firstName: 'John',
+          firstName: 'Jane',
           lastName: 'Doe',
-          email: 'john.doe@example.com',
-          password: 'password123'
+          email: 'jane.doe@example.com',
+          password: 'password123',
+          confirmPassword: 'password123',
+          role: 'user' 
         }
       };
       const res = {
@@ -40,15 +44,13 @@ describe('Auth Controller', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
         success: true,
         user: expect.objectContaining({
-          firstName: 'John',
+          firstName: 'Jane',
           lastName: 'Doe',
-          email: 'john.doe@example.com'
-          // Puedes agregar más comprobaciones específicas si es necesario
+          email: 'jane.doe@example.com'
         })
       }));
     
-      // Elimina el usuario creado después de la prueba
-      await deleteUser('john.doe@example.com');
+      await deleteUser('jane.doe@example.com');
     });
 
     it('should return an unauthorized error if the requesting user is not an admin', async () => {
@@ -63,7 +65,9 @@ describe('Auth Controller', () => {
           firstName: 'Jane',
           lastName: 'Doe',
           email: 'jane.doe@example.com',
-          password: 'password123'
+          password: 'password123',
+          confirmPassword: 'password123',
+          role: 'user' 
         }
       };
       const res = {
@@ -88,8 +92,10 @@ describe('Auth Controller', () => {
         body: {
           firstName: 'Ramiro',
           lastName: 'Sarasola',
-          email: 'ghidinimateo1@gmail.com',
-          password: '123456'
+          email: 'ramirosarasola@gmail.com',
+          password: '123456',
+          confirmPassword: '123456',
+          role: 'user'
         }
       }
 
