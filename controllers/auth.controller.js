@@ -1,6 +1,7 @@
 const express = require('express');
 const { User } = require('../models')
 const asyncHandler = require('../middlewares/async')
+const  { connect }  = require('../utils/redisClient')
 
 //@route    POST api/auth/register
 //@desc     Register a user
@@ -11,6 +12,8 @@ const userRoleOptions = ['admin', 'user'];
 
 exports.register = asyncHandler(async(req, res, next) => {
     const { firstName, lastName, email, password, confirmPassword ,role } = req.body;
+
+    const redisClient = await connect();
 
     if(req.user.role !== 'admin'){
         return res.status(401).json({ errors: [{ msg: `User ${req.user.firstName} ${req.user.lastName} has no clearance to create a new user` }] });
@@ -33,6 +36,9 @@ exports.register = asyncHandler(async(req, res, next) => {
 
     //Create user
     user = await User.create({firstName, lastName, email, password, role})
+    
+    //Delete users key from redis
+    await redisClient.del('users');
 
     return res.status(201).json({
         success: true,
