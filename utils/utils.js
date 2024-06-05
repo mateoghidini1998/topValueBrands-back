@@ -45,9 +45,10 @@ const createReport = asyncHandler(async (req, reportType) => {
 const pollReportStatus = async (reportId, accessToken) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
   let reportStatus = '';
+  let reportDocument = '';
   while (reportStatus !== 'DONE') {
 
-    if(reportStatus === 'FATAL'){
+    if(reportStatus === 'FATAL' || reportStatus === 'CANCEL'){
       return new Error('Error fetching report');
     }
 
@@ -59,9 +60,10 @@ const pollReportStatus = async (reportId, accessToken) => {
     });
     console.log(reportStatus)
     reportStatus = response.data.processingStatus;
+    reportDocument = response.data.reportDocumentId;
     await new Promise(resolve => setTimeout(resolve, 5000));
   }
-  return reportStatus;
+  return reportDocument;
 };
 
 const getReportById = asyncHandler(async (req, reportType) => {
@@ -70,17 +72,17 @@ const getReportById = asyncHandler(async (req, reportType) => {
   
     try {
       // Poll the report status until it's DONE
-      await pollReportStatus(reportId, accessToken);
+      const reportResponse = await pollReportStatus(reportId, accessToken);
   
-      const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-      console.log('URL: ', url);
+      // const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
+      // console.log('URL: ', url);
   
-      const reportResponse = await axios.get(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-amz-access-token': accessToken
-        }
-      });
+      // const reportResponse = await axios.get(url, {
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'x-amz-access-token': accessToken
+      //   }
+      // });
       console.log('Obtuvimos el reporte')
       return reportResponse.data;
     } catch (error) {
@@ -221,9 +223,9 @@ const parseReportToJSON = (dataString) => {
 
 const sendCSVasJSON = asyncHandler(async (req, res, next) => {
     try {
-      // const csvFile = await downloadCSVReport(req, res, next);
+      const csvFile = await downloadCSVReport(req, res, next);
       // For testing
-      const csvFile =  './reports/report_1717441611342.csv'
+      // const csvFile =  './reports/report_1717441611342.csv'
   
       const results = [];
       let keys = [];
@@ -248,6 +250,7 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
         }
       }
       // res.json({ count: results.length, items: results });
+      console.log(results);
       return results;
     } catch (error) {
       // console.error(error.message);
