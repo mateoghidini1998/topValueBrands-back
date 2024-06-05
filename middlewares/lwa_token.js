@@ -1,5 +1,3 @@
-// middleware.js
-
 const axios = require('axios');
 const asyncHandler = require('./async');
 const dotenv = require('dotenv');
