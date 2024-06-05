@@ -1,9 +1,9 @@
-const { register } = require('../../controllers/auth.controller');
-const { login } = require('../../controllers/auth.controller');
+const { register, login, getMe } = require('../../controllers/auth.controller');
 const { User } = require('../../models');
 
 
 const dotenv = require('dotenv');
+
 
 dotenv.config({
     path: './.env'
@@ -210,5 +210,37 @@ describe('Auth Controller', () => {
 
   });
 
+  describe('getMe', () => {
+    it('should return user data if user is authenticated without password', async () => {
+      const mockUser = {
+        id: '1',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        role: 'admin'
+      };
+      
+      jest.spyOn(User, 'findByPk').mockResolvedValue(mockUser);
+
+      const req = {
+        user: { id: '1' }
+      };
+
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn()
+      };
+      
+      await getMe(req, res);
+
+      expect(User.findByPk).toHaveBeenCalledWith(req.user.id, { attributes: { exclude: ['password'] } });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: mockUser
+      });
+
+    })
+  });
 
 });
