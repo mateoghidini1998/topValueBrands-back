@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">78.12% </span>
+                <span class="strong">73.17% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/32</span>
+                <span class='fraction'>30/41</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">77.77% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>12/14</span>
+                <span class='fraction'>14/18</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">78.12% </span>
+                <span class="strong">73.17% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>25/32</span>
+                <span class='fraction'>30/41</span>
             </div>
         
             
@@ -156,14 +156,37 @@
 <a name='L91'></a><a href='#L91'>91</a>
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
@@ -175,6 +198,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -256,27 +290,44 @@ const asyncHandler = require('../middlewares/async')
 //@route    POST api/auth/register
 //@desc     Register a user
 //@access   Private
+&nbsp;
+// Create role options
+const userRoleOptions = ['admin', 'user'];
+&nbsp;
 exports.register = asyncHandler(async(req, res, next) =&gt; {
-    const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, confirmPassword ,role } = req.body;
 &nbsp;
-    if(req.user.role !== 'admin'){
-        return res.status(401).json({ errors: [{ msg: `User ${req.user.firstName} ${req.user.lastName} has no clearance to create a new user` }] });
-    }
-    
-    let user = await User.findOne({ where: { email } });
+  console.log("Requesting user role:", req.user.role);
+  
+  if(req.user.role !== 'admin'){
+      return res.status(401).json({ errors: [{ msg: `User ${req.user.firstName} ${req.user.lastName} has no clearance to create a new user` }] });
+  }
+  
+  let user = await User.findOne({ where: { email } });
 &nbsp;
-    //Check if user exists
-    if(user){
-        return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
-    }
+  //Check if user exists
+  if(user){
+      console.log("User already exists with email:", email);
+      return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
+  }
 &nbsp;
-    //Create user
-    user = await User.create({firstName, lastName, email, password})
+  <span class="missing-if-branch" title="if path not taken" >I</span>if(!userRoleOptions.includes(role)){
+<span class="cstat-no" title="statement not covered" >      console.log("Invalid user role:", role);</span>
+<span class="cstat-no" title="statement not covered" >      return res.status(400).json({ errors: [{ msg: 'User role must be admin or user' }] });</span>
+  }
 &nbsp;
-    return res.status(201).json({
-        success: true,
-        user
-    })
+  <span class="missing-if-branch" title="if path not taken" >I</span>if(password !== confirmPassword){
+<span class="cstat-no" title="statement not covered" >      console.log("Passwords do not match");</span>
+<span class="cstat-no" title="statement not covered" >      return res.status(400).json({ errors: [{ msg: 'Passwords do not match' }] });</span>
+  }
+&nbsp;
+  //Create user
+  user = await User.create({firstName, lastName, email, password, role});
+&nbsp;
+  return res.status(201).json({
+      success: true,
+      user
+  });
 });
 &nbsp;
 //@route   POST api/auth
@@ -349,7 +400,7 @@ exports.sendTokenResponse = <span class="fstat-no" title="function not covered" 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2024-05-03T22:21:42.099Z
+                at 2024-06-05T00:03:09.319Z
             </div>
         <script src="../prettify.js"></script>
         <script>
