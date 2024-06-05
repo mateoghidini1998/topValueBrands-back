@@ -49,6 +49,7 @@ const pollReportStatus = async (reportId, accessToken) => {
   while (reportStatus !== 'DONE') {
 
     if(reportStatus === 'FATAL' || reportStatus === 'CANCEL'){
+      console.log(reportStatus)
       return new Error('Error fetching report');
     }
 
@@ -63,6 +64,7 @@ const pollReportStatus = async (reportId, accessToken) => {
     reportDocument = response.data.reportDocumentId;
     await new Promise(resolve => setTimeout(resolve, 5000));
   }
+  console.log(response.data)
   return reportDocument;
 };
 
@@ -73,16 +75,7 @@ const getReportById = asyncHandler(async (req, reportType) => {
     try {
       // Poll the report status until it's DONE
       const reportResponse = await pollReportStatus(reportId, accessToken);
-  
-      // const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-      // console.log('URL: ', url);
-  
-      // const reportResponse = await axios.get(url, {
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'x-amz-access-token': accessToken
-      //   }
-      // });
+      console.log('REPORT RESPONSE: ', reportResponse)
       console.log('Obtuvimos el reporte')
       return reportResponse.data;
     } catch (error) {
@@ -143,6 +136,7 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
 
 const generateInventoryReport = asyncHandler(async (req, res, next) => {
   const report = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
+  console.log('REPORT:' ,report);
   if (!report || !report.reportDocumentId) {
     throw new Error('Invalid or missing report data');
   }
