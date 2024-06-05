@@ -259,18 +259,18 @@ const addImageToProducts = async (products, accessToken) => {
 };
 
 
-exports.addImageToNewProducts = asyncHandler(async (req, res) => {
-    const user = await User.findOne({ where: { id: req.user.id } });
-    if (user.role !== 'admin') {
-        return res.status(401).json({ msg: 'Unauthorized' });
-    }
+exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
+    // const user = await User.findOne({ where: { id: req.user.id } });
+    // if (user.role !== 'admin') {
+    //     return res.status(401).json({ msg: 'Unauthorized' });
+    // }
 
     const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
-    const accessToken = req.headers['x-amz-access-token'];
+    // const accessToken = req.headers['x-amz-access-token'];
 
     const result = await addImageToProducts(newProducts, accessToken);
 
-    res.json(result);
+    return result;
 });
 
 
