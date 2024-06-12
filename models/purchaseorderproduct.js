@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class PurchaseOrderProduct extends Model {
     /**
@@ -10,18 +8,26 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      PurchaseOrderProduct.belongsTo(models.PurchaseOrder, {foreignKey: 'purchase_order_id'});
-      PurchaseOrderProduct.belongsTo(models.Product, {foreignKey: 'product_id'});
+      PurchaseOrderProduct.belongsTo(models.PurchaseOrder, {
+        foreignKey: 'purchase_order_id',
+      });
+      PurchaseOrderProduct.belongsTo(models.Product, {
+        foreignKey: 'product_id',
+      });
     }
   }
-  PurchaseOrderProduct.init({
-    purchase_order_id: DataTypes.INTEGER, 
-    product_id: DataTypes.INTEGER,
-    price: DataTypes.DECIMAL,
-    quantity: DataTypes.INTEGER
-  }, {
-    sequelize,
-    modelName: 'PurchaseOrderProduct',
-  });
+  PurchaseOrderProduct.init(
+    {
+      purchase_order_id: DataTypes.INTEGER,
+      product_id: DataTypes.INTEGER,
+      unit_price: DataTypes.DECIMAL,
+      total_amount: DataTypes.DECIMAL,
+      quantity: DataTypes.INTEGER,
+    },
+    {
+      sequelize,
+      modelName: 'PurchaseOrderProduct',
+    }
+  );
   return PurchaseOrderProduct;
 };
