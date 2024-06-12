@@ -7,41 +7,44 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       purchase_order_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'PurchaseOrders',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       product_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Products',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
-      price: {
-        type: Sequelize.FLOAT
+      unit_price: {
+        type: Sequelize.FLOAT,
       },
       quantity: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+      },
+      total_amount: {
+        type: Sequelize.FLOAT,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('PurchaseOrderProducts');
-  }
+  },
 };
