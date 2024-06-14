@@ -7,42 +7,51 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       product_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Products',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       current_rank: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       thirty_days_rank: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       ninety_days_rank: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       units_sold: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       product_velocity: {
-        type: Sequelize.FLOAT
+        type: Sequelize.FLOAT,
+      },
+      lowest_fba_price: {
+        type: Sequelize.FLOAT,
+      },
+      fees: {
+        type: Sequelize.FLOAT,
+      },
+      profit: {
+        type: Sequelize.FLOAT,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('TrackedProducts');
-  }
+  },
 };
