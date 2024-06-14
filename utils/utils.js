@@ -91,11 +91,11 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
     'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL'
   );
 
-  if (!reportData || !reportData.reportDocumentId) {
+  if (!reportData) {
     throw new Error('Report data is invalid or missing reportDocumentId');
   }
 
-  const documentId = reportData.reportDocumentId;
+  const documentId = reportData;
 
   const response = await axios.get(
     `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
@@ -136,7 +136,6 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
   }
 
   const jsonData = parseReportToJSON(dataString);
-
   return jsonData;
 });
 
