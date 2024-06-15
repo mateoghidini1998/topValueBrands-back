@@ -22,17 +22,16 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
 //@access Private
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   try {
+    const products = await fetchProducts(40);
+
     const [orderData, keepaData] = await Promise.all([
-      saveOrders(req, res, next),
-      getProductsTrackedData(req, res, next),
+      saveOrders(req, res, next, products),
+      getProductsTrackedData(products),
     ]);
 
-    const orderItems = orderData;
-    const keepaItems = keepaData;
-
-    const combinedData = keepaItems.map((keepaItem) => {
+    const combinedData = keepaData.map((keepaItem) => {
       const orderItem =
-        orderItems.find((o) => o.product_id === keepaItem.product_id) || {};
+        orderData.find((o) => o.product_id === keepaItem.product_id) || {};
       const unitsSold = orderItem.quantity || 0;
       const productVelocity = orderItem.velocity || 0;
 
@@ -53,17 +52,14 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
     await TrackedProduct.bulkCreate(combinedData);
 
-    // Llamada a getEstimateFees después de que los tracked products se hayan guardado
-    const feeEstimates = await getEstimateFees(req, res, next);
-    console.log('FEE ESTIMATES: ', feeEstimates);
+    const feeEstimates = await getEstimateFees(req, res, next, products);
 
-    // Actualizar las filas de los tracked products con los fees
-    feeEstimates.forEach(async (feeEstimate) => {
+    for (const feeEstimate of feeEstimates) {
       await TrackedProduct.update(
         { fees: feeEstimate.fees },
         { where: { product_id: feeEstimate.product_id } }
       );
-    });
+    }
 
     return res.status(200).json({
       message: 'Data combined and saved successfully.',
@@ -78,85 +74,58 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 });
 
 //Function to group asins into groups of 20
-const getProductsTrackedData = async (req, res, next) => {
-  try {
-    const products = await Product.findAll({ limit: 40 });
+const getProductsTrackedData = async (products) => {
+  const asinGroups = [];
 
-    const asinGroups = [];
-    for (let i = 0; i < products.length; i += 20) {
-      const group = products
-        .slice(i, i + 20)
-        .map((product) => product.ASIN)
-        .join(',');
-      asinGroups.push(group);
-    }
-    console.log('ASIN groups:', asinGroups);
-
-    const keepaResponses = [];
-    for (const asinGroup of asinGroups) {
-      const keepaDataResponse = await getKeepaData(asinGroup);
-      console.log('Keepa data response:', keepaDataResponse);
-      keepaResponses.push(keepaDataResponse);
-
-      await new Promise((resolve) => setTimeout(resolve, 65000));
-    }
-
-    const processedData = keepaResponses.flatMap((response) =>
-      response.products.map((product) => {
-        const matchingProduct = products.find((p) => p.ASIN === product.asin);
-        let lowestPrice = null;
-
-        if (product.stats.buyBoxPrice <= 0) {
-          if (product.stats.current[10] <= 0) {
-            lowestPrice = product.stats.current[7];
-          } else {
-            lowestPrice = product.stats.current[10];
-          }
-        } else {
-          lowestPrice = product.stats.buyBoxPrice;
-        }
-
-        return {
-          product_id: matchingProduct.id,
-          currentSalesRank: product.stats.current[3],
-          avg30: product.stats.avg30[3],
-          avg90: product.stats.avg90[3],
-          lowestFbaPrice: lowestPrice,
-        };
-      })
-    );
-    console.log(processedData);
-    return processedData;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    throw new Error('Error fetching data from Keepa.');
+  for (let i = 0; i < products.length; i += 20) {
+    const group = products
+      .slice(i, i + 20)
+      .map((product) => product.ASIN)
+      .join(',');
+    asinGroups.push(group);
   }
+
+  const keepaResponses = [];
+  for (const asinGroup of asinGroups) {
+    const keepaDataResponse = await getKeepaData(asinGroup);
+    keepaResponses.push(keepaDataResponse);
+    await delay(65000); // Delay between API calls
+  }
+
+  const processedData = keepaResponses.flatMap((response) =>
+    response.products.map((product) => {
+      const matchingProduct = products.find((p) => p.ASIN === product.asin);
+      let lowestPrice =
+        product.stats.buyBoxPrice > 0
+          ? product.stats.buyBoxPrice
+          : product.stats.current[10] > 0
+          ? product.stats.current[10]
+          : product.stats.current[7];
+
+      return {
+        product_id: matchingProduct.id,
+        currentSalesRank: product.stats.current[3],
+        avg30: product.stats.avg30[3],
+        avg90: product.stats.avg90[3],
+        lowestFbaPrice: lowestPrice,
+      };
+    })
+  );
+  return processedData;
 };
 
 //Function to retrieve sales ranks from keepa API. Each request receives a group of 20 ASINs
 const getKeepaData = async (asinGroup) => {
   const apiKey = process.env.KEEPA_API_KEY;
   const url = `https://api.keepa.com/product?key=${apiKey}&domain=1&asin=${asinGroup}&stats=1&offers=20`;
-  console.log(url);
-  try {
-    console.log('Fetching data from Keepa for ASIN group:', asinGroup);
-    const response = await axios.get(url);
-    console.log('Response from Keepa:', response.data);
-    if (!response.data) {
-      throw new Error('No data received from Keepa');
-    }
-    return response.data;
-  } catch (error) {
-    console.error(
-      'Error fetching data for ASIN group:',
-      asinGroup,
-      error.response ? error.response.data : error.message
-    );
-    throw error;
+  const response = await axios.get(url);
+  if (!response.data) {
+    throw new Error('No data received from Keepa');
   }
+  return response.data;
 };
 
-const saveOrders = asyncHandler(async (req, res, next) => {
+const saveOrders = async (req, res, next, products) => {
   const jsonData = await generateOrderReport(req, res, next);
 
   if (!jsonData) {
@@ -169,19 +138,17 @@ const saveOrders = asyncHandler(async (req, res, next) => {
       new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000
   );
 
-  const skuQuantities = {};
-  for (let item of filteredOrders) {
+  const skuQuantities = filteredOrders.reduce((acc, item) => {
     const { sku, quantity, asin } = item;
-
     const qty = parseInt(quantity, 10);
-    if (!skuQuantities[sku]) {
-      skuQuantities[sku] = { quantity: qty, asin };
+    if (!acc[sku]) {
+      acc[sku] = { quantity: qty, asin };
     } else {
-      skuQuantities[sku].quantity += qty;
+      acc[sku].quantity += qty;
     }
-  }
+    return acc;
+  }, {});
 
-  const products = await Product.findAll();
   const asinToProductId = products.reduce((acc, product) => {
     acc[product.ASIN] = product.id;
     return acc;
@@ -197,11 +164,9 @@ const saveOrders = asyncHandler(async (req, res, next) => {
   );
 
   return finalJson;
-});
+};
 
-const getEstimateFees = asyncHandler(async (req, res, next) => {
-  const products = await Product.findAll({ limit: 40 });
-
+const getEstimateFees = async (req, res, next, products) => {
   const feeEstimate = await Promise.all(
     products.map(async (product, index) => {
       const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
@@ -229,36 +194,33 @@ const getEstimateFees = asyncHandler(async (req, res, next) => {
         },
       };
 
-      // Esperar 5 segundos entre cada solicitud
       if (index > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await delay(5000);
       }
 
-      try {
-        const response = await axios.post(url, body, {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-amz-access-token': req.headers['x-amz-access-token'],
-          },
-        });
+      const response = await axios.post(url, body, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-amz-access-token': req.headers['x-amz-access-token'],
+        },
+      });
 
-        const feesEstimate =
-          response.data?.payload?.FeesEstimateResult?.FeesEstimate
-            ?.TotalFeesEstimate?.Amount || null;
+      const feesEstimate =
+        response.data?.payload?.FeesEstimateResult?.FeesEstimate
+          ?.TotalFeesEstimate?.Amount || null;
 
-        return {
-          product_id: product.id,
-          fees: feesEstimate,
-        };
-      } catch (error) {
-        console.error(
-          `Error fetching fees for ASIN ${product.ASIN}:`,
-          error.response.data
-        );
-        throw new Error('Error fetching fees.');
-      }
+      return {
+        product_id: product.id,
+        fees: feesEstimate,
+      };
     })
   );
 
   return feeEstimate;
-});
+};
+
+const fetchProducts = async (limit = 40) => {
+  return await Product.findAll({ limit });
+};
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
