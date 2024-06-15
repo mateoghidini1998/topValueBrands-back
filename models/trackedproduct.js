@@ -16,7 +16,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   TrackedProduct.init(
     {
-      product_id: DataTypes.INTEGER,
+      product_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        unique: true,
+      },
       current_rank: DataTypes.INTEGER,
       thirty_days_rank: DataTypes.INTEGER,
       ninety_days_rank: DataTypes.INTEGER,
