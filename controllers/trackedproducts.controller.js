@@ -6,6 +6,12 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: './.env' });
 
+const fetchProducts = async (limit = 40) => {
+  return await Product.findAll({ limit });
+};
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 //@route GET api/v1/pogenerator/trackedproducts
 //@desc  Get all tracked products
 //@access Private
@@ -50,16 +56,29 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       };
     });
 
-    await TrackedProduct.bulkCreate(combinedData);
+    // Perform the bulk create with upsert
+    await TrackedProduct.bulkCreate(combinedData, {
+      updateOnDuplicate: [
+        'current_rank',
+        'thirty_days_rank',
+        'ninety_days_rank',
+        'units_sold',
+        'product_velocity',
+        'lowest_fba_price',
+      ],
+    });
 
     const feeEstimates = await getEstimateFees(req, res, next, products);
 
-    for (const feeEstimate of feeEstimates) {
-      await TrackedProduct.update(
+    // Batch update fees to minimize database transactions
+    const updatePromises = feeEstimates.map((feeEstimate) => {
+      return TrackedProduct.update(
         { fees: feeEstimate.fees },
         { where: { product_id: feeEstimate.product_id } }
       );
-    }
+    });
+
+    await Promise.all(updatePromises);
 
     return res.status(200).json({
       message: 'Data combined and saved successfully.',
@@ -218,9 +237,3 @@ const getEstimateFees = async (req, res, next, products) => {
 
   return feeEstimate;
 };
-
-const fetchProducts = async (limit = 40) => {
-  return await Product.findAll({ limit });
-};
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
