@@ -21,7 +21,13 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
       {
         model: Product,
         as: 'product',
-        attributes: ['product_name', 'ASIN', 'seller_sku', 'supplier_id'],
+        attributes: [
+          'product_name',
+          'ASIN',
+          'seller_sku',
+          'product_cost',
+          'supplier_id',
+        ],
         include: [
           {
             model: Supplier,
