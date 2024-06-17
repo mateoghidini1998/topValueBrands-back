@@ -16,11 +16,6 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //@desc  Get all tracked products
 //@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
-  const { supplier_id } = req.query; // Leer el parámetro de consulta supplier_id
-
-  // Construir el objeto de where condicionalmente
-  const supplierFilter = supplier_id ? { supplier_id } : {};
-
   const trackedProducts = await TrackedProduct.findAll({
     include: [
       {
@@ -34,7 +29,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
           'product_image',
           'supplier_id',
         ],
-        where: supplierFilter,
         include: [
           {
             model: Supplier,
@@ -46,9 +40,20 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
     ],
   });
 
+  // Reestructurar los datos para aplanar la jerarquía
+  const flattenedTrackedProducts = trackedProducts.map((trackedProduct) => {
+    const { product, ...trackedProductData } = trackedProduct.toJSON();
+    const { supplier, ...productData } = product;
+    return {
+      ...trackedProductData,
+      ...productData,
+      supplier_name: supplier ? supplier.supplier_name : null,
+    };
+  });
+
   res.status(200).json({
     success: true,
-    data: trackedProducts,
+    data: flattenedTrackedProducts,
   });
 });
 
