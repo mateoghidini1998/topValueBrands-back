@@ -31,6 +31,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
           'ASIN',
           'seller_sku',
           'product_cost',
+          'product_image',
           'supplier_id',
         ],
         where: supplierFilter,
@@ -98,10 +99,33 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
     const feeEstimates = await getEstimateFees(req, res, next, products);
 
-    // Batch update fees to minimize database transactions
+    // Get product costs for all products
+    const productCosts = await Product.findAll({
+      where: {
+        id: products.map((product) => product.id),
+      },
+      attributes: ['id', 'product_cost'],
+    });
+
+    const costMap = productCosts.reduce((acc, product) => {
+      acc[product.id] = product.product_cost;
+      return acc;
+    }, {});
+
+    // Batch update fees and calculate profit
     const updatePromises = feeEstimates.map((feeEstimate) => {
+      const productCost = costMap[feeEstimate.product_id] || 0;
+      const lowestFbaPrice =
+        combinedData.find((item) => item.product_id === feeEstimate.product_id)
+          ?.lowest_fba_price || 0;
+      const fees = feeEstimate.fees || 0;
+      const profit = lowestFbaPrice - fees - productCost;
+
       return TrackedProduct.update(
-        { fees: feeEstimate.fees },
+        {
+          fees: fees,
+          profit: profit,
+        },
         { where: { product_id: feeEstimate.product_id } }
       );
     });
