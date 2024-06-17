@@ -16,7 +16,9 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //@desc  Get all tracked products
 //@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
-  const trackedProducts = await TrackedProduct.findAll({
+  const { supplier_id } = req.query;
+
+  const findAllOptions = {
     include: [
       {
         model: Product,
@@ -38,9 +40,16 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
         ],
       },
     ],
-  });
+  };
 
-  // Reestructurar los datos para aplanar la jerarquía
+  if (supplier_id) {
+    findAllOptions.include[0].where = {
+      supplier_id: supplier_id,
+    };
+  }
+
+  const trackedProducts = await TrackedProduct.findAll(findAllOptions);
+
   const flattenedTrackedProducts = trackedProducts.map((trackedProduct) => {
     const { product, ...trackedProductData } = trackedProduct.toJSON();
     const { supplier, ...productData } = product;
