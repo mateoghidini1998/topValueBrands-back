@@ -39,9 +39,19 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
     ],
   });
 
+  const flattenedTrackedProducts = trackedProducts.map((trackedProduct) => {
+    const { product, ...trackedProductData } = trackedProduct.toJSON();
+    const { supplier, ...productData } = product;
+    return {
+      ...trackedProductData,
+      ...productData,
+      supplier_name: supplier ? supplier.supplier_name : null,
+    };
+  });
+
   res.status(200).json({
     success: true,
-    data: trackedProducts,
+    data: flattenedTrackedProducts,
   });
 });
 
