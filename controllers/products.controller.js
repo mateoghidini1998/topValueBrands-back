@@ -30,9 +30,16 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: 'Product not found' });
   }
 
+  const supplier = await Supplier.findByPk(req.body.supplier_id);
+
+  if (!supplier) {
+    return res.status(404).json({ msg: 'Supplier not found' });
+  }
+
   try {
     // add the supplier info to the product
-    product.supplier_name = req.body.supplier_name;
+    product.supplier_id = req.body.supplier_id;
+
     product.supplier_item_number = req.body.supplier_item_number;
     product.product_cost = req.body.product_cost;
     product.pack_type = req.body.pack_type;
