@@ -1,4 +1,4 @@
-const { Product, TrackedProduct } = require('../models');
+const { Product, TrackedProduct, Supplier } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
@@ -16,7 +16,23 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //@desc  Get all tracked products
 //@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
-  const trackedProducts = await TrackedProduct.findAll();
+  const trackedProducts = await TrackedProduct.findAll({
+    include: [
+      {
+        model: Product,
+        as: 'product',
+        attributes: ['product_name', 'ASIN', 'seller_sku', 'supplier_id'],
+        include: [
+          {
+            model: Supplier,
+            as: 'supplier',
+            attributes: ['supplier_name'],
+          },
+        ],
+      },
+    ],
+  });
+
   res.status(200).json({
     success: true,
     data: trackedProducts,
