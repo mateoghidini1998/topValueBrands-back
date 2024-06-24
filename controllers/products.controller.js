@@ -13,6 +13,27 @@ dotenv.config({
   path: './.env',
 });
 
+//@route    POST api/products
+//@desc     Create a product
+//@access   Private
+exports.createProduct = asyncHandler(async (req, res) => {
+  /* if (req.user.role !== 'admin') {
+    return res.status(401).json({ msg: 'Unauthorized' });
+  } */
+
+  const supplier = await Supplier.findByPk(req.body.supplier_id);
+
+  if (!supplier) {
+    return res.status(404).json({ msg: 'Supplier not found' });
+  }
+
+  const product = await Product.create(req.body);
+  res.status(201).json({
+    success: true,
+    data: product,
+  });
+});
+
 //@route    PATCH api/products/addExtraInfoToProduct
 //@desc     Update product
 //@access   Private
