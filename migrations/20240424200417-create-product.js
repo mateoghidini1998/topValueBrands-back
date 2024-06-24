@@ -7,20 +7,20 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       ASIN: {
         type: Sequelize.STRING,
         allowNull: true,
-        unique: false
+        unique: false,
       },
       product_image: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: true,
       },
       product_name: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: true,
       },
       seller_sku: {
         type: Sequelize.STRING.BINARY,
@@ -31,34 +31,34 @@ module.exports = {
       FBA_available_inventory: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        defaultValue: 0
+        defaultValue: 0,
       },
       reserved_quantity: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        defaultValue: 0
+        defaultValue: 0,
       },
       Inbound_to_FBA: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        defaultValue: 0
+        defaultValue: 0,
       },
       supplier_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: 'Suppliers',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       supplier_item_number: {
         type: Sequelize.STRING,
-        allowNull:true
+        allowNull: true,
       },
       product_cost: {
         type: Sequelize.FLOAT,
         allowNull: true,
-        defaultValue: 0
+        defaultValue: 0,
       },
       pack_type: {
         type: Sequelize.STRING,
@@ -67,19 +67,24 @@ module.exports = {
       is_active: {
         allowNull: true,
         type: Sequelize.BOOLEAN,
-        defaultValue: true
+        defaultValue: true,
+      },
+      in_seller_account: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       },
       createdAt: {
         allowNull: true,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: true,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
     });
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Products');
-  }
+  },
 };

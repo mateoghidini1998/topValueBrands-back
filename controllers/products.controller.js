@@ -13,45 +13,25 @@ dotenv.config({
   path: './.env',
 });
 
-// Create a function to Create a new product
+//@route    POST api/products
+//@desc     Create a product
+//@access   Private
 exports.createProduct = asyncHandler(async (req, res) => {
-  // check if the user is admin
-  if (req.user.role !== 'admin') {
+  /* if (req.user.role !== 'admin') {
     return res.status(401).json({ msg: 'Unauthorized' });
-  }
+  } */
 
-  // Check that the request body has all the required fields by using an array of keys
-  const requiredFields = ['supplier_id', 'seller_sku', 'product_name'];
-  for (const field of requiredFields) {
-    if (!req.body.hasOwnProperty(field)) {
-      return res.status(400).json({ msg: `Missing required field: ${field}` });
-    }
-  }
-
-  // Check if the product already exists
-  const product = await Product.findOne({
-    where: {
-      seller_sku: req.body.seller_sku
-    },
-  });
-  if (product) {
-    return res.status(400).json({ msg: 'Product already exists' });
-  }
-
-  //check if the supplier exists
   const supplier = await Supplier.findByPk(req.body.supplier_id);
+
   if (!supplier) {
     return res.status(404).json({ msg: 'Supplier not found' });
   }
 
-
-
-  try {
-    const product = await Product.create(req.body);
-    res.status(200).json(product);
-  } catch (error) {
-    console.error({ msg: error.message });
-  }
+  const product = await Product.create(req.body);
+  res.status(201).json({
+    success: true,
+    data: product,
+  });
 });
 
 //@route    PATCH api/products/addExtraInfoToProduct

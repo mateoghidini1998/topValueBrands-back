@@ -3,12 +3,12 @@ const router = express.Router();
 const { authorize, protect } = require('../middlewares/auth');
 
 const {
-    addExtraInfoToProduct,
-    toggleShowProduct,
-    getProducts,
-    addImageToAllProducts,
-    addImageToNewProducts,
-    createProduct,
+  addExtraInfoToProduct,
+  toggleShowProduct,
+  getProducts,
+  addImageToAllProducts,
+  addImageToNewProducts,
+  createProduct,
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
@@ -101,7 +101,9 @@ router.post('/add', protect, authorize("admin"), createProduct);
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/',  protect, authorize("admin"), getProducts);
+router.get('/', protect, authorize('admin'), getProducts);
+
+router.post('/', createProduct);
 
 /**
  * @openapi
@@ -207,7 +209,12 @@ router.get('/',  protect, authorize("admin"), getProducts);
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.patch('/addExtraInfoToProduct', protect, authorize("admin"), addExtraInfoToProduct);
+router.patch(
+  '/addExtraInfoToProduct',
+  protect,
+  authorize('admin'),
+  addExtraInfoToProduct
+);
 
 /**
  * @openapi
@@ -295,10 +302,16 @@ router.patch('/addExtraInfoToProduct', protect, authorize("admin"), addExtraInfo
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.patch('/disable', protect, authorize("admin"), toggleShowProduct);
+router.patch('/disable', protect, authorize('admin'), toggleShowProduct);
 
-router.patch('/addImage', addAccessTokenHeader, addImageToAllProducts)
+router.patch('/addImage', addAccessTokenHeader, addImageToAllProducts);
 
-router.patch('/syncImages',protect, authorize("admin"), addAccessTokenHeader, addImageToNewProducts)
+router.patch(
+  '/syncImages',
+  protect,
+  authorize('admin'),
+  addAccessTokenHeader,
+  addImageToNewProducts
+);
 
 module.exports = router;
