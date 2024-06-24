@@ -13,25 +13,61 @@ dotenv.config({
   path: './.env',
 });
 
-//@route    POST api/products
+//@route    POST api/products/add
 //@desc     Create a product
 //@access   Private
 exports.createProduct = asyncHandler(async (req, res) => {
-  /* if (req.user.role !== 'admin') {
+  // check if the user is admin
+  if (req.user.role !== 'admin') {
     return res.status(401).json({ msg: 'Unauthorized' });
-  } */
-
-  const supplier = await Supplier.findByPk(req.body.supplier_id);
-
-  if (!supplier) {
-    return res.status(404).json({ msg: 'Supplier not found' });
   }
 
-  const product = await Product.create(req.body);
-  res.status(201).json({
-    success: true,
-    data: product,
+  // check if the product exists
+  const product = await Product.findOne({
+    where: { seller_sku: req.body.seller_sku },
   });
+  if (product) {
+    return res.status(400).json({ msg: 'Product already exists' });
+  }
+
+  // check if there is missing any required fields from the array
+  const requiredFields = [
+    'seller_sku',
+    'product_name',
+    'ASIN',
+  ];
+
+  for (const field of requiredFields) {
+    if (!req.body[field]) {
+      return res.status(400).json({ msg: `Missing required field: ${field}` });
+    }
+  }
+
+  // check if the supplier exists
+  const supplier = await Supplier.findByPk(req.body.supplier_id);
+  // if the supplier does not exist add the supplier Unknown
+  if (!supplier) {
+    // find the supplier with the name Unknown
+    let newSupplier = await Supplier.findOne({
+      where: { supplier_name: 'Unknown' },
+    });
+
+    // if the "Unknown" supplier does not exist, create it
+    if (!newSupplier) {
+      newSupplier = await Supplier.create({
+        supplier_name: 'Unknown',
+      });
+    }
+
+    req.body.supplier_id = newSupplier.id;
+  }
+
+  try {
+    const newProduct = await Product.create(req.body);
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(400).json({ msg: error.message });
+  }
 });
 
 //@route    PATCH api/products/addExtraInfoToProduct
@@ -58,12 +94,27 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
   }
 
   try {
+
+    // add the product changes
+    product.product_name = req.body.product_name;
+    product.product_image = req.body.product_image;
+    product.ASIN = req.body.ASIN;
+
     // add the supplier info to the product
     product.supplier_id = req.body.supplier_id;
-
     product.supplier_item_number = req.body.supplier_item_number;
+
+
+    // add the product cost to the product
     product.product_cost = req.body.product_cost;
     product.pack_type = req.body.pack_type;
+
+    // add the inventory stock info to the product
+    product.FBA_available_inventory = req.body.FBA_available_inventory;
+    product.reserved_quantity = req.body.reserved_quantity;
+    product.Inbound_to_FBA = req.body.Inbound_to_FBA;
+
+
     // save the product
     await product.save();
     res.status(200).json(product);
