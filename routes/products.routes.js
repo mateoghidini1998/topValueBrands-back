@@ -8,8 +8,11 @@ const {
     getProducts,
     addImageToAllProducts,
     addImageToNewProducts,
+    createProduct,
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
+
+router.post('/add', protect, authorize("admin"), createProduct);
 
 /**
  * @openapi
