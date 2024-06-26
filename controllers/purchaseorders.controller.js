@@ -1,5 +1,8 @@
 const asyncHandler = require('../middlewares/async');
-const { Product, PurchaseOrder, PurchaseOrderProduct } = require('../models');
+const { Product, PurchaseOrder, PurchaseOrderProduct, Supplier } = require('../models');
+const path = require('path');
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
 
 exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { order_number, supplier_id, status, products } = req.body;
@@ -37,7 +40,7 @@ exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   purchaseOrder = await PurchaseOrder.create({
     order_number,
     supplier_id,
-    status,
+    status: 'Pending',
     total_price: 0,
   });
 
@@ -164,6 +167,12 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
     ],
   });
 
+  // get the supplier_name for each purchase order
+  for (const purchaseOrder of purchaseOrders) {
+    const purchaseSupplier = await Supplier.findByPk(purchaseOrder.supplier_id);
+    purchaseOrder.setDataValue('supplier_name', purchaseSupplier.supplier_name);
+  }
+
   return res.status(200).json({
     success: true,
     data: purchaseOrders,
@@ -207,10 +216,185 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   return totalPrice;
 };
 
+exports.rejectPurchaseOrder = asyncHandler(async (req, res, next) => {
+
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: 'Purchase Order not found' });
+  }
+
+  await purchaseOrder.update({ status: 'Rejected' });
+
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrder
+  });
+});
+
+exports.approvePurchaseOrder = asyncHandler(async (req, res, next) => {
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: 'Purchase Order not found' });
+  }
+
+  await purchaseOrder.update({ status: 'Approved' });
+
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrder
+  });
+});
+
 const getPurchaseOrderProducts = async (purchaseOrderId) => {
   const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
     where: { purchase_order_id: purchaseOrderId },
   });
 
   return purchaseOrderProducts;
+};
+
+// Método para descargar la orden de compra
+// Método para descargar la orden de compra
+exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
+    include: [
+      {
+        model: PurchaseOrderProduct,
+        as: 'purchaseOrderProducts',
+      },
+    ],
+  });
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: 'Purchase Order not found' });
+  }
+
+  const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
+  const totalPrice = purchaseOrder.total_price;
+  const totalQuantity = purchaseOrderProducts.reduce((total, product) => total + product.quantity, 0);
+  const totalAmount = purchaseOrderProducts.reduce((total, product) => total + product.total_amount, 0);
+
+  // Obtener los nombres de los productos de forma asíncrona
+  const products = await Promise.all(purchaseOrderProducts.map(async (product) => {
+    const productData = await Product.findOne({ where: { id: product.product_id } });
+    if (!productData) {
+      return null;
+    }
+
+    return {
+      ASIN: productData.ASIN,
+      product_id: product.product_id,
+      unit_price: product.unit_price,
+      quantity: product.quantity,
+      total_amount: product.total_amount,
+    };
+  }));
+
+  // Filtrar productos nulos (en caso de que no se encuentren algunos productos)
+  const filteredProducts = products.filter(product => product !== null);
+
+  const pdfData = {
+    purchaseOrder: {
+      id: purchaseOrder.id,
+      total_price: totalPrice,
+      total_quantity: totalQuantity,
+      total_amount: totalAmount,
+    },
+    products: filteredProducts,
+  };
+
+  console.log(pdfData);
+
+  const pdfBuffer = await generatePDF(pdfData);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename=purchase-order.pdf');
+  res.send(pdfBuffer);
+});
+
+
+// Método para generar el PDF
+const generatePDF = (data) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    let buffers = [];
+
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+      let pdfData = Buffer.concat(buffers);
+      resolve(pdfData);
+    });
+
+    // Cabecera del documento con imagen
+    const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
+    doc.image(logoPath, {
+      fit: [100, 100],
+      align: 'center',
+      valign: 'center'
+    });
+
+    doc.moveDown();
+    doc.fontSize(20).text('Purchase Order', { align: 'center' });
+    doc.moveDown();
+
+    // Información de emisión
+    doc.fontSize(12).text('ISSUED TO:', { bold: true });
+    doc.text('Central Pet Distribution (SUPPLIER NAME)');
+    doc.text('11316 46TH STREET N.');
+    doc.text('TAMPA FL 33617');
+    doc.moveDown();
+
+    doc.text(`DATE: ${new Date().toLocaleDateString()}`);
+    doc.text(`PO NUMBER: ${data.purchaseOrder.id}`);
+    doc.moveDown();
+
+    // Información de la orden de compra
+    doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.id}`);
+    doc.text(`Total Price: $${data.purchaseOrder.total_price}`);
+    doc.text(`Total Quantity: ${data.purchaseOrder.total_quantity}`);
+    doc.text(`Total Amount: $${data.purchaseOrder.total_amount}`);
+    doc.moveDown();
+
+    // Información de los productos
+    doc.fontSize(14).text('Products', { underline: true });
+    doc.moveDown();
+
+    // Tabla de productos
+    const tableTop = 250;
+    const itemCodeX = 50;
+    const descriptionX = 100;
+    const quantityX = 300;
+    const unitPriceX = 350;
+    const totalX = 400;
+
+    doc.fontSize(10).text('ITEM NO.', itemCodeX, tableTop, { bold: true });
+    doc.text('DESCRIPTION', descriptionX, tableTop, { bold: true });
+    doc.text('UNIT PRICE', unitPriceX, tableTop, { bold: true });
+    doc.text('QTY', quantityX, tableTop, { bold: true });
+    doc.text('TOTAL', totalX, tableTop, { bold: true });
+
+    let position = tableTop + 20;
+    data.products.forEach((product, index) => {
+      doc.text(index + 1, itemCodeX, position);
+      doc.text(product.product_name, descriptionX, position);
+      doc.text(`$${product.unit_price.toFixed(2)}`, unitPriceX, position);
+      doc.text(product.quantity, quantityX, position);
+      doc.text(`$${product.total_amount.toFixed(2)}`, totalX, position);
+      position += 20;
+    });
+
+    // Subtotal y total
+    position += 20;
+    doc.text(`SUBTOTAL: $${data.purchaseOrder.total_amount.toFixed(2)}`, totalX, position);
+    position += 20;
+    doc.text(`TOTAL: $${data.purchaseOrder.total_amount.toFixed(2)}`, totalX, position);
+    position += 20;
+
+    // Notas de la orden
+    doc.moveDown();
+    doc.text('ORDER NOTES:', { bold: true });
+    doc.text('Thank you for your business!');
+    doc.text('www.topvaluebrands.com');
+
+    doc.end();
+  });
 };

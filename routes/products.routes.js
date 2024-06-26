@@ -12,7 +12,7 @@ const {
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
-router.post('/add', protect, authorize("admin"), createProduct);
+router.post('/add', protect, addAccessTokenHeader, authorize("admin"), createProduct);
 
 /**
  * @openapi

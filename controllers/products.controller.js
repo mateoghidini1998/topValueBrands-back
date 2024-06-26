@@ -24,17 +24,28 @@ exports.createProduct = asyncHandler(async (req, res) => {
 
   // check if the product exists
   const product = await Product.findOne({
-    where: { seller_sku: req.body.seller_sku },
+    where: { ASIN: req.body.ASIN },
   });
   if (product) {
     return res.status(400).json({ msg: 'Product already exists' });
+  } else {
+    const accessToken = req.headers['x-amz-access-token']
+    // if the product does not exist get the product name from amazon with the getProductNameByASIN function
+    
+    console.log(req.body)
+    console.log(req.headers['x-amz-access-token'])
+
+    const productName = await getProductNameByASIN(req.body.ASIN, req.headers['x-amz-access-token']);
+    req.body.product_name = productName;
   }
 
   // check if there is missing any required fields from the array
   const requiredFields = [
-    'seller_sku',
-    'product_name',
+    // 'seller_sku',
+    'product_cost',
     'ASIN',
+    'supplier_item_number',
+    'supplier_id',
   ];
 
   for (const field of requiredFields) {
@@ -60,6 +71,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
     }
 
     req.body.supplier_id = newSupplier.id;
+    req.body.in_seller_account = false;
+
   }
 
   try {
@@ -81,7 +94,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 
   // check if the product exists
   const product = await Product.findOne({
-    where: { seller_sku: req.body.seller_sku },
+    where: { id: req.body.id },
   });
   if (!product) {
     return res.status(404).json({ msg: 'Product not found' });
@@ -89,7 +102,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 
   const supplier = await Supplier.findByPk(req.body.supplier_id);
 
-  if (!supplier) {
+  if (req.supplier && !supplier) {
     return res.status(404).json({ msg: 'Supplier not found' });
   }
 
@@ -136,7 +149,7 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
   // Get the product by seller_sku to check if the product exists
   const product = await Product.findOne({
-    where: { seller_sku: req.body.seller_sku },
+    where: { id: req.body.id },
   });
   if (!product) {
     return res.status(404).json({ msg: 'Product not found' });
@@ -367,3 +380,31 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
 
   return result;
 });
+
+
+const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
+  console.log('ASIN: '+ req);
+  console.log(accessToken);
+  
+  const ASIN = req;
+
+  const url = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=ATVPDKIKX0DER`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': accessToken,
+      },
+    });
+    const productName = response.data.summaries[0].itemName;
+    console.log(productName);
+    // validate the product name
+    return productName;
+  } catch (error) {
+    console.error({ msg: error.message });
+    const productName = 'No se encontro el nombre del producto';
+    return productName;
+  }
+
+})
