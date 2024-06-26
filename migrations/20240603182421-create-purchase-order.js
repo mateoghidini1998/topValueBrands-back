@@ -22,6 +22,10 @@ module.exports = {
           key: 'id'
         }
       },
+      notes: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
       status: {
         type: Sequelize.STRING
       },
