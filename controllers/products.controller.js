@@ -1,9 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async');
 const axios = require('axios');
-const { User } = require('../models');
-const { Supplier } = require('../models');
-const { Product } = require('../models');
+const { Supplier, TrackedProduct, Product, User } = require('../models');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -31,7 +29,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
   } else {
     const accessToken = req.headers['x-amz-access-token']
     // if the product does not exist get the product name from amazon with the getProductNameByASIN function
-    
+
     console.log(req.body)
     console.log(req.headers['x-amz-access-token'])
 
@@ -121,6 +119,17 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 
     // add the product cost to the product
     product.product_cost = req.body.product_cost;
+
+    // We update the trackedProducts profit by substracting the old product cost from the new product cost
+    const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
+    console.log(trackedProduct);
+    if (trackedProduct) {
+      trackedProduct.profit = trackedProduct.lowest_fba_price - trackedProduct.fees - product.product_cost;
+      await trackedProduct.save();
+    }
+
+
+
     product.pack_type = req.body.pack_type;
 
     // add the inventory stock info to the product
@@ -384,9 +393,9 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
 
 
 const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
-  console.log('ASIN: '+ req);
+  console.log('ASIN: ' + req);
   console.log(accessToken);
-  
+
   const ASIN = req;
 
   const url = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=ATVPDKIKX0DER`;
