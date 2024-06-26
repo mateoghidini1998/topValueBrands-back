@@ -41,6 +41,7 @@ const processReport = async (productsArray) => {
         ASIN: product.asin,
         product_name: product['product-name'],
         seller_sku: product.sku,
+        in_seller_account: true,
         FBA_available_inventory: parseFloat(
           product['afn-fulfillable-quantity']
         ),
