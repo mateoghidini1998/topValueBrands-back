@@ -112,6 +112,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     product.product_name = req.body.product_name;
     product.product_image = req.body.product_image;
     product.ASIN = req.body.ASIN;
+    product.seller_sku = req.body.seller_sku;
 
     // add the supplier info to the product
     product.supplier_id = req.body.supplier_id;
