@@ -336,12 +336,22 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
   // Filtrar productos nulos (en caso de que no se encuentren algunos productos)
   const filteredProducts = products.filter(product => product !== null);
 
+  const supplierName = await Supplier.findOne({ where: { id: purchaseOrder.supplier_id } });
+  if (!supplierName) {
+    return res.status(404).json({ message: 'Supplier not found' });
+  }
+  const supplierNameValue = supplierName.supplier_name;
+
   const pdfData = {
     purchaseOrder: {
       id: purchaseOrder.id,
+      order_number: purchaseOrder.order_number,
+      supplier_name: supplierNameValue,
+      status: purchaseOrder.status,
       total_price: totalPrice,
       total_quantity: totalQuantity,
       total_amount: totalAmount,
+      notes: purchaseOrder.notes,
     },
     products: filteredProducts,
   };
@@ -357,7 +367,86 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
 
 
 // Método para generar el PDF
+// const generatePDF = (data) => {
+
+//   console.log(data);
+
+//   return new Promise((resolve, reject) => {
+//     const doc = new PDFDocument();
+//     let buffers = [];
+
+//     doc.on('data', buffers.push.bind(buffers));
+//     doc.on('end', () => {
+//       let pdfData = Buffer.concat(buffers);
+//       resolve(pdfData);
+//     });
+
+//     // Cabecera del documento con imagen
+//     const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
+    
+//     // align the image to the center
+//     doc.image(logoPath, 200, 10, { width: 200, align: 'center' });
+
+//     // Move down
+//     doc.moveDown(8);
+//     doc.text(`DATE: ${new Date().toLocaleDateString()}`);
+//     doc.moveDown(1);
+//     doc.fontSize(12).text('ISSUED TO:', { bold: true });
+//     doc.moveDown(1);
+//     doc.text(`${data.purchaseOrder.supplier_name}`);
+//     doc.text('11316 46TH STREET N.');
+//     doc.text('TAMPA FL 33617');
+//     doc.moveDown();
+    
+
+//     // Información de la orden de compra
+//     doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.order_number}`);
+
+//     doc.moveDown(3);
+//     const TABLE_LEFT = 70;
+//     const TABLE_TOP = 350;
+
+//     const itemDistanceY = 20;
+
+//     doc.text('ITEM NO.', TABLE_LEFT  , TABLE_TOP, { bold: true });
+//     doc.text('ASIN', TABLE_LEFT + 70  ,TABLE_TOP, { bold: true });
+//     doc.text('UNIT PRICE', TABLE_LEFT  + 180 ,TABLE_TOP,  { bold: true });
+//     doc.text('QUANTITY', TABLE_LEFT + 300  ,TABLE_TOP,  { bold: true });
+//     doc.text('TOTAL', TABLE_LEFT + 400  ,TABLE_TOP,  { bold: true });
+
+//     let position = TABLE_TOP + itemDistanceY;
+//     data.products.forEach((product, index) => {
+//       doc.text(product.product_id, TABLE_LEFT, position);
+//       doc.text(product.ASIN, TABLE_LEFT + 70, position);
+//       doc.text(product.unit_price, TABLE_LEFT + 180, position);
+//       doc.text(product.quantity, TABLE_LEFT + 300, position);
+//       doc.text(product.total_amount, TABLE_LEFT + 400, position);
+//       position += 20;
+//     });
+
+//     // Subtotal y total
+//     doc.moveDown(3);
+//     doc.text(`SUBTOTAL:   $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
+
+//     // Order notes
+//     doc.moveDown(2);
+//     doc.text('ORDER NOTES:', TABLE_LEFT);
+//     doc.moveDown();
+//     doc.text(data.purchaseOrder.notes)
+
+
+
+//     doc.text('Thank you for your business!', { bold: true, align:"center"}, (doc.page.height - 80));
+//     doc.text('www.topvaluebrands.com', { bold: true, align: "center"});
+
+
+//     doc.end();
+//   });
+// };
+
 const generatePDF = (data) => {
+  console.log(data);
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument();
     let buffers = [];
@@ -368,76 +457,59 @@ const generatePDF = (data) => {
       resolve(pdfData);
     });
 
-    // Cabecera del documento con imagen
     const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
-    doc.image(logoPath, {
-      fit: [100, 100],
-      align: 'center',
-      valign: 'center'
-    });
-
-    doc.moveDown();
-    doc.fontSize(20).text('Purchase Order', { align: 'center' });
-    doc.moveDown();
-
-    // Información de emisión
+    
+    doc.image(logoPath, 200, 10, { width: 200, align: 'center' });
+    doc.moveDown(8);
+    doc.text(`DATE: ${new Date().toLocaleDateString()}`);
+    doc.moveDown(1);
     doc.fontSize(12).text('ISSUED TO:', { bold: true });
-    doc.text('Central Pet Distribution (SUPPLIER NAME)');
+    doc.moveDown(1);
+    doc.text(`${data.purchaseOrder.supplier_name}`);
     doc.text('11316 46TH STREET N.');
     doc.text('TAMPA FL 33617');
     doc.moveDown();
+    doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.order_number}`);
+    doc.moveDown(3);
 
-    doc.text(`DATE: ${new Date().toLocaleDateString()}`);
-    doc.text(`PO NUMBER: ${data.purchaseOrder.id}`);
-    doc.moveDown();
+    const TABLE_LEFT = 70;
+    const TABLE_TOP = 350;
+    const itemDistanceY = 20;
 
-    // Información de la orden de compra
-    doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.id}`);
-    doc.text(`Total Price: $${data.purchaseOrder.total_price}`);
-    doc.text(`Total Quantity: ${data.purchaseOrder.total_quantity}`);
-    doc.text(`Total Amount: $${data.purchaseOrder.total_amount}`);
-    doc.moveDown();
+    // Table Headers
+    doc.fillColor('blue').fontSize(12).text('ITEM NO.', TABLE_LEFT, TABLE_TOP, { extraBold: true });
+    doc.text('ASIN', TABLE_LEFT + 70, TABLE_TOP, { bold: true });
+    doc.text('UNIT PRICE', TABLE_LEFT + 180, TABLE_TOP, { bold: true });
+    doc.text('QUANTITY', TABLE_LEFT + 300, TABLE_TOP, { bold: true });
+    doc.text('TOTAL', TABLE_LEFT + 400, TABLE_TOP, { bold: true });
 
-    // Información de los productos
-    doc.fontSize(14).text('Products', { underline: true });
-    doc.moveDown();
-
-    // Tabla de productos
-    const tableTop = 250;
-    const itemCodeX = 50;
-    const descriptionX = 100;
-    const quantityX = 300;
-    const unitPriceX = 350;
-    const totalX = 400;
-
-    doc.fontSize(10).text('ITEM NO.', itemCodeX, tableTop, { bold: true });
-    doc.text('DESCRIPTION', descriptionX, tableTop, { bold: true });
-    doc.text('UNIT PRICE', unitPriceX, tableTop, { bold: true });
-    doc.text('QTY', quantityX, tableTop, { bold: true });
-    doc.text('TOTAL', totalX, tableTop, { bold: true });
-
-    let position = tableTop + 20;
+    let position = TABLE_TOP + itemDistanceY;
     data.products.forEach((product, index) => {
-      doc.text(index + 1, itemCodeX, position);
-      doc.text(product.product_name, descriptionX, position);
-      doc.text(`$${product.unit_price.toFixed(2)}`, unitPriceX, position);
-      doc.text(product.quantity, quantityX, position);
-      doc.text(`$${product.total_amount.toFixed(2)}`, totalX, position);
-      position += 20;
+      // Background color for each row
+      if (index % 2 === 0) {
+        doc.rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY).fill('#f2f2f2').stroke();
+      }
+      doc.fillColor('black');
+      doc.text(product.product_id, TABLE_LEFT, position);
+      doc.text(product.ASIN, TABLE_LEFT + 70, position);
+      doc.text('$' + product.unit_price, TABLE_LEFT + 180, position);
+      doc.text(product.quantity, TABLE_LEFT + 300, position);
+      doc.text('$'+ product.total_amount, TABLE_LEFT + 400, position);
+      position += itemDistanceY;
     });
 
-    // Subtotal y total
-    position += 20;
-    doc.text(`SUBTOTAL: $${data.purchaseOrder.total_amount.toFixed(2)}`, totalX, position);
-    position += 20;
-    doc.text(`TOTAL: $${data.purchaseOrder.total_amount.toFixed(2)}`, totalX, position);
-    position += 20;
+    // Subtotal and Total
+    doc.moveDown(3);
+    doc.fillColor('black').text(`SUBTOTAL:   $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
 
-    // Notas de la orden
+    // Order Notes
+    doc.moveDown(2);
+    doc.text('ORDER NOTES:', TABLE_LEFT);
     doc.moveDown();
-    doc.text('ORDER NOTES:', { bold: true });
-    doc.text('Thank you for your business!');
-    doc.text('www.topvaluebrands.com');
+    doc.text(data.purchaseOrder.notes);
+
+    doc.text('Thank you for your business!', { bold: true, align: "center" }, doc.page.height - 150);
+    doc.text('www.topvaluebrands.com', { bold: true, align: "center" });
 
     doc.end();
   });
