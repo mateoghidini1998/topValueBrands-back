@@ -2,7 +2,7 @@ name: Deploy to Azure App Service
 
 on:
   push:
-    branches: [feature/TVB_19]
+    branches: [feature/TVB_23]
   # pull_request:
   #   branches: [main]
 
