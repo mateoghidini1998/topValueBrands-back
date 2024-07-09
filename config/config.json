@@ -3,21 +3,21 @@
     "username": "tvb_admin",
     "password": "Topvaluebrands1!",
     "database": "top_value_brands",
-    "host": "127.0.0.1",
+    "host": "tvb-dbserver-01.mysql.database.azure.com",
     "dialect": "mysql"
   },
   "test": {
     "username": "tvb_admin",
     "password": "Topvaluebrands1!",
     "database": "top_value_brands",
-    "host": "127.0.0.1",
+    "host": "tvb-dbserver-01.mysql.database.azure.com",
     "dialect": "mysql"
   },
   "production": {
     "username": "tvb_admin",
     "password": "Topvaluebrands1!",
     "database": "top_value_brands",
-    "host": "127.0.0.1",
+    "host": "tvb-dbserver-01.mysql.database.azure.com",
     "dialect": "mysql"
   }
 }
