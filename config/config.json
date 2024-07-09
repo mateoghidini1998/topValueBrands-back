@@ -4,7 +4,13 @@
     "password": "Topvaluebrands1!",
     "database": "top_value_brands",
     "host": "tvb-dbserver-01.mysql.database.azure.com",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   },
   "test": {
     "username": "tvb_admin",
