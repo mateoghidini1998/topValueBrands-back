@@ -142,7 +142,8 @@ router.post('/login', login);
  *                       format: date-time
  *                       example: "2024-04-29T21:22:59.473Z"
  */
-router.post('/register', protect, authorize('admin'), register);
+router.post('/register', register);
+//protect, authorize('admin'),
 
 /**
  * @openapi
