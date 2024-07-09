@@ -13,12 +13,18 @@ jobs:
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
+
       - name: Setup Node.js Version
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
+
       - name: Install Dependencies
         run: npm install
+
+      - name: Run Sequelize Migrations
+        run: npx sequelize-cli db:migrate
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
