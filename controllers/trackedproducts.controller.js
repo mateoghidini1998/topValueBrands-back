@@ -6,8 +6,8 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: './.env' });
 
-const fetchProducts = async (limit = 40) => {
-  return await Product.findAll({ limit });
+const fetchProducts = async () => {
+  return await Product.findAll();
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -71,7 +71,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
 //@access Private
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   try {
-    const products = await fetchProducts(40);
+    const products = await fetchProducts();
 
     const [orderData, keepaData] = await Promise.all([
       saveOrders(req, res, next, products),
@@ -162,9 +162,9 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 const getProductsTrackedData = async (products) => {
   const asinGroups = [];
 
-  for (let i = 0; i < products.length; i += 20) {
+  for (let i = 0; i < products.length; i += 60) {
     const group = products
-      .slice(i, i + 20)
+      .slice(i, i + 60)
       .map((product) => product.ASIN)
       .join(',');
     asinGroups.push(group);
@@ -184,8 +184,8 @@ const getProductsTrackedData = async (products) => {
         product.stats.buyBoxPrice > 0
           ? product.stats.buyBoxPrice
           : product.stats.current[10] > 0
-          ? product.stats.current[10]
-          : product.stats.current[7];
+            ? product.stats.current[10]
+            : product.stats.current[7];
 
       return {
         product_id: matchingProduct.id,
