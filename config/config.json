@@ -1,9 +1,6 @@
 {
-  "development": {
-    "username": "tvb_admin",
-    "password": "Topvaluebrands1!",
-    "database": "top_value_brands",
-    "host": "tvb-dbserver-01.mysql.database.azure.com",
+  "production": {
+    "use_env_variable": "DATABASE_URL",
     "dialect": "mysql",
     "dialectOptions": {
       "ssl": {
@@ -11,19 +8,5 @@
         "rejectUnauthorized": false
       }
     }
-  },
-  "test": {
-    "username": "tvb_admin",
-    "password": "Topvaluebrands1!",
-    "database": "top_value_brands",
-    "host": "tvb-dbserver-01.mysql.database.azure.com",
-    "dialect": "mysql"
-  },
-  "production": {
-    "username": "root",
-    "password": "$Htazzxs101",
-    "database": "top_value_brands",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
   }
 }
