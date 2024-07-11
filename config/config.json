@@ -8,5 +8,9 @@
         "rejectUnauthorized": false
       }
     }
+  },
+  "development": {
+    "dialect": "mysql",
+    "use_env_variable": "DATABASE_URL_DEV"
   }
 }

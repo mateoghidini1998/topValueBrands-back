@@ -3,6 +3,7 @@ const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
 const dotenv = require('dotenv');
+const logger = require('../logger/logger');
 
 dotenv.config({ path: './.env' });
 
@@ -16,6 +17,8 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //@desc  Get all tracked products
 //@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
+  logger.info('Executing getTrackedProducts', { query: req.query });
+
   const { supplier_id } = req.query;
 
   const findAllOptions = {
@@ -46,47 +49,58 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
     findAllOptions.include[0].where = {
       supplier_id: supplier_id,
     };
+    logger.info('Filtering by supplier_id', { supplier_id });
   }
 
-  const trackedProducts = await TrackedProduct.findAll(findAllOptions);
+  try {
+    const trackedProducts = await TrackedProduct.findAll(findAllOptions);
+    logger.info('Tracked products found successfully', { count: trackedProducts.length });
 
-  const flattenedTrackedProducts = trackedProducts.map((trackedProduct) => {
-    const { product, ...trackedProductData } = trackedProduct.toJSON();
-    const { supplier, ...productData } = product;
-    return {
-      ...trackedProductData,
-      ...productData,
-      supplier_name: supplier ? supplier.supplier_name : null,
-    };
-  });
+    const flattenedTrackedProducts = trackedProducts.map((trackedProduct) => {
+      const { product, ...trackedProductData } = trackedProduct.toJSON();
+      const { supplier, ...productData } = product;
+      return {
+        ...trackedProductData,
+        ...productData,
+        supplier_name: supplier ? supplier.supplier_name : null,
+      };
+    });
 
-  res.status(200).json({
-    success: true,
-    data: flattenedTrackedProducts,
-  });
+    res.status(200).json({
+      success: true,
+      data: flattenedTrackedProducts,
+    });
+
+    logger.info('Tracked products sent successfully', { response: flattenedTrackedProducts });
+  } catch (error) {
+    logger.error('There was an error while obtaining tracked products', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'There was an error while obtaining tracked products',
+    });
+  }
 });
-
 //@route GET api/v1/pogenerator/trackedproducts
 //@desc  Track products and save them into db from keepa api data and order reports from AMZ API.
 //@access Private
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
+  logger.info('Start generateTrackedProductsData', { query: req.query });
+
   try {
     const products = await fetchProducts();
+    logger.info('Fetched products successfully', { count: products.length });
 
     const [orderData, keepaData] = await Promise.all([
       saveOrders(req, res, next, products),
       getProductsTrackedData(products),
     ]);
+    logger.info('Fetched order data and keepa data successfully', { orderDataCount: orderData.length, keepaDataCount: keepaData.length });
 
     const combinedData = keepaData.map((keepaItem) => {
-      const orderItem =
-        orderData.find((o) => o.product_id === keepaItem.product_id) || {};
+      const orderItem = orderData.find((o) => o.product_id === keepaItem.product_id) || {};
       const unitsSold = orderItem.quantity || 0;
       const productVelocity = orderItem.velocity || 0;
-
-      const lowestFbaPriceInDollars = keepaItem.lowestFbaPrice
-        ? keepaItem.lowestFbaPrice / 100
-        : null;
+      const lowestFbaPriceInDollars = keepaItem.lowestFbaPrice ? keepaItem.lowestFbaPrice / 100 : null;
 
       return {
         product_id: keepaItem.product_id,
@@ -99,7 +113,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       };
     });
 
-    // Perform the bulk create with upsert
     await TrackedProduct.bulkCreate(combinedData, {
       updateOnDuplicate: [
         'current_rank',
@@ -110,28 +123,27 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         'lowest_fba_price',
       ],
     });
+    logger.info('Combined data bulk created successfully', { combinedDataCount: combinedData.length });
 
     const feeEstimates = await getEstimateFees(req, res, next, products);
+    logger.info('Fetched fee estimates successfully', { feeEstimatesCount: feeEstimates.length });
 
-    // Get product costs for all products
     const productCosts = await Product.findAll({
       where: {
         id: products.map((product) => product.id),
       },
       attributes: ['id', 'product_cost'],
     });
+    logger.info('Fetched product costs successfully', { productCostsCount: productCosts.length });
 
     const costMap = productCosts.reduce((acc, product) => {
       acc[product.id] = product.product_cost;
       return acc;
     }, {});
 
-    // Batch update fees and calculate profit
     const updatePromises = feeEstimates.map((feeEstimate) => {
       const productCost = costMap[feeEstimate.product_id] || 0;
-      const lowestFbaPrice =
-        combinedData.find((item) => item.product_id === feeEstimate.product_id)
-          ?.lowest_fba_price || 0;
+      const lowestFbaPrice = combinedData.find((item) => item.product_id === feeEstimate.product_id)?.lowest_fba_price || 0;
       const fees = feeEstimate.fees || 0;
       const profit = lowestFbaPrice - fees - productCost;
 
@@ -145,30 +157,33 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
 
     await Promise.all(updatePromises);
+    logger.info('Batch update of fees and profit completed successfully');
 
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Data combined and saved successfully.',
       data: combinedData,
     });
+    logger.info('Response sent successfully', { response: combinedData });
   } catch (error) {
-    console.error('Error combining and saving data:', error);
-    return res
-      .status(500)
-      .json({ success: false, message: 'Error combining and saving data.' });
+    logger.error('Error combining and saving data', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error combining and saving data.',
+    });
   }
 });
-
 //Function to group asins into groups of 20
 const getProductsTrackedData = async (products) => {
   const asinGroups = [];
 
-  for (let i = 0; i < products.length; i += 60) {
+  for (let i = 0; i < products.length; i += 20) {
     const group = products
-      .slice(i, i + 60)
+      .slice(i, i + 20)
       .map((product) => product.ASIN)
       .join(',');
     asinGroups.push(group);
   }
+  console.log(asinGroups)
 
   const keepaResponses = [];
   for (const asinGroup of asinGroups) {
