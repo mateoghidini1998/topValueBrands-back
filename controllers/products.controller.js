@@ -6,10 +6,20 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
+const redisClient = require('../redis/redis');
 
 dotenv.config({
   path: './.env',
 });
+
+// Función para invalidar el caché de productos
+const invalidateProductCache = async () => {
+  const keys = await redisClient.keys('products_*');
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+};
+
 
 //@route    POST api/products/add
 //@desc     Create a product
@@ -75,6 +85,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
 
   try {
     const newProduct = await Product.create(req.body);
+
+    await invalidateProductCache();
     res.status(201).json(newProduct);
   } catch (error) {
     res.status(400).json({ msg: error.message });
@@ -140,6 +152,9 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 
     // save the product
     await product.save();
+
+    await invalidateProductCache();
+
     res.status(200).json(product);
   } catch (error) {
     console.error({ msg: error.message });
@@ -168,6 +183,10 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
   try {
     product.is_active = !product.is_active;
     await product.save();
+
+
+    await invalidateProductCache();
+
     res.status(200).json(product);
   } catch (error) {
     console.error({ msg: error.message });
@@ -365,6 +384,7 @@ const addImageToProducts = async (products, accessToken) => {
   };
 
   await fetchProductImage();
+  await invalidateProductCache();
 
   return {
     addedSuccessfully: products.length - errorCount,
@@ -387,7 +407,7 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   // const accessToken = req.headers['x-amz-access-token'];
 
   const result = await addImageToProducts(newProducts, accessToken);
-
+  await invalidateProductCache();
   return result;
 });
 

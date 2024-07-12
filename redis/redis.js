@@ -7,13 +7,15 @@ dotenv.config({ path: './.env' });
 const cacheHostName = process.env.AZURE_CACHE_FOR_REDIS_HOST_NAME;
 const cachePassword = process.env.AZURE_CACHE_FOR_REDIS_ACCESS_KEY;
 
-if (!cacheHostName) throw Error("AZURE_CACHE_FOR_REDIS_HOST_NAME is empty")
-if (!cachePassword) throw Error("AZURE_CACHE_FOR_REDIS_ACCESS_KEY is empty")
+if (!cacheHostName) throw new Error("AZURE_CACHE_FOR_REDIS_HOST_NAME is empty");
+if (!cachePassword) throw new Error("AZURE_CACHE_FOR_REDIS_ACCESS_KEY is empty");
 
 const redisClient = redis.createClient({
   // redis for TLS
-  url: `redis://${cacheHostName}:6380`,
-  password: cachePassword
+  url: `redis://default:${cachePassword}@${cacheHostName}:6380`,
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 redisClient.on('connect', () => {
@@ -24,15 +26,20 @@ redisClient.on('error', (err) => {
   console.error('Redis error:', err);
 });
 
-// Example: Set and get a value
-redisClient.set('key', 'value', (err, reply) => {
-  if (err) throw err;
-  console.log(reply); // Should print 'OK'
-});
+const connectRedis = async () => {
+  try {
+    await redisClient.connect();
+    console.log('Redis client connected');
 
-redisClient.get('key', (err, reply) => {
-  if (err) throw err;
-  console.log(reply); // Should print 'value'
-});
+    // Example: Set and get a value
+    await redisClient.set('key', 'value');
+    const value = await redisClient.get('key');
+    console.log(value); // Should print 'value'
+  } catch (err) {
+    console.error('Failed to connect to Redis:', err);
+  }
+};
+
+connectRedis();
 
 module.exports = redisClient;
