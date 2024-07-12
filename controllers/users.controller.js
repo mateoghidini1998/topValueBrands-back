@@ -1,12 +1,28 @@
 const { User } = require('../models');
 const asyncHandler = require('../middlewares/async');
+const { connect } = require('../redis/redis')
 
 
 //@route    GET api/users/
 //@desc     Get all users
 //@access   Private
 exports.getUsers = asyncHandler(async (req, res, next) => {
+   const redis = await connect();
+
+   const key = 'users';
+   const redisUsers = await redis.get(key);
+
+   if( redisUsers ) {
+      console.log('Users From Redis')
+      return res.status(200).json({
+         success: true,
+         data: JSON.parse(redisUsers)
+      })
+   }
+      
+   console.log('Users From DB')
    const users = await User.findAll();
+   await redis.set(key, JSON.stringify(users));
    return res.status(200).json({
       success: true,
       data: users

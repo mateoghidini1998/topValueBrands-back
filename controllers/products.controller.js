@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
-const redisClient = require('../redis/redis');
+const { connect } = require('../redis/redis');
 
 dotenv.config({
   path: './.env',
@@ -206,6 +206,19 @@ exports.getProducts = asyncHandler(async (req, res) => {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
 
+  const redis = await connect();
+
+  const key = 'products'
+  const redisProducts = await redis.get(key)
+
+  if(redisProducts) {
+    console.log('Products from Redis')
+    return res.status(200).json({
+      success: true,
+      data: JSON.parse(redisProducts)
+    })
+  }
+
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
@@ -261,6 +274,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
     keyword !== '' ? products.length : await Product.count();
   const totalPages = Math.ceil(totalProducts / limit);
 
+  console.log('Users From DB')
+  await redis.set(key, JSON.stringify(products));
   return res.status(200).json({
     success: true,
     total: totalProducts,
