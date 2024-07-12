@@ -2,7 +2,6 @@ const { User } = require('../models');
 const asyncHandler = require('../middlewares/async');
 const { connect } = require('../redis/redis')
 
-
 //@route    GET api/users/
 //@desc     Get all users
 //@access   Private
