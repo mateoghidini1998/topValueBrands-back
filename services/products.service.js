@@ -1,6 +1,7 @@
 const { Product } = require('../models');
 const { Op } = require('sequelize');
 const redisClient = require('../redis/redis');
+const logger = require('../logger/logger')
 
 exports.productService = {
   findAll: ({ page, limit, orderBy, sortBy, keyword }) => new Promise(async (resolve, reject) => {
@@ -42,11 +43,13 @@ exports.productService = {
         }
 
         if (cachedData) {
-          console.log('Cache hit');
+          console.log('Data from CACHE');
+          logger.info('DATA FROM CACHE')
           return resolve(JSON.parse(cachedData));
         }
 
-        console.log('Cache miss');
+        console.log('Data from DB');
+        logger.info('DATA FROM DB')
 
         // Realiza la consulta a la base de datos
         const data = await Product.findAndCountAll({
@@ -61,7 +64,7 @@ exports.productService = {
         }
 
         // Guarda los resultados en el caché con una expiración de 1 hora
-        redisClient.setex(cacheKey, 3600, JSON.stringify(res));
+        redisClient.setEx(cacheKey, 3600, JSON.stringify(res));
 
         resolve(res);
       });
