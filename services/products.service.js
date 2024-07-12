@@ -61,7 +61,7 @@ exports.productService = {
         }
 
         // Guarda los resultados en el caché con una expiración de 1 hora
-        redisClient.setex(cacheKey, 3600, JSON.stringify(res));
+        redisClient.setEx(cacheKey, 3600, JSON.stringify(res));
 
         resolve(res);
       });
