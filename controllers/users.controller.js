@@ -6,22 +6,22 @@ const { connect } = require('../redis/redis')
 //@desc     Get all users
 //@access   Private
 exports.getUsers = asyncHandler(async (req, res, next) => {
-   const redis = await connect();
+   // const redis = await connect();
 
-   const key = 'users';
-   const redisUsers = await redis.get(key);
+   // const key = 'users';
+   // const redisUsers = await redis.get(key);
 
-   if( redisUsers ) {
-      console.log('Users From Redis')
-      return res.status(200).json({
-         success: true,
-         data: JSON.parse(redisUsers)
-      })
-   }
-      
-   console.log('Users From DB')
+   // if (redisUsers) {
+   //    console.log('Users From Redis')
+   //    return res.status(200).json({
+   //       success: true,
+   //       data: JSON.parse(redisUsers)
+   //    })
+   // }
+
+   // console.log('Users From DB')
+   // await redis.set(key, JSON.stringify(users));
    const users = await User.findAll();
-   await redis.set(key, JSON.stringify(users));
    return res.status(200).json({
       success: true,
       data: users
@@ -101,10 +101,10 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
    //  console.log(loggedInUser)
    const user = await User.findByPk(req.params.id);
    if (loggedInUser.role !== 'admin' && loggedInUser.id !== user.id) {
-      return res.status(401).json({success:false, errors: [{ msg: 'User has no clearance to modify this user' }] });
+      return res.status(401).json({ success: false, errors: [{ msg: 'User has no clearance to modify this user' }] });
    }
    if (!user) {
-      return res.status(404).json({success:false, errors: [{ msg: 'User not found' }] });
+      return res.status(404).json({ success: false, errors: [{ msg: 'User not found' }] });
    }
 
    // Check if user exists by email
@@ -112,12 +112,12 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
    console.log(req.body);
 
    if (password !== confirmPassword) {
-      return res.status(400).json({success:false, errors: [{ msg: 'Passwords do not match' }] });
+      return res.status(400).json({ success: false, errors: [{ msg: 'Passwords do not match' }] });
    }
 
    const userExists = await User.findOne({ where: { email } });
    if (userExists && userExists.id !== user.id) {
-      return res.status(400).json({success:false, errors: [{ msg: 'User already exists' }] });
+      return res.status(400).json({ success: false, errors: [{ msg: 'User already exists' }] });
    }
 
    await user.update({ firstName, lastName, email, role, password })
