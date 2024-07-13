@@ -11,16 +11,14 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-/* // Enable CORS
+// Enable CORS
 const corsOptions = {
   origin: 'https://top-value-brands-front.vercel.app/',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,
 };
-app.use(cors(corsOptions)); */
-
-app.use(cors())
+app.use(cors(corsOptions));
 
 // Cookie Parser
 app.use(cookieParser());
