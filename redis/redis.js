@@ -24,7 +24,7 @@ exports.connect = async () => {
   if (process.env.NODE_ENV === 'production') {
     client = redis.createClient({
       // Redis for TLS in production
-      url: `redis://default:${cachePassword}@${cacheHostName}:6380`,
+      url: `redis://default:${cachePassword}@${cacheHostName}:6379`,
       tls: {
         rejectUnauthorized: false
       }
