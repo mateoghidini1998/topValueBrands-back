@@ -20,7 +20,6 @@ exports.fetchNewToken = async () => {
 
     accessToken = response.data.access_token;
     tokenExpiration = new Date(Date.now() + response.data.expires_in * 1000);
-    console.log(accessToken)
     return accessToken;
 }
 
