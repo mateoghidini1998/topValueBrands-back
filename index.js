@@ -26,7 +26,8 @@ const purchaseorders = require('./routes/purchaseorders.routes');
 const { swaggerDoc } = require('./routes/swagger.routes');
 const cron = require('node-cron');
 const { addAccessTokenHeader } = require('./middlewares/lwa_token');
-const { syncDBWithAmazon } = require('./controllers/reports.controller')
+const { syncDBWithAmazon } = require('./controllers/reports.controller');
+const logger = require('./logger/logger');
 
 //Mount routers
 app.use('/api/v1/auth', auth);
@@ -48,26 +49,27 @@ app.listen(5000, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('28 11 * * *', async () => {
-    console.log('running a task every day at 11:26am');
-      try {
-        console.log('Estoy aca')
-        const req = { headers: {} }; // Mock request object with headers
-        const res = {
-          json: (data) => console.log('Sync result:', data),
-        }; // Mock response object
-        const next = (error) => {
-          if (error) {
-            console.error('Error during sync:', error);
-          }
-        }; // Mock next function for error handling
-        console.log('Por ejecutar token')
-        await addAccessTokenHeader(req, res, async () => {
-          console.log('Por generar report')
-          await syncDBWithAmazon(req, res, next);
-        });
-      } catch (error) {
-        console.error('Error during scheduled sync:', error);
-      }
-    });
+  cron.schedule('17 17 * * *', async () => {
+    try {
+      console.log('Sync scheduled for 5:17pm every day');
+      logger.info('Sync scheduled for 5:17pm every day');
+      console.log('Estoy aca')
+      const req = { headers: {} }; // Mock request object with headers
+      const res = {
+        json: (data) => console.log('Sync result:', data),
+      }; // Mock response object
+      const next = (error) => {
+        if (error) {
+          console.error('Error during sync:', error);
+        }
+      }; // Mock next function for error handling
+      console.log('Por ejecutar token')
+      await addAccessTokenHeader(req, res, async () => {
+        console.log('Por generar report')
+        await syncDBWithAmazon(req, res, next);
+      });
+    } catch (error) {
+      console.error('Error during scheduled sync:', error);
+    }
+  });
 });
