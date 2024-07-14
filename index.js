@@ -48,7 +48,7 @@ app.listen(5000, () => {
   swaggerDoc(app, PORT);
 
   cron.schedule('* * * 5 *', async () => {
-    console.log('running a task every two minutes');
+    console.log('running a task every day at 5am');
     // try {
     //   const accessToken = fetchNewToken();
     //   // Call createReport and get the reportId
