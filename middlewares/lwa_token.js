@@ -10,7 +10,7 @@ dotenv.config({
 let accessToken = null;
 let tokenExpiration = new Date(0);
 
-exports.fetchNewToken = async () => {
+async function fetchNewToken() {
     const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
         'grant_type': 'refresh_token',
         'refresh_token': process.env.REFRESH_TOKEN,
