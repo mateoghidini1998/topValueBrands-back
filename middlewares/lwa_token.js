@@ -10,16 +10,17 @@ dotenv.config({
 let accessToken = null;
 let tokenExpiration = new Date(0);
 
-async function fetchNewToken() {
+exports.fetchNewToken = async () => {
     const response = await axios.post(`${process.env.AMZ_ENDPOINT}`, {
-       'grant_type': 'refresh_token',
-       'refresh_token': process.env.REFRESH_TOKEN,
-       'client_id': process.env.CLIENT_ID,
-       'client_secret': process.env.CLIENT_SECRET
+        'grant_type': 'refresh_token',
+        'refresh_token': process.env.REFRESH_TOKEN,
+        'client_id': process.env.CLIENT_ID,
+        'client_secret': process.env.CLIENT_SECRET
     });
-   
+
     accessToken = response.data.access_token;
     tokenExpiration = new Date(Date.now() + response.data.expires_in * 1000);
+    console.log(accessToken)
     return accessToken;
 }
 
@@ -32,7 +33,7 @@ exports.addAccessTokenHeader = asyncHandler(async (req, res, next) => {
         } else {
             console.log('Token is still valid...');
         }
-        
+
         req.headers['x-amz-access-token'] = accessToken;
         console.log(accessToken);
 

@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
     "mysql2": "^3.9.7",
+    "node-cron": "^3.0.3",
     "pdfkit": "^0.15.0",
     "redis": "^4.6.15",
     "sequelize": "^6.37.3",
