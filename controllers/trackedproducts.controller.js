@@ -7,8 +7,10 @@ const logger = require('../logger/logger');
 
 dotenv.config({ path: './.env' });
 
-const fetchProducts = async () => {
-  return await Product.findAll();
+const LIMIT_PRODUCTS = 20000;
+
+const fetchProducts = async ({ limit = LIMIT_PRODUCTS }) => {
+  return await Product.findAll({ limit });
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -84,17 +86,17 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
 //@desc  Track products and save them into db from keepa api data and order reports from AMZ API.
 //@access Private
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
-  logger.info('Start generateTrackedProductsData', { query: req.query });
+  logger.info('Start generateTrackedProductsData');
 
   try {
-    const products = await fetchProducts();
-    logger.info('Fetched products successfully', { count: products.length });
+    const products = await fetchProducts({ limit: LIMIT_PRODUCTS });
+    logger.info('Fetched products successfully');
 
     const [orderData, keepaData] = await Promise.all([
       saveOrders(req, res, next, products),
       getProductsTrackedData(products),
     ]);
-    logger.info('Fetched order data and keepa data successfully', { orderDataCount: orderData.length, keepaDataCount: keepaData.length });
+    logger.info('Fetched order data and keepa data successfully');
 
     const combinedData = keepaData.map((keepaItem) => {
       const orderItem = orderData.find((o) => o.product_id === keepaItem.product_id) || {};
@@ -123,10 +125,10 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         'lowest_fba_price',
       ],
     });
-    logger.info('Combined data bulk created successfully', { combinedDataCount: combinedData.length });
+    logger.info('Combined data bulk created successfully');
 
     const feeEstimates = await getEstimateFees(req, res, next, products);
-    logger.info('Fetched fee estimates successfully', { feeEstimatesCount: feeEstimates.length });
+    logger.info('Fetched fee estimates successfully');
 
     const productCosts = await Product.findAll({
       where: {
@@ -134,7 +136,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       },
       attributes: ['id', 'product_cost'],
     });
-    logger.info('Fetched product costs successfully', { productCostsCount: productCosts.length });
+    logger.info('Fetched product costs successfully');
 
     const costMap = productCosts.reduce((acc, product) => {
       acc[product.id] = product.product_cost;
@@ -163,7 +165,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       message: 'Data combined and saved successfully.',
       data: combinedData,
     });
-    logger.info('Response sent successfully', { response: combinedData });
+    logger.info('Response sent successfully');
   } catch (error) {
     logger.error('Error combining and saving data', { error: error.message });
     res.status(500).json({
@@ -172,13 +174,16 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
   }
 });
-//Function to group asins into groups of 20
+//Function to group asins into groups of GROUPS_ASINS
+
+const GROUPS_ASINS = 50;
+
 const getProductsTrackedData = async (products) => {
   const asinGroups = [];
 
-  for (let i = 0; i < products.length; i += 20) {
+  for (let i = 0; i < products.length; i += GROUPS_ASINS) {
     const group = products
-      .slice(i, i + 20)
+      .slice(i, i + GROUPS_ASINS)
       .map((product) => product.ASIN)
       .join(',');
     asinGroups.push(group);

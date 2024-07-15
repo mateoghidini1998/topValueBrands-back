@@ -25,7 +25,6 @@ module.exports = {
       seller_sku: {
         type: Sequelize.STRING.BINARY,
         allowNull: true,
-        unique: true,
         collate: 'utf8_bin',
       },
       FBA_available_inventory: {
