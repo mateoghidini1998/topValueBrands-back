@@ -27,11 +27,8 @@ const { swaggerDoc } = require('./routes/swagger.routes');
 const cron = require('node-cron');
 const { addAccessTokenHeader } = require('./middlewares/lwa_token');
 const { syncDBWithAmazon } = require('./controllers/reports.controller');
-<<<<<<< HEAD
 const logger = require('./logger/logger');
-=======
 const { generateTrackedProductsData } = require('./controllers/trackedproducts.controller');
->>>>>>> development
 
 //Mount routers
 app.use('/api/v1/auth', auth);
@@ -50,15 +47,15 @@ dotenv.config({
 const PORT = process.env.PORT || 5000;
 
 app.listen(5000, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
   cron.schedule('53 11 * * *', async () => {
-    console.log('running a task every day at 11:26am');
+    logger.info('running a task every day at 11:26am');
     // Mock request, response, and next for the cron job context
     const req = { headers: {} };
     const res = {
-      json: (data) => console.log('Cron job response:', data),
+      json: (data) => logger.info('Cron job response:', data),
     };
     const next = (error) => {
       if (error) {
@@ -68,10 +65,10 @@ app.listen(5000, () => {
 
     // sync database with amazon cronjob
     try {
-      console.log('1. Scheduling cron job to sync database with Amazon...');
+      logger.info('1. Scheduling cron job to sync database with Amazon...');
       await addAccessTokenHeader(req, res, async () => {
         await syncDBWithAmazon(req, res, next);
-        console.log('Cron job for syncing database with Amazon completed.');
+        logger.info('Cron job for syncing database with Amazon completed.');
       });
     } catch (error) {
       console.error('Error during scheduled sync database with Amazon:', error);
@@ -80,10 +77,10 @@ app.listen(5000, () => {
 
     // generate tracked products cronjob
     try {
-      console.log('2. Scheduling cron job to generate tracked products...');
+      logger.info('2. Scheduling cron job to generate tracked products...');
       await addAccessTokenHeader(req, res, async () => {
         await generateTrackedProductsData(req, res, next);
-        console.log('Cron job for generating tracked products completed.');
+        logger.info('Cron job for generating tracked products completed.');
       });
     } catch (error) {
       console.error('Error during scheduled generate tracked products:', error);
