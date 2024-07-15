@@ -6,21 +6,21 @@ const { connect } = require('../redis/redis')
 //@desc     Get all users
 //@access   Private
 exports.getUsers = asyncHandler(async (req, res, next) => {
-   // const redis = await connect();
+   const redis = await connect();
 
-   // const key = 'users';
-   // const redisUsers = await redis.get(key);
+   const key = 'users';
+   const redisUsers = await redis.get(key);
 
-   // if (redisUsers) {
-   //    console.log('Users From Redis')
-   //    return res.status(200).json({
-   //       success: true,
-   //       data: JSON.parse(redisUsers)
-   //    })
-   // }
+   if (redisUsers) {
+      console.log('Users From Redis')
+      return res.status(200).json({
+         success: true,
+         data: JSON.parse(redisUsers)
+      })
+   }
 
-   // console.log('Users From DB')
-   // await redis.set(key, JSON.stringify(users));
+   console.log('Users From DB')
+   await redis.set(key, JSON.stringify(users));
    const users = await User.findAll();
    return res.status(200).json({
       success: true,
