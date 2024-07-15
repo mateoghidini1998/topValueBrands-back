@@ -8,8 +8,18 @@ const app = express();
 //Body parser
 app.use(express.json());
 
+const  corsOptions = {
+
+  origin: "*",
+  
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  
+  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept"],
+  
+};
+
 //Enable CORS
-app.use(cors());
+app.use(cors(corsOptions));
 
 //Cookie Parser
 app.use(cookieParser());
