@@ -206,18 +206,18 @@ exports.getProducts = asyncHandler(async (req, res) => {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
 
-  const redis = await connect();
+  // const redis = await connect();
 
-  const key = 'products'
-  const redisProducts = await redis.get(key)
+  // const key = 'products'
+  // const redisProducts = await redis.get(key)
 
-  if (redisProducts) {
-    console.log('Products from Redis')
-    return res.status(200).json({
-    success: true,
-    data: JSON.parse(redisProducts)
-    })
-  }
+  // if (redisProducts) {
+  //   console.log('Products from Redis')
+  //   return res.status(200).json({
+  //     success: true,
+  //     data: JSON.parse(redisProducts)
+  //   })
+  // }
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
