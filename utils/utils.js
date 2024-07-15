@@ -16,7 +16,7 @@ const createReport = asyncHandler(async (req, reportType) => {
     marketplaceIds: [`${process.env.MARKETPLACE_US_ID}`],
   };
 
-  if (reportType === 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL') {
+  /* if (reportType === 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL') {
     const dataEndTime = moment().utc().endOf('day').toISOString();
     const dataStartTime = moment()
       .utc()
@@ -34,7 +34,20 @@ const createReport = asyncHandler(async (req, reportType) => {
       ...requestBody,
       custom: true,
     };
-  }
+  } */
+
+    const dataEndTime = moment().utc().endOf('day').toISOString();
+    const dataStartTime = moment()
+      .utc()
+      .subtract(30, 'days')
+      .startOf('day')
+      .toISOString();
+    requestBody = {
+      ...requestBody,
+      dataStartTime,
+      dataEndTime,
+      custom: true,
+    };
 
   const response = await axios.post(url, requestBody, {
     headers: {
@@ -48,6 +61,7 @@ const createReport = asyncHandler(async (req, reportType) => {
 
 const pollReportStatus = async (reportId, accessToken) => {
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
+  console.log('URL: ', url)
   let reportStatus = '';
   let reportDocument = '';
   while (reportStatus !== 'DONE') {
