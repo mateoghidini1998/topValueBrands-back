@@ -26,7 +26,8 @@ const purchaseorders = require('./routes/purchaseorders.routes');
 const { swaggerDoc } = require('./routes/swagger.routes');
 const cron = require('node-cron');
 const { addAccessTokenHeader } = require('./middlewares/lwa_token');
-const { syncDBWithAmazon } = require('./controllers/reports.controller')
+const { syncDBWithAmazon } = require('./controllers/reports.controller');
+const { generateTrackedProductsData } = require('./controllers/trackedproducts.controller');
 
 //Mount routers
 app.use('/api/v1/auth', auth);
@@ -48,26 +49,40 @@ app.listen(5000, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('28 11 * * *', async () => {
+  cron.schedule('53 11 * * *', async () => {
     console.log('running a task every day at 11:26am');
-      try {
-        console.log('Estoy aca')
-        const req = { headers: {} }; // Mock request object with headers
-        const res = {
-          json: (data) => console.log('Sync result:', data),
-        }; // Mock response object
-        const next = (error) => {
-          if (error) {
-            console.error('Error during sync:', error);
-          }
-        }; // Mock next function for error handling
-        console.log('Por ejecutar token')
-        await addAccessTokenHeader(req, res, async () => {
-          console.log('Por generar report')
-          await syncDBWithAmazon(req, res, next);
-        });
-      } catch (error) {
-        console.error('Error during scheduled sync:', error);
+    // Mock request, response, and next for the cron job context
+    const req = { headers: {} };
+    const res = {
+      json: (data) => console.log('Cron job response:', data),
+    };
+    const next = (error) => {
+      if (error) {
+        console.error('Cron job error:', error);
       }
-    });
+    };
+
+    // sync database with amazon cronjob
+    try {
+      console.log('1. Scheduling cron job to sync database with Amazon...');
+      await addAccessTokenHeader(req, res, async () => {
+        await syncDBWithAmazon(req, res, next);
+        console.log('Cron job for syncing database with Amazon completed.');
+      });
+    } catch (error) {
+      console.error('Error during scheduled sync database with Amazon:', error);
+      return; // Optional: stop the next job if the first one fails
+    }
+
+    // generate tracked products cronjob
+    try {
+      console.log('2. Scheduling cron job to generate tracked products...');
+      await addAccessTokenHeader(req, res, async () => {
+        await generateTrackedProductsData(req, res, next);
+        console.log('Cron job for generating tracked products completed.');
+      });
+    } catch (error) {
+      console.error('Error during scheduled generate tracked products:', error);
+    }
+  });
 });

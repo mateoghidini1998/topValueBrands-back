@@ -1,6 +1,6 @@
 sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfillable-quantity	afn-listing-exists	afn-warehouse-quantity	afn-fulfillable-quantity	afn-unsellable-quantity	afn-reserved-quantity	afn-total-quantity	per-unit-volume	afn-inbound-working-quantity	afn-inbound-shipped-quantity	afn-inbound-receiving-quantity	afn-researching-quantity	afn-reserved-future-supply	afn-future-supply-buyable
 00-WTH3-LMPN	X0041WP4LT	B000HHM9WI	ANIMED Pure MSM 5lb	New	38.99	No		Yes	1	0	1	0	181	0.21	0	180	0	0	0	0
-00-WUQ0-DFW7	X003ZEG3HN	B003E7UNE4	Ecoco Eco Style Gel Olive Oil - 100% Pure Olive Oil - Adds Shine And Tames Split Ends - Weightless Style - Nourishes And Repairs - Adds Moisture To The Scalp - Superior Hold - Healthy Shine - 32 Oz	New	9.04	No		Yes	56	10	0	46	56	0.06	0	0	0	0	0	0
+00-WUQ0-DFW7	X003ZEG3HN	B003E7UNE4	Ecoco Eco Style Gel Olive Oil - 100% Pure Olive Oil - Adds Shine And Tames Split Ends - Weightless Style - Nourishes And Repairs - Adds Moisture To The Scalp - Superior Hold - Healthy Shine - 32 Oz	New	8.99	No		Yes	56	16	0	40	56	0.06	0	0	0	0	0	0
 01-CVKH-NOE4	X0045CHAUD	B005GX6NKM	Simply Organic Organic Chili Powder ( 1X2.89 Oz)	New	11.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 03-SWOE-J07J	X003TXR7CP	B000GCL6YQ	Benadryl Children's Allergy Relief Liquid Medicine with Diphenhydramine HCl, Kids' Allergy Syrup for Allergy Symptoms Like Runny Nose, Itchy Eyes & More, Cherry Flavor, 4 fl. oz	New	14.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 04-82DN-IKBY	X004BAJ5NJ	B005D1HOFA	VP Racing Vent Cap Replacement 2 Pack	New	10.75	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
@@ -8,7 +8,7 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 07-HBTO-ZQQ4	X003U2TXBX	B019FV2RH8	Miracle-Gro Indoor Plant Food Spikes, 4 Packs of 1.1-Ounce	New	14.78	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 07-LNCO-QAY0	X0049KB2YL	B007Z8N1OM	Grandma Mae's Country Naturals Grain Inclusive Dry Dog Food 4 LB Adult Chicken & Brown Rice	New	32.99	No		Yes	0	0	0	0	0	0.27	0	0	0	0	0	0
 07-UW90-6TC3	X0046VL2ZR	B082GC6NNW	Grannicks Bitter Apple Taste Deterrent for Dogs (New Version)	New	12.50	No		Yes	0	0	0	0	206	0.01	50	100	56	0	0	147
-08-BE8Q-GF2Y	X0046RMS9Z	B0B3Q278WK	Zoo Med Crested Gecko Food - Plum - 2 oz	New	8.66	No		Yes	18	15	0	3	19	0.02	0	0	1	0	0	0
+08-BE8Q-GF2Y	X0046RMS9Z	B0B3Q278WK	Zoo Med Crested Gecko Food - Plum - 2 oz	New	8.66	No		Yes	18	14	0	4	19	0.02	0	0	1	0	0	0
 08-BNT9-KDZO	X0048UZFBD	B0049PLD26	MG LB Bloom Booster	New	12.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 08-BX82-ZX5U	X003SLAU8B	B087HH1FHT	Colgate Total Whitening Toothpaste - 4.8 ounce (3 Pack)	New	14.40	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 08-SO7Z-4YHL	X003VK3L21	B07P5G332G	Right Guard Xtreme Defense Invisible Solid Antiperspirant Deodorant, Pure Cool, 2.6 oz (Pack of 3)	New	18.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -18,11 +18,11 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 0D-ZW06-JTWG	X00485NQ0P	B000HHSAKI	Durvet WormEze Liquid Canine & Feline Antihelmintic, 8 oz	New	14.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 0E-IN6B-D737	X003YS3P4J	B00W4TWDL4	Jergens Mild Soap, Lightly Scented Gentle Cleansing Soap, For All Skin Types, 3.5 Ounce (Pack of 8)	New	19.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 0E-VMUP-RPKE	X0049K6OTJ	B00H9KHVVU	NGK Iridium IX DCPR8EIX Spark Plugs for 2006-2016 Harley Davidson V-Rod (Pair)	New	22.49	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
-0H-IUWM-KKHZ	X00449CLO7	B06XXWZGSV	Durvet Healthy Flock Poultry Probiotics	New	13.53	No		Yes	34	34	0	0	34	0.01	0	0	0	0	0	0
+0H-IUWM-KKHZ	X00449CLO7	B06XXWZGSV	Durvet Healthy Flock Poultry Probiotics	New	13.90	No		Yes	34	34	0	0	34	0.01	0	0	0	0	0	0
 0H-YSUF-OIVF	X003ZNM9LD	B07KJNGYZR	Vital Essentials Vital Cat Minnows Freeze-Dried Cat Treats - All Natural Raw Treat - Made & Sourced in USA - Grain Free - 0.5 oz Resealable Pouch - 3 Pack	New	29.46	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 0J-7PZV-ETQB	X0042T8AML	B08VJL6FTL	Redbarn Chew-A-Bulls (Size: Mini | Shape: Hydrant | 48-Count (Pack of 1))	New	20.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 0J-APVP-XN6W	X0041WTNST	B073PCZPZK	Chuckit! Max Glow Ball, Medium 2ct (2 x 1ct)	New	15.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-0J-J2PG-8AEU	X003S9UO3T	B00028ZLSG	Pet Tabs Original Formula Vitamin Supplement, 60 Count	New	20.07	No		Yes	94	24	0	70	94	0.01	0	0	0	0	0	0
+0J-J2PG-8AEU	X003S9UO3T	B00028ZLSG	Pet Tabs Original Formula Vitamin Supplement, 60 Count	New	20.53	No		Yes	94	23	0	71	94	0.01	0	0	0	0	0	0
 0K-0VV5-4VF3	X0045ARXE3	B07PB39VVL	Colgate Total Teeth Whitening Toothpaste, 3.3 oz (93g) - Pack of 3	New	13.50	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 0K-CWSG-FRFF	X003ZNR49Z	B004S9QY5O	Tea Tree Therapy Antiseptic Ointment,2oz	New	12.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 0L-96WN-GQLQ	X00486DV3B	B01EP4TPO8	Durvet Duramectin Equine Wormer Paste - 3 Tubes	New	25.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
@@ -36,7 +36,7 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 0R-WCVJ-QX2S	X00495XXNJ	B001PIHBAI	(Price/EACH)JACKS HOUSEPLANT SPECIAL 8 OZ.	New	13.72	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 0S-0EMS-SXVC	X0048ZIZGF	B007C4IK90	Tcb No Base Hair Relaxer Creme Regular, 7.5 Ounce	New	9.92	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 0T-FZ5A-ZT7H	X0041WVD7X	B0006G5F0S	Zoo Med Wipe Out 1 Disinfectant, 32 oz	New	25.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
-0U-HLFJ-6T1R	X0046VEQ0F	B07B5XPDHS	Stella & Chewy's, Grass-Fed Lamb Recipe Raw Coated Kibble Dry Dog Food, 3.5 Pound	New	28.21	No		Yes	1	0	0	1	33	0.17	0	0	32	0	0	0
+0U-HLFJ-6T1R	X0046VEQ0F	B07B5XPDHS	Stella & Chewy's, Grass-Fed Lamb Recipe Raw Coated Kibble Dry Dog Food, 3.5 Pound	New	30.99	No		Yes	1	0	0	1	33	0.17	0	0	32	0	0	0
 0U-I9MM-JTGH	X004BBVV85	B00ZM0LWGO	Baby Wipes Natural Care with Aloe Vera Huggies Wipes 56 Pc Kids	New	7.40	No		Yes	0	0	0	0	8	0.04	0	8	0	0	0	0
 0X-E4PB-WWRR	X00462OAP5	B075XTV6FQ	Camay Soap 3Ct X 125G Naturel	New	6.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 0Z-ZIWU-BXVR	X0048ZH7OL	B07868H5QN	Bathroom Bleach Foamer Original Spray, Pack of 3	New	27.99	No		Yes	0	0	0	0	0	0.3	0	0	0	0	0	0
@@ -63,7 +63,7 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 1L-WZNJ-9IXI	X0041X2QTV	B01EX695BG	(3 Pack) Nutri Source Soft/Tender Dog Treat Flavor: Salmon 6-Ounces	New	19.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 1M-RDEF-GZZ1	X004B478ON	B01FG7TTDK	Avalon Organics Anti-Dandruff Shampoo and Anti-Dandruff Conditioner Bundle With 2% Salicylic Acid, Aloe Vera, Tea Tree, Chamomille and Essential Oils, 14 fl. oz. each	New	29.75	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 1N-0U38-NG9U	X003SA2607	B0000DI82L	GE Advanced Silicone Kitchen & Bath Sealant White, 10.1 oz, 1, Cartridge	New	16.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-1O-AL5M-5VGV	X00479NNKP	B005XOPAPI	32oz Tree & Shrub Drench	New	24.86	No		Yes	242	97	0	136	430	0.07	0	180	8	9	0	0
+1O-AL5M-5VGV	X00479NNKP	B005XOPAPI	32oz Tree & Shrub Drench	New	24.77	No		Yes	239	96	0	134	427	0.07	0	180	8	9	0	0
 1P-YEBR-ATV8	X003UUUMO7	B0023UUUPA	Refresh Your Car! 09584 Auto Vent Stick, Cucumber Melon, 4 Per Pack	New	9.79	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 1Q-OSQO-0XTI	X0046WEG59	B005IPKQL0	Springer Magrath® Orphan-No-More Calf Claimer Powder | Powdered Calf & Lamb Claim Aids in Newborn Adoption | 9 oz	New	23.20	No		Yes	23	23	0	0	23	0.02	0	0	0	0	0	0
 1Q-X3V6-MC64	X00443BLDZ	B00CHMSHMW	Greenies Pill Pockets Soft Dog Treats, Peanut Butter, Tablet, 3.2 Oz. (Pack Of 6)	New	46.99	No		Yes	42	42	0	0	42	0.2	0	0	0	0	0	0
@@ -80,10 +80,10 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 1Y-RWMG-KGP2	X0044A0MY7	B0BKX71R2H	Dr. Marty Nature's Blend for Active Vitality Seniors Freeze Dried Raw Dog Food, 16 oz	New	37.90	No		Yes	0	0	0	0	105	0.19	0	105	0	0	2	103
 1Z-J1ZU-LGJQ	X0047QYJG5	B0002SQT9Q	Milton Closed Ball Air Chuck with Safety Clip-on Grip, 1/4" FNPT, Tire Pressure Gauge, Air Hose Quick Connect Adapter, S-698, SILVER	New	13.49	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 1Z-VKMC-IH1H	X0040BS5V7	B07D6TNCRC	Van Der Hagen Shave Butter- Best Shave 3 pack (6 oz/tube)	New	20.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-21-5CNU-XGLI	X00446BHEF	B002G3EJ1K	FreeStyle Freedom Lite Blood Glucose Meter	New	26.99	No		Yes	77	31	0	46	147	0.06	65	0	5	0	0	0
+21-5CNU-XGLI	X00446BHEF	B002G3EJ1K	FreeStyle Freedom Lite Blood Glucose Meter	New	26.99	No		Yes	77	32	0	45	147	0.06	65	0	5	0	0	0
 24-HGLI-K7X9	X0049R32VZ	B003RPCIYG	Plackers Back Teeth Micro Dental Flossers, Delicious Mint Flavor, Provides Easy Access for Back Teeth, Built-in Protected Pick, Easy Storage, 75 Count (Pack of 1)	New	10.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 24-W5WJ-UPUC	X004BG1MAH	B004GZ7VXO	TROJAN FIRE & ICE CONDOMS DUAL ACTION LUBRICANT 18 Pack	New	18.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
-26-5XX5-RW2X	X00457L6HB	B003NYA3SO	VAN NESS PLASTIC MOLDING Fura-Zone Ointment for Horses, 1 Pound Container	New	24.82	No		Yes	27	24	0	3	27	0.03	0	0	0	0	0	0
+26-5XX5-RW2X	X00457L6HB	B003NYA3SO	VAN NESS PLASTIC MOLDING Fura-Zone Ointment for Horses, 1 Pound Container	New	25.32	No		Yes	27	23	0	4	27	0.03	0	0	0	0	0	0
 26-IDHB-C1FH	X00486KRMT	B0CJDG6QF8	TrizCHLOR 4 Wipes for Dogs and Cats, 50 Count	New	19.98	No		Yes	0	0	0	0	45	0.07	0	0	45	0	0	0
 27-NIXL-QSGT	X0046WCGJH	B09876FTGV	Ivermectin Paste - Horse Wormer 1 Tube 6.08 Grams (3-Pack)	New	27.00	No		Yes	13	12	0	1	13	0.07	0	0	0	0	0	0
 28-VDXP-LPKP	X0040XW115	B013EXTU7S	Hikari Betta BioGold Baby Pellet 0.7oz [2-Pack]	New	15.40	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -101,7 +101,7 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 2H-5BVG-ETRP	X0047G3STJ	B09DQZ2RG9	SYLVANIA 9007 LED Powersport Headlight Bulbs for Off-Road Use or Fog Lights - 2 Pack	New	96.75	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 2I-2ZP4-B1F4	X003ZKJQM1	B01GVVJM6E	ZuPreem Pure Fun Bird Food for Large Birds, 2 lb - Variety Blend of Fruit, FruitBlend Pellets, Vegetables, Nuts for Amazons, Macaws, Cockatoos	New	21.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 2J-A9R2-L8HS	X0046ISOGZ	B015CVWCN4	Dr. Bronner’s - All-One Toothpaste (Peppermint, 5 Ounce, 3-Pack) - 70% Organic Ingredients, Natural and Effective, Fluoride-Free, SLS-Free, Helps Freshen Breath, Reduce Plaque, Whiten Teeth, Vegan	New	22.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
-2J-LOBZ-OL3A	X00479GO9R	B00A1XLSQG	Toyota Oil Filter - 90915YZZF2	New	19.99	No		Yes	117	104	0	13	123	0.01	0	0	6	0	0	0
+2J-LOBZ-OL3A	X00479GO9R	B00A1XLSQG	Toyota Oil Filter - 90915YZZF2	New	19.99	No		Yes	117	95	0	22	123	0.01	0	0	6	0	0	0
 2K-850K-LKFO	X0047D29CJ	B005I4QWQO	Eco Style Styling Gel Super Protein, Black, 16 Ounce	New	8.80	No		Yes	110	108	0	0	110	0.03	0	0	0	2	0	0
 2K-AN6R-H9NC	X00455S56D	B076MJFQV1	Checkups- Dental Dog Treats, 1Pack (48oz (24 Count Each)) Ak%Hles	New	23.50	No		Yes	97	73	0	23	111	0.2	0	0	14	1	0	0
 2L-3C60-LU6X	X0045O769L	B07MG8WCVC	Dove, Body Wash, Lotus Flower Extract & Rice Water - 16.9 Fl	New	19.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
@@ -154,19 +154,19 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 3T-Y1X1-05XA	X0045O3XR5	B07VX6H4K8	Folgers Instant Coffee Crystals, Classic Roast, 24 ounce	New	29.99	No		Yes	2	0	0	1	78	0.16	0	0	76	1	0	0
 3V-GRPG-33ME	X0046RUV99	B00FNP4JE0	Purina Fancy Feast With Ocean Fish & Salmon And Accents Of Garden Greens Gourmet Cat Food	New	10.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 3V-LAFL-TIJC	X004AAHHWL	B0995KHR1R	Van Beek-Natural Science InPrime Canine - Natural Joint Support for Dogs - Helps Maintain Normal Joint Mobility & Function - Supports Hip and Joint for Dogs - Palatable Dog Joint Care - (60 Count)	New	26.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-3W-JIX0-ED01	X0046VEPHT	B0714J9TFD	Stella & Chewy'S Raw Coated Chicken 3.5Lb Dry Dog Food	New	29.99	No		Yes	37	17	0	19	41	0.2	4	0	0	1	0	0
+3W-JIX0-ED01	X0046VEPHT	B0714J9TFD	Stella & Chewy'S Raw Coated Chicken 3.5Lb Dry Dog Food	New	29.99	No		Yes	37	18	0	18	41	0.2	4	0	0	1	0	0
 3W-X6NR-WTDE	X0046RLHER	B00BUFWCNC	Zoomed Reptitherm Undertank Heater 10-20Gal 6X8	New	18.00	No		Yes	14	4	0	10	14	0.07	0	0	0	0	0	19
 3X-CL9Y-0SN3	X0048NUM5T	B005G5ZO0U	Earthborn Holistic Harbor Harvest Grain Free Canned Cat Food, 5.5 Oz, Case Of 24	New	54.99	No		Yes	6	2	0	4	6	0.58	0	0	0	0	0	1
 3Y-M98S-UMND	X004BCLNPP	B003YTBOJU	MENNEN Menn Skn Bracr Size 5z, 5 Fl Oz	New	10.68	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 40-Z1D4-FLT3	X004BDZAKX	B00QVPFOXQ	Glass Plus Glass Cleaner, 32 fl oz Bottle, Multi-Surface Glass Cleaner (Pack of 3)	New	19.99	No		Yes	0	0	0	0	0	0.27	0	0	0	0	0	0
-41-582V-PNBS	X0046VG1Q7	B01KNFI86E	Grannick's Care Dogs Bitter Apple No Chew Spray 8oz	New	13.56	No		Yes	9	0	0	7	857	0.01	211	340	297	2	26	169
+41-582V-PNBS	X0046VG1Q7	B01KNFI86E	Grannick's Care Dogs Bitter Apple No Chew Spray 8oz	New	13.50	No		Yes	9	0	0	7	857	0.01	211	340	297	2	25	170
 41-YHS6-0SAB	X003UAHS03	B00J5HK3MY	Ajax Powder Cleanser with Bleach, 14 oz-3 pk	New	13.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 43-AF42-OBY6	X00472AFWV	B004SBMRK8	Sierra Mountain Dog Food	New	29.99	No		Yes	0	0	0	0	0	0.34	0	0	0	0	0	0
 43-UVB3-HI70	X0046U2BMB	B01NAVFJ1G	Sectpod VetOne OB Lube Sterile	New	7.99	No		Yes	50	0	0	50	50	0.01	0	0	0	0	0	0
 45-7EN8-DDW9	X00435HYHV	B096WJB8YC	Nutri Source TU80022 14 oz Soft & Tender Salmon Treats	New	15.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 48-ZQYT-HWPN	X0042TP7LD	B00XM2V38G	VetOne O3 Omega Soft Gel for Large Dogs - Essential Fatty Acid Support - Skin & Coat Supplement - 250 Capsules	New	44.99	No		Yes	1	0	0	1	49	0.04	48	0	0	0	0	0
 49-941Y-SFUM	X00453DCTP	B07YQH476F	Dechra Eicosa3FF SnipCaps (Small), for Dogs Up to 60lbs, 120 Count	New	41.30	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-4B-2XIT-NJ68	X0040XHBRT	B00WZ9E75I	ARC KwikStop Styptic Powder (14 gm)	New	12.50	No		Yes	182	180	0	1	182	0	0	0	0	1	0	0
+4B-2XIT-NJ68	X0040XHBRT	B00WZ9E75I	ARC KwikStop Styptic Powder (14 gm)	New	12.50	No		Yes	182	179	0	2	182	0	0	0	0	1	0	0
 4B-V2VA-AK74	X0040L1T6F	B00IG07888	Ricola Honey Herb Throat Drop Pack of 3	New	15.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 4D-3WX7-KVRF	X003SA2KFX	B0084NNYGM	LITTLE GIANT Steel Small Animal Feeder with Lid - Pet Lodge - Small Animal Feed Box, Hold Several Days Worth of Feed, Great for Rabbits, Ferrets and Other Small Animals (7 Inch) (Item No. AF7ML)	New	19.99	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
 4D-;AJBN-EYVC	X0041DJ4BT	B00A1MWAKK	Pet Naturals of Vermont L-Lysine 60 Fun-Shaped Chews for Cats - 3 pack	New	22.50	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -176,11 +176,11 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 4G-D2W0-MALP	X0040XVR9R	B078YG9ZFJ	BOEHRINGER INGELHEIM 2151001 Today - Tube 12 Syringe/Box	New	99.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 4G-EZY6-CQ3Y	X0048UR8SL	B005UTKT0W	Mosquito Dunks 6's - Biological Mosquito Control	New	15.99	No		Yes	31	28	0	3	31	0.03	0	0	0	0	0	0
 4G-XIL9-E1T4	X004AA6BMD	B07N1KSYD3	Dechra EpiKlean Ear Cleanser for Cats and Dogs 12 oz	New	26.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-4I-1CO7-YVEW	X003Y4KXHZ	B01LYCI7E3	2-Pack Summit Mosquito Dunks	New	22.40	No		Yes	585	364	0	220	632	0.08	0	0	47	1	0	0
+4I-1CO7-YVEW	X003Y4KXHZ	B01LYCI7E3	2-Pack Summit Mosquito Dunks	New	22.40	No		Yes	589	377	0	211	630	0.08	0	0	41	1	0	0
 4J-12PT-LPFB	X0040FGE89	B00GD45TO4	Equus Magnificus, Inc.-German Horse Muffin All Natural Horse Treats 6 Pound	New	40.99	No		Yes	0	0	0	0	0	0.37	0	0	0	0	0	0
 4K-10WZ-FIBC	X003ZS24WR	B01MXXWWRH	Calcium with Vitamins from Rep Cal	New	14.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 4M-AEJE-DFHB	X0043CVX2B	B0773MVNN3	2LB Synerg Python Dust	New	8.00	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
-4N-GAPH-VAKZ	X0043CXNP1	B07DDGR56K	Garden Tech Dust Bug Killer Multiple Insects Rtu Carbaryl 1 Lb. (Pack of 2)	New	21.95	No		Yes	1227	428	1	792	1813	0.12	501	0	85	6	0	0
+4N-GAPH-VAKZ	X0043CXNP1	B07DDGR56K	Garden Tech Dust Bug Killer Multiple Insects Rtu Carbaryl 1 Lb. (Pack of 2)	New	21.95	No		Yes	1225	439	1	779	1811	0.12	501	0	85	6	0	0
 4O-NYMQ-AU8Y	X0049VSQCL	B01LX9BJA0	(2 Pack) Hikari Sinking Cichlid Gold Pellets for Pets, Mini - 2.2 Pound Bags (4.4 Pounds Total)	New	58.97	No		Yes	0	0	0	0	0	0.34	0	0	0	0	0	0
 4P-QNUY-LSQJ	X004B0HCMZ	B01N9Y0W50	(4 Pack) Zoo Med Repti Basking Spot Lamps 100 watt for Reptiles	New	32.88	No		Yes	0	0	0	0	60	0.15	60	0	0	0	0	0
 4R-F0CV-Y9U7	X003YFSSQ7	B07CRHCQZ2	Fruitables Baked Dog Treats - Pumpkin Treats for Dogs - Healthy Low Calorie Treats - Free of Wheat, Corn and Soy - Pumpkin and Banana - 7 Ounces (2 Pack)	New	7.00	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
@@ -194,19 +194,19 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 4Z-CWCK-SCC0	X003TQUFM1	B00HSUUYG0	Nizoral A-D Shampoo, 1%, 7oz	New	15.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 4Z-TWIC-HRZZ	X003ZXKYFB	B09LJ2RBH4	Dove Men Body Wash Clean Comfort 1 Liter (33.8 Oz) - Pack of 2	New	28.99	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
 4Z-UWN0-U47W	X0045OHR5J	B0BNW5V1TV	Dr. Marty Nature's Feast Essential Wellness Poultry Dry Cat Food 12 oz	New	42.00	No		Yes	39	28	0	11	39	0.17	0	0	0	0	0	0
-52-2WIJ-9CEI	X003Z6Y4D1	B073PG25CM	Gilmour Continuous Plastic Salt Water Nozzle	New	8.99	No		Yes	116	48	0	68	116	0.05	0	0	0	0	0	0
+52-2WIJ-9CEI	X003Z6Y4D1	B073PG25CM	Gilmour Continuous Plastic Salt Water Nozzle	New	8.99	No		Yes	116	65	0	51	116	0.05	0	0	0	0	0	0
 53-XQY7-S73U	X004811K9D	B000TX96X0	Mopar Power Steering Fluid +4 MS9602-68218064AC, 32 Fl.oz, Oil	New	18.50	No		Yes	0	0	0	0	59	0.04	0	59	0	0	0	64
 54-X7PV-IJAL	X0041X7US3	B00E8GL2UY	ANIMED VIA-CALM 5 lb PAIL 90452 PAIL 90452…	New	49.99	No		Yes	0	0	0	0	0	0.2	0	0	0	0	0	0
 54-YA4U-SPB2	X0048I8G3T	B07NN85HGV	Northwest Naturals Raw Rewards Freeze-Dried Chicken Breast Treats for Dogs and Cats - Bite-Sized Pieces - Healthy, 1 Ingredient, Human Grade Pet Food, All Natural - 10 Oz (Packaging May Vary)	New	36.99	No		Yes	0	0	0	0	0	0.29	0	0	0	0	0	0
 55-WKSQ-6FB6	X0041XAZFD	B00U4F1FO6	Marshall Bandits Ferret Treat, 3-Ounce, Chicken (Pack of 4)	New	18.64	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-5B-JMVX-BVJS	X0041E0RRN	B07C1ML943	OptixCare Pet Eye Lube Plus + Hyaluron 20g for Dog Cat Horses	New	14.99	No		Yes	11	0	0	9	11	0	0	0	0	2	0	0
+5B-JMVX-BVJS	X0041E0RRN	B07C1ML943	OptixCare Pet Eye Lube Plus + Hyaluron 20g for Dog Cat Horses	New	16.16	No		Yes	11	0	0	9	11	0	0	0	0	2	0	0
 5C-PFDN-HV41	X0042T89AJ	B077S5VLZX	AtopiCream HC Leave-in 1% Hydrocortisone Conditioner Moisturizer for Dogs with Dry, Itchy Skin and Allergies, Pet Itch Relief, 8 oz	New	27.25	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 5C-VXKL-H6DN	X0040BE8OP	B01DMY6SPG	Redbarn Filled Dog Bones | Natural Long-Lasting Dental Treats; Suitable for Aggressive Chewers | Large (6") - 5 Bones (Peanut Butter)	New	38.50	No		Yes	36	26	0	10	56	0.31	20	0	0	0	0	0
 5E-M7YJ-SFO8	X004A0GFA1	B07HGT5M5S	Optixcare Eye Lube + Hyaluron (20 g)	New	16.99	No		Yes	47	47	0	0	47	0	0	0	0	0	0	0
 5E-VMM2-E1Z3	X0041X2I4T	B092SYVHRQ	VL Goldenfeast Madagascar Blend, 3 lb Bag	New	24.99	No		Yes	114	62	0	51	114	0.2	0	0	0	1	0	0
 5F-TDTD-ZU5M	X0045E7SSZ	B001RYOOUK	L'Oréal Paris Kids Extra Gentle 2in1 Shampoo - Very Berry Strawberry (250ml)	New	13.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 5F-VPKG-VEA4	X0043RDDNX	B07G3M19BC	Open Farm, Rustic Stew Wild-Caught Salmon Recipe Wet Dog Food, 12.5 Ounce, 12 Pack	New	50.99	No		Yes	0	0	0	0	53	0.24	0	0	53	0	0	0
-5G-9QOX-YMLW	X0044F0ZKD	B09RJKRMZ4	Vet One NDC 13985-447-16	New	32.06	No		Yes	46	30	0	16	46	0.11	0	0	0	0	0	0
+5G-9QOX-YMLW	X0044F0ZKD	B09RJKRMZ4	Vet One NDC 13985-447-16	New	31.50	No		Yes	45	30	0	15	45	0.11	0	0	0	0	0	0
 5H-P5DB-Q7DZ	X00485V8U5	B004X77L2Q	Kaytee Wild Bird Food Mealworms For Bluebirds, Wrens, Robins, Chickadees, Woodpeckers, Cardinals & Chickens, 3.5 Ounce	New	15.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 5H-TPVS-LRTO	X003S9GVT5	B0799S67K7	Wormx Plus DeWormer, Large Dog, 6-Ct.	New	35.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 5I-0B5J-URAT	X00493V80V	B0BWBG8XK8	Vital Essentials Freeze Dried Raw Whole Animal Dog Treats, Rabbit Bites, 2 oz	New	8.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -233,14 +233,14 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 5W-7ODB-VOMP	X004BDYSHT	B0C1CQ7G7D	Crest 3D White Toothpaste, Deep Clean, Enamel Safe Whitening 3.8 oz (107g) - Pack of 2	New	18.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 5W-HHYW-M4JE	X0048NW4YL	B00026Z3ZE	API pH DOWN Freshwater Aquarium Water pH Reducing Solution 1.25-Ounce Bottle	New	8.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 5X-0AIM-XS68	X004AA9XAF	B07D1DMZJ9	MiconaHex +Triz Mousse 7.1 ounces (200ml), Formulated for Dogs, Cats and Horses, Antimicrobial, Antifungal, Moisturizing, By Dechra Veterinary Products	New	38.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
-5X-OJUS-19DT	X003YYXUDT	B07XNZ3DXQ	Red Sea Fish Pharm ARE22231 Aiptasia-X Eliminator Kit for Aquarium, 2oz/60ml	New	19.63	No		Yes	1	1	0	0	1	0.01	0	0	0	0	0	0
+5X-OJUS-19DT	X003YYXUDT	B07XNZ3DXQ	Red Sea Fish Pharm ARE22231 Aiptasia-X Eliminator Kit for Aquarium, 2oz/60ml	New	19.51	No		Yes	1	1	0	0	1	0.01	0	0	0	0	0	0
 5Y-RBX7-SQ5K	X0040BE575	B07WSGCFKD	Redbarn All-Natural Air Dried Beef Training Treats for Puppies & Dogs – Grain-Free Single Protein Rewards Made in USA for Small, Medium, & Large Breeds - 8 oz Resealable Bag	New	9.99	No		Yes	14	14	0	0	14	0.05	0	0	0	0	0	0
 5Z-BQ6F-FU74	X0040BE5SJ	B00008DFOG	Redbarn All-Natural Premium Rolled Dog Food, Beef Recipe - Soft Semi-Moist Wet Formula for High Protein Diet, Training Rewards, & Treat Pill Concealer - 4 lb. (1 Count)	New	19.99	No		Yes	148	146	0	2	148	0.07	0	0	0	0	0	0
 60-1XM4-W3R6	X0042CDL09	B00547SMH2	Fruitables Pumpkin & Blueberry Crunchy Dog Treats, 7oz Pouch (Pack of 6)	New	21.99	No		Yes	0	0	0	0	0	0.33	0	0	0	0	0	0
 62-PTPP-PI5O	X0045CE9CP	B0BWWZRDX9	Dr. Marty Nature's Blend Sensitivity Select Freeze-Dried Raw Dry Dog Food 16 oz	New	46.98	No		Yes	0	0	0	0	0	0.25	0	0	0	0	0	0
 64-FLIO-ZP1K	X00462GSD7	B01BSMMJ2A	Liqui Moly Long-Life Grease + MoS2 | 100 g | Lithium Fat | SKU: 2003	New	11.45	No		Yes	55	55	0	0	55	0.01	0	0	0	0	0	0
 64-I42H-SAGU	X003RRHFIT	B0718WB2TT	Lambert Kay Fresh 'N Clean Scented Shampoo Professional Dog and Cat Grooming 18 oz Ready Use	New	16.99	No		Yes	57	23	0	30	57	0.07	0	0	0	4	0	0
-66-NMUW-LHO0	X0041WTT3X	B0031TP6GK	AniMed Shed-Med Premium Dog Supplement - Natural Ingredients for Reduced Shedding and Improved Skin and Coat Health, Skin and Coat Supplement for Dogs 32 oz	New	25.74	No		Yes	6	2	0	4	37	0.06	0	31	0	0	0	0
+66-NMUW-LHO0	X0041WTT3X	B0031TP6GK	AniMed Shed-Med Premium Dog Supplement - Natural Ingredients for Reduced Shedding and Improved Skin and Coat Health, Skin and Coat Supplement for Dogs 32 oz	New	25.99	No		Yes	6	3	0	3	37	0.06	0	31	0	0	0	0
 67-71GN-ZL5I	X0045O4TI7	B015HU2HF8	(2 Pack) Zoo Med Reptisun 10.0 Uvb Mini Compact Fluorescent	Unknown					5	2	0	1	188	0.06	150	0	33	2	0	147
 67-WZKB-K0AG	X004BAHUB3	B005D1HOFA	VP Racing Vent Cap Replacement 2 Pack	New	10.75	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 6B-VW1L-11KQ	X0047IPEJT	B07P1DQVJ6	PureSpa SpaPure pH Up (1 lb), 2 pack	New	18.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
@@ -260,17 +260,17 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 6M-ZGFE-KKNT	X0043DXGX9	B0BB4PJF5K	Dr. Marty Nature's Blend Freeze-Dried Raw Dog Food 48 oz (3 Bags x 16 oz)	New	108.99	No		Yes	14	0	0	13	102	0.31	0	88	0	1	0	0
 6O-JW5J-FM8V	X00460W4N7	B0017RJEQQ	Loving Pets, Corp. Rawhide Compressed Bone 8.5in	New	8.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 6O-S1G6-TRAZ	X0049KB34F	B00494LRIW	Grandma Mae's Country Naturals Cat & Kitten Food 3 lbs	New	24.99	No		Yes	0	0	0	0	0	0.14	0	0	0	0	0	0
-6P-BVAY-FCGU	X0048UZDR9	B008SV2D9O	Organic Laboratories 100-021 Lab QT Organocide 3-in-1 Garden Spray For Fish	New	27.48	No		Yes	121	0	1	115	241	0.06	120	0	0	5	0	0
+6P-BVAY-FCGU	X0048UZDR9	B008SV2D9O	Organic Laboratories 100-021 Lab QT Organocide 3-in-1 Garden Spray For Fish	New	27.52	No		Yes	118	0	0	113	238	0.06	120	0	0	5	0	0
 6P-PM9H-M8UK	X0040BP0P1	B00ARHXL20	Avon Imari Roll-on Anti-perspirant Deodorant Bonus Size 2.6 oz (12-Pack)	New	25.99	No		Yes	0	0	0	0	0	0.15	0	0	0	0	0	0
 6R-RNUD-856E	X0043WSSHJ	B0992WP2PW	Skout's Honor Probiotic Pet Shampoo & Conditioner with Avocado Oil & Omega-3s, 97% Natural, Paraben & Sulfate-Free, Cruelty-Free, 16oz, Happy Puppy	New	23.99	No		Yes	78	9	69	0	78	0.03	0	0	0	0	0	120
 6S-C08H-ME8Z	X00462OHS5	B001NFC1BM	Liqui Moly 20010 85W-90 GL-5 High Pressure Gear Oil - 1 L	New	18.99	No		Yes	34	33	0	0	37	0.07	0	0	3	1	0	0
 6S-ZLQQ-6KVJ	X00444MG4H	B01LFCEIJK	Open Farm Dehydrated Cod Skin Grain-Free Dog Treats, One-Ingredient Gently Cooked Pacific Fish Recipe with No Artificial Flavors or Preservatives, 2.25 oz	New	16.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 6U-TBHI-SR9F	X0044LD3QZ	B0002ASS0W	Pet-Ag Bene-Bac Plus Pet Gel - 15 g Syringe - FOS & Probiotics for Dogs, Cats, Exotic & Wildlife Mammals	New	12.32	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 6V-KAUF-UPTP	X00486I0KP	B07C3MX23K	DuraMectin Ivermectin Paste 1.87% Horse Wormer 1 Tube (for Horses only)	New	12.00	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-6X-MCAP-3ITO	X00457AZP5	B07D3QQJK5	All Purpose Animal Nu-Stock Ointment Stops Itching Immediately, 12 Oz. tube	New	24.99	No		Yes	308	143	0	165	308	0.03	0	0	0	0	0	0
+6X-MCAP-3ITO	X00457AZP5	B07D3QQJK5	All Purpose Animal Nu-Stock Ointment Stops Itching Immediately, 12 Oz. tube	New	24.99	No		Yes	308	141	0	167	308	0.03	0	0	0	0	0	0
 6Y-F15F-QNG3	X003Y4Q8ID	B07G9M6QTP	Mosquito Summit Dunks for Insects (6 Dunks) (1, 30 Ounce)	New	18.90	No		Yes	368	144	0	224	403	0.12	0	0	35	0	0	0
 6Y-U6Z5-OU2V	X0049R35EJ	B07HNXTF21	Resolve Ultra Pet Steam Carpet Cleaner Solution Shampoo, 3X Concentrate, Safe for Bissell, Hoover & Rug Doctor, Carpet Cleaner, Pet Stain and Odor Remover, Carpet Cleaner Solution, 48 oz	New	22.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
-6Z-EKJN-PQ17	X0049DOB5F	B071J1JJ9F	Stella & Chewy'S Raw Coated Small Breed Chicken Recipe Dog Food 3.5Lb	New	31.40	No		Yes	162	76	1	84	163	0.2	0	0	1	1	0	0
+6Z-EKJN-PQ17	X0049DOB5F	B071J1JJ9F	Stella & Chewy'S Raw Coated Small Breed Chicken Recipe Dog Food 3.5Lb	New	31.40	No		Yes	162	75	1	85	163	0.2	0	0	1	1	0	0
 6Z-TFO7-DSW0	X0046WEGK9	B004M5MGNI	Orvus WA Paste Cleaner - 120oz.- Horse, Livestock and Dog Shampoo - Quilt, Fine Linen Detergent/Cleaner	New	40.99	No		Yes	29	28	0	0	69	0.28	40	0	0	1	0	0
 71-DN5Z-MAZP	X0040QGZWD	B08QW3LCDY	Higgins 2 Pack of Sunburst Gourmet Blend Parakeet Food, 2 Pounds Each, with Protein Egg Food	New	19.99	No		Yes	0	0	0	0	0	0.22	0	0	0	0	0	0
 71-TA6P-FJQQ	X0046VKEP1	B008158XP0	Dechra EpiKlean Ear Cleanser (8 Oz)	New	18.85	No		Yes	1	0	0	1	1	0.02	0	0	0	0	0	0
@@ -301,15 +301,15 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 7J-OQ9K-HVIK	X003SA1POF	B07RR6P9YK	Oxbow Enriched Life Chew Proof Glass Water Bottle, 8oz / 237ml	New	15.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 7K-CS27-R46F	X0043AJ2UD	B0BL8YT42N	Greenies Bundle Pack Pill Pocket Tablet for Dogs (3 Pack) Flavored Dog Treats (90 Tablets) Bundle Dental Treats	New	23.50	No		Yes	612	595	1	15	614	0.05	0	0	2	1	0	0
 7K-R64O-2G68	X00444ZZRH	B01N8XBEWO	Victor Easy Set Mouse Traps (Pack of 12)	New	14.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
-7K-TW65-PHM5	X0044NRNMX	B00K8FS5R2	Bosch Finish SGZ9091UC Dishwasher Salt - 2Kg (Package may vary)	New	15.99	No		Yes	379	210	2	167	407	0.09	0	0	28	0	0	0
+7K-TW65-PHM5	X0044NRNMX	B00K8FS5R2	Bosch Finish SGZ9091UC Dishwasher Salt - 2Kg (Package may vary)	New	15.99	No		Yes	379	215	2	162	407	0.09	0	0	28	0	0	0
 7L-E844-BJ9L	X0046JNSY7	B018LBPCQ6	Redbarn Grain Free 3lb Dog Food Roll - Chicken (1-Count)	New	19.90	No		Yes	137	97	0	40	137	0.06	0	0	0	0	0	0
 7L-HPDN-UVKU	X00460W60D	B0002ARSJO	Nature Zone SNZ59231 Appetite Plus Reptile Concentrated Solution, 2-Ounce	New	8.98	No		Yes	12	12	0	0	33	0.01	0	0	21	0	0	0
 7N-4TH4-QC5Z	X003W2ZW0R	B01MDM1CPJ	Sheba Perfect Portions Savory Mixed Grill Entree` Cuts in Gravy (5-2 Pack Trays)	New	17.99	No		Yes	0	0	0	0	120	0.04	120	0	0	0	0	0
-7P-LYTA-7JYQ	X00462HHSH	B07BY9MYDX	Nutro Crunchy Treats	New	21.04	No		Yes	463	456	0	6	463	0.09	0	0	0	1	0	0
+7P-LYTA-7JYQ	X00462HHSH	B07BY9MYDX	Nutro Crunchy Treats	New	20.99	No		Yes	461	456	0	4	461	0.09	0	0	0	1	0	0
 7R-HIWE-QGOL	X0047D1PSD	B01IAFFZD8	Mr. Bubble Liquid Bubble Bath, Original 16 oz (Pack of 7)	New	34.70	No		Yes	38	38	0	0	42	0.24	0	0	4	0	0	0
 7S-N31D-9WS4	X0045YQVP1	B0785N2Y2S	PE Mysis Flakes Saltwater Fish Food (30g - 1.06 oz)	New	13.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-7T-J5IA-JNZ9	X0049R9CBT	B07ZQMBX9J	Air Wick V.I.P. Pre-Poop Toilet Spray | Hawaiian Hotshot Scent | Contains Essential Oils | Travel size Air Freshener | Up to 100 uses - 1.85 Ounce (Pack of 3)	New	12.99	No		Yes	67	27	0	40	76	0.02	0	0	9	0	0	0
-7T-TIJ5-A25V	X004436DRT	B073ZLLZ6Q	Redbarn Bully Slices for Dogs | Highly Palatable, Long-Lasting Natural Dental Treats with Functional Ingredients, 9 oz. (Pack of 3) - Peanut Butter	New	35.68	No		Yes	119	71	0	47	187	0.43	66	0	2	1	0	0
+7T-J5IA-JNZ9	X0049R9CBT	B07ZQMBX9J	Air Wick V.I.P. Pre-Poop Toilet Spray | Hawaiian Hotshot Scent | Contains Essential Oils | Travel size Air Freshener | Up to 100 uses - 1.85 Ounce (Pack of 3)	New	12.99	No		Yes	66	26	0	40	75	0.02	0	0	9	0	0	0
+7T-TIJ5-A25V	X004436DRT	B073ZLLZ6Q	Redbarn Bully Slices for Dogs | Highly Palatable, Long-Lasting Natural Dental Treats with Functional Ingredients, 9 oz. (Pack of 3) - Peanut Butter	New	35.35	No		Yes	119	72	0	46	187	0.43	66	0	2	1	0	0
 7V-FGEZ-PFAD	X003YFV35P	B00KMNTYHK	Rooster Booster Vitamins and Electrolytes with Lactobacillus, Natural, 8 oz.	New	14.50	No		Yes	19	15	0	4	19	0.02	0	0	0	0	0	0
 7W-3V96-493R	X003WGQB03	B000SWTKV0	Light Grey Celtic Sea Salt 1 Pound Resealable Bag – Additive-Free, Delicious Sea Salt, Perfect for Cooking, Baking and More - Gluten-Free, Non-GMO Verified, Kosher and Paleo-Friendly	New	16.99	No		Yes	2	0	0	2	2	0.06	0	0	0	0	0	0
 7W-C8TH-PG79	X003W30RFV	B07PBTB187	Dove Body Wash Variety Pack- 3 Assorted Scents- 16.9 Ounce / 500 Ml nternational Version	New	26.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
@@ -345,7 +345,7 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 8P-LUGV-O6FK	X0047IO521	B07P5N74QB	PureSpa SpaPure Defoamer (1 pt) (2 Pack)	New	20.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 8P-MUY6-WK6H	X0049KJDEH	B005KSPT8K	Nutri-Source Pure Vita Grain-Free Turkey And Sweet Potato Dry Dog Food, 5 Pound Bag	New	28.99	No		Yes	0	0	0	0	0	0.3	0	0	0	0	0	0
 8Q-067T-GGSY	X0046WEE8D	B001CCNG88	Grannick's Bitter Apple Taste Deterrent Spray Bottle for Dogs, 8 Ounces, Single	New	12.99	No		Yes	273	270	0	3	706	0.01	139	294	0	0	0	3
-8T-1MEB-ARTC	X0042TEAVB	B00R50342E	Fisherman's Friend Original Extra Strong Cough Suppressant Lozenges, 20 Count (Pack of 2)	New	7.54	No		Yes	223	3	0	220	393	0.01	120	43	7	0	0	66
+8T-1MEB-ARTC	X0042TEAVB	B00R50342E	Fisherman's Friend Original Extra Strong Cough Suppressant Lozenges, 20 Count (Pack of 2)	New	7.21	No		Yes	223	3	0	220	393	0.01	120	43	7	0	0	66
 8U-A6XZ-IFXU	X0043DXGYX	B0BVL94R77	Fancy Feast Gourmet Wet Cat Food Gravy Lovers Feast, 24 cans (Variety Bundle)	New	21.00	No		Yes	0	0	0	0	0	0.28	0	0	0	0	0	0
 8V-ITPI-GJJ5	X003YL5LPR	B00FMQBJW0	Gold Bond Extra Strength 14oz Medicated Body Lotion for Dry & Itchy Skin (Pack of 2)	New	22.90	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 8V-X8GU-OIL4	X003YYXUCF	B074MLFHS7	Red Sea Aqcult 306168 1 LTR Reefer Foundation B Alkalin	New	30.99	No		Yes	0	0	0	0	1	0.08	0	1	0	0	0	0
@@ -360,14 +360,14 @@ sku	fnsku	asin	product-name	condition	your-price	mfn-listing-exists	mfn-fulfilla
 96-FNYJ-GQO2	X003S9NGW5	B002DGVYZO	Dr. Tim`s Aquatics Waste-Away Saltwater 8 Oz	New	13.37	No		Yes	1	0	0	1	1	0.01	0	0	0	0	0	0
 99-AVIA-JELX	X0047IO549	B0049BADPI	SeaKlear Spa Balanced Shock Oxidizer for Spas & Hot Tubs, 2 lb	New	28.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 9B-LB45-SN7U	X003YS6IE3	B076TTKVZC	Combat 023400973064 Max Ant Killing Gel, 27 Grams (Pack of 4), 4 Pack	New	21.88	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
-9C-XUKK-HR1K	X0042T892R	B09RJN3DDC	VetOne CeraDerm Aloe & Oatmeal Conditioning Shampoo 16 oz	New	13.51	No		Yes	35	35	0	0	35	0.03	0	0	0	0	0	0
-9D-GB4D-87Z4	X00462K41T	B000XZ9WCY	Nutro Natural Choice Crunchy Treats With Real Apples Dog Treats	New	15.12	No		Yes	356	354	0	2	390	0.06	0	0	34	0	0	0
+9C-XUKK-HR1K	X0042T892R	B09RJN3DDC	VetOne CeraDerm Aloe & Oatmeal Conditioning Shampoo 16 oz	New	13.50	No		Yes	35	35	0	0	35	0.03	0	0	0	0	0	0
+9D-GB4D-87Z4	X00462K41T	B000XZ9WCY	Nutro Natural Choice Crunchy Treats With Real Apples Dog Treats	New	15.00	No		Yes	356	354	0	2	390	0.06	0	0	34	0	0	0
 9D-V591-BQTS	X0044Y31RX	B001FB5TOA	Degree Original Antiperspirant Deodorant Sheer Powder Pack of 6 48-Hour Sweat & Odor Protection Antiperspirant for Women 2.6 oz	New	23.99	No		Yes	128	33	0	95	128	0.08	0	0	0	0	0	0
 9F-5X07-X99E	X004094VPD	B01N75R6B3	Cepacol Extra Strength Sore Throat, 16 Lozenge, 3-pack, Cherry	New	17.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 9G-TLTH-INNF	X003WM2Z0R	B000HHHEFU	AniMed Horse Glucosamine 5000 Supplement, 16 oz	New	22.99	No		Yes	0	0	0	0	12	0.05	0	12	0	0	0	0
 9H-4OJL-THRQ	X0041AL1Q3	B0002YFBQW	Nupro Joint Support (30 oz)	New	31.99	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 9H-FMRI-QA6B	X0042CH2YF	B00KAR9SHE	TRESemmé Expert Selection Heat Protection Spray, Keratin Smooth, 8 Fl Oz ,(Pack of 3)	New	20.94	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-9H-GMPI-2UC4	X003Y3DTRR	B07D267L8M	ZuPreem Natural Pellets Bird Food for Medium Birds, 2.5 lb (Pack of 2) - Daily Nutrition, Made in USA for Cockatiels, Quakers, Lovebirds, Small Conures	New	28.20	No		Yes	59	23	0	35	59	0.38	0	0	0	1	0	0
+9H-GMPI-2UC4	X003Y3DTRR	B07D267L8M	ZuPreem Natural Pellets Bird Food for Medium Birds, 2.5 lb (Pack of 2) - Daily Nutrition, Made in USA for Cockatiels, Quakers, Lovebirds, Small Conures	New	28.20	No		Yes	59	21	0	37	59	0.38	0	0	0	1	0	0
 9I-1JPH-HI1C	X00443LNA1	B00D4R5F60	Original Source Tea Tree & Mint Shower Gel 250ml - (Pack of 6)	New	20.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 9I-54GX-0ULH	X0048UZFT5	B00EE4E1RQ	Ortho 0196410 Home Defense MAX Insect Killer Spray for Indoor and Home Perimeter, 24-Ounce (Ant, Roach, Spider, Stinkbug & Centipede Killer)(2Pack)	New	23.90	No		Yes	0	0	0	0	0	0.18	0	0	0	0	0	0
 9J-K4GU-FJEB	X0047NFSVN	B00JMAPSGK	Pentosin 8403107 CHF 202 Synthetic Hydraulic Fluid, 1 Liter	New	23.99	No		Yes	2	0	0	2	75	0.05	72	0	1	0	0	35
@@ -397,7 +397,7 @@ A5-PK7L-8V74	X00419HK4B	B01HT9DAHY	K&H Pet Products Perfect Bucket Heater w/ Cor
 A6-JC22-Y9VI	X00445YULN	B0001IMM0W	Victor Tin Cat Mice Glue Boards 72 / Box.	New	32.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 A6-W6PA-9JDX	X00457L94V	B07QLGHRTD	Elite E3 Hair 16 oz Growth Equine Horse Dog Mane Tail Growth Stimulant Shampoo	New	19.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 A7-7UR5-U3MQ	X0044I865L	B003OD5M4Y	Derma3 Large Breed Softgels 60 ct	New	23.48	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-A7-EYFR-JHLA	X003Y4Q8KB	B07HCLTXFG	Summit...responsible solutions Mosquito Bits - Quick Kill FamilyValue 1Pack (30Ounce)	New	18.99	No		Yes	599	327	0	268	600	0.09	0	0	1	4	0	0
+A7-EYFR-JHLA	X003Y4Q8KB	B07HCLTXFG	Summit...responsible solutions Mosquito Bits - Quick Kill FamilyValue 1Pack (30Ounce)	New	18.99	No		Yes	599	328	0	267	600	0.09	0	0	1	4	0	0
 A7-F5JY-V6VW	X0045M6IDN	B00P7PHTBG	Dove Deep Moisture Deeply Nourishing Body Wash 500ml Pack of 6	New	36.99	No		Yes	0	0	0	0	0	0.29	0	0	0	0	0	0
 A7-WHEX-T9TM	X0042DM90V	B004V4HQ8A	GeriCare Ferrous Sulfate Tablets 325mg, Elemental Iron 65 mg High Potency Iron Supplement | No Artificial Color Additives Dietary Supplement 100 Count. (Pack of 1)	New	8.00	No		Yes	1	0	0	1	1	0	0	0	0	0	0	0
 A8-1QSF-ZPZB	X00462K6OT	B0745JDP8Z	Sheba Perfect Portions Multipack Cuts in Gravy, Signature Tuna Entree, Roasted Chicken Entree (12- Individual Serving) (3-Double Trays of Each)	New	25.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
@@ -410,19 +410,19 @@ AC-E184-HPUA	X0045KLXXZ	B07H57FS1H	Victor M158-4 Metal Pedal Mouse Trap, 32 Trap
 AD-X1RQ-3UA9	X0046KWYQT	B01HQL67BG	Redbarn Bully Slices for Dogs (Vanilla) Natural Dental Treats (1 Bag)	New	16.99	No		Yes	31	18	0	13	31	0.22	0	0	0	0	0	0
 AE-4DUB-OWU3	X003ZBZIZ9	B00BWH9XZI	Ricola Cherry Honey, 24ct, Pack of 3	New	17.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 AF-DEJ4-FV1R	X0040P0O17	B00TP3H952	Conair Pro Silver Bird Hair Dryer SB307W	New	60.99	No		Yes	0	0	0	0	48	0.32	48	0	0	0	0	0
-AG-43WV-BS3Y	X0048UEC3F	B01N5DS13H	Dr. Bronner’s - All-One Toothpaste (Anise, 5 Ounce, 3-Pack) - 70% Organic Ingredients, Natural and Effective, Fluoride-Free, SLS-Free, Helps Freshen Breath, Reduce Plaque, Whiten Teeth, Vegan	New	19.26	No		Yes	0	0	0	0	12	0.05	0	0	12	0	0	0
+AG-43WV-BS3Y	X0048UEC3F	B01N5DS13H	Dr. Bronner’s - All-One Toothpaste (Anise, 5 Ounce, 3-Pack) - 70% Organic Ingredients, Natural and Effective, Fluoride-Free, SLS-Free, Helps Freshen Breath, Reduce Plaque, Whiten Teeth, Vegan	New	19.30	No		Yes	0	0	0	0	12	0.05	0	0	12	0	0	0
 AJ-14RK-VTYH	X004AUA723	B071HF5T4F	Seachem Prime 1000ml	New	37.50	No		Yes	0	0	0	0	60	0.08	60	0	0	0	0	0
-AJ-CMHV-UQB7	X0045YR2KT	B00DDZ4HIK	Florida Marine Research Sfm00005 Hermit Crab Food, 4-Ounce	New	6.99	No		Yes	35	20	0	15	40	0.01	5	0	0	0	0	16
+AJ-CMHV-UQB7	X0045YR2KT	B00DDZ4HIK	Florida Marine Research Sfm00005 Hermit Crab Food, 4-Ounce	New	6.99	No		Yes	35	26	0	9	40	0.01	5	0	0	0	0	16
 AK-5HQS-PYIX	X00479BVTZ	B000O0TAI4	Ford Genuine Parts F1AZ-6731-BD Oil Filter	New	14.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 AK-79UE-BS9I	X003ZDVVZ3	B00MYAI2KO	Preparation H Multi-Symptom Relief Hemorrhoidal Ointment 1 Ounce	New	15.55	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-AK-CPOG-93YG	X0045YR2Y5	B00CAOADME	Cockatiel Treat Stick, Honey, 8-oz	New	11.99	No		Yes	32	6	0	25	54	0.02	0	0	22	1	0	0
+AK-CPOG-93YG	X0045YR2Y5	B00CAOADME	Cockatiel Treat Stick, Honey, 8-oz	New	12.04	No		Yes	28	7	0	20	50	0.02	0	0	22	1	0	0
 AK-KI60-NNW7	X003Y2UT5X	B075RYP752	(2 Pack) Biotin Daily Hoof Care Supplement	New	38.99	No		Yes	0	0	0	0	0	0.33	0	0	0	0	0	0
 AL-LWNC-GCLM	X004270CP1	B0753M69PC	Monterey Horticultural Oil - Organic Gardening Fungicide, Insecticide, & Miticide - Controls Aphids, Mites, Scales - 1 Gallon - Apply Using a Sprayer	New	52.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
 AL-S7CW-QKMN	X004B0M1D5	B0167AN4UO	Lucas Upper Cylinder Lubricant & Fuel Injector Cleaner (5.25 oz.)-6 Pack	New	34.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 AL-UC5B-XQI9	X0046L75CB	B003AAND88	TEMPTATIONS Classic Treats for Cats Seafood Medley Flavor 6.3 Ounces (Pack of 10)	New	34.99	No		Yes	0	0	0	0	0	0.67	0	0	0	0	0	0
 AM-APGX-BPTT	X0046TUYVR	B07XYHDK57	Vet-Kem Ovitrol Flea, Tick & Bot Spray 16 oz	New	26.99	No		Yes	0	0	0	0	187	0.05	0	187	0	0	0	0
-AM-IJC1-G5R4	X004741Z05	B0BXZ49V8S	Vaseline Intensive Care Body Lotion Advanced Repair Unscented 4 ct for Dry Skin with Ultra-Hydrating Lipids and Vaseline Jelly 20.3 oz	New	30.92	No		Yes	2	0	0	2	2	0.2	0	0	0	0	0	0
-AM-N54N-MQ56	X003ZS22YH	B00UPCFD8C	Redbarn Filled Dog Bones | Natural Long-Lasting Dental Treats; Suitable for Aggressive Chewers | Large (6") - 5 Bones (Peanut Butter)	New	39.28	No		Yes	186	97	0	89	250	0.2	60	0	4	0	0	0
+AM-IJC1-G5R4	X004741Z05	B0BXZ49V8S	Vaseline Intensive Care Body Lotion Advanced Repair Unscented 4 ct for Dry Skin with Ultra-Hydrating Lipids and Vaseline Jelly 20.3 oz	New	30.92	No		Yes	2	1	0	1	2	0.2	0	0	0	0	0	0
+AM-N54N-MQ56	X003ZS22YH	B00UPCFD8C	Redbarn Filled Dog Bones | Natural Long-Lasting Dental Treats; Suitable for Aggressive Chewers | Large (6") - 5 Bones (Peanut Butter)	New	38.68	No		Yes	186	97	0	89	250	0.2	60	0	4	0	0	0
 AN-IDZM-MPLK	X0048P35S3	B00BUFTAR8	Gimborn Freeze Dried Beef Liver Trts 4oz	New	17.92	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 ANIMALHEALTH-10	X002MD17G5	B00OBYQH9O	Happy Jack Kennel Dip Dog Flea and Tick Treatment & Prevention, Made in USA, Spray Yard & Home 30-Day Control, Kills Fleas, Ticks, Deer Ticks, Mange, Lice, for Puppies, Small to Large Dogs (16 oz)	New	39.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 ANIMALHEALTH-11	X002MDQAFD	B000HHHFZE	SADDLER J M 546666 Raplast Spray for Horses, 16 oz	New	38.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
@@ -438,12 +438,12 @@ ANIMALHEALTH-7	X002KD437R	B00SVXILO0	Tomlyn High Calorie Nutritional Gel for Pup
 ANIMALHEALTH-8	X002MDXL7D	B000FJQSY8	Fiebing's Liquid Mink Oil for Leather Boots (8 fl oz) - Leather Cleaner & Conditioner - Waterproof, Preserve, Soften All Smooth Leathercraft & Vinyl - Prevents Salt Stains - Use On Couch, Shoe, Purse	New	11.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 ANIMALHEALTH-9	X002MDQ8YL	B0002JF0G8	Happy Jack Kennel Dip Dog Flea and Tick Treatment & Prevention, Made in USA, Spray Yard & Home 30-Day Control, Kills Fleas, Ticks, Deer Ticks, Mange, Lice, for Puppies, Small to Large Dogs (8 oz)	New	26.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 AO-4N14-XHWI	X00462K4BJ	B07B2NGCZ2	NUTRO Mini Bites Dog Treats Beef & Hickory Smoke Flavor, 4.5 oz. Bag	New	19.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-AO-DNKS-HFMP	X00457FNHF	B009QAIWF0	Thrush Rid for Horses	New	13.85	No		Yes	117	76	0	39	177	0	60	0	0	2	0	0
+AO-DNKS-HFMP	X00457FNHF	B009QAIWF0	Thrush Rid for Horses	New	13.85	No		Yes	117	75	0	40	177	0	60	0	0	2	0	0
 AO-ISUP-NMYF	X0048UZEFP	B06XFM52DL	Summit # 111-5 20 Count Mssquito Dunks Biological Mosquito Control - Quantity 2	New	46.99	No		Yes	4	4	0	0	25	0.27	21	0	0	0	0	20
 AP-O44F-V5XG	X004AP4KLR	B0BX4SRZQ8	Greenies (4 Pack Feline Dental Cat Treat Variety Bundle 4 Flavors - 2.1oz Each Bag	New	29.95	No		Yes	0	0	0	0	36	0.16	36	0	0	0	0	0
 AQ-HDFP-NG4Y	X00485EU69	B00BP31TJW	NGK (3365) CMR6H Spark Plug - Pack of 4	New	19.25	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 AQ-MZOO-CKY2	X00485T31B	B003C5ZE60	Savory Prime Chicken Jerky Treat, 16-Ounce, All Breed Sizes, Model: 30016	New	16.01	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
-AT-K9IY-ENCT	X004A3V9P9	B001F2ATZS	Pure Vita Dry Dog Food - Duck & Oatmeal - 5 Lbs	New	32.99	No		Yes	64	29	0	35	64	0.32	0	0	0	0	0	0
+AT-K9IY-ENCT	X004A3V9P9	B001F2ATZS	Pure Vita Dry Dog Food - Duck & Oatmeal - 5 Lbs	New	32.99	No		Yes	63	27	0	36	63	0.32	0	0	0	0	0	0
 AU-02H6-98R5	X0040X8V4B	B07MYTR9XG	Oxbow Carnivore Care (340 Gram)	New	54.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 AU-87FQ-ZRLM	X0048ZD4D9	B074KMF8J3	Trojan Magnum XL Size Lubricated Latex Condoms (12 Count - Pack of 3)	New	29.95	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 AU-IRDL-6LL7	X004270QH5	B004GTKJ2K	Surrender Fire Ant Killer 1 lb Can	New	24.95	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -465,9 +465,9 @@ B2-AXJJ-86WO	X0045ARX25	B001GKZP6W	Clorox 2 Stain Remover and Color Brightener, 
 B2-FP6W-T0Q8	X003Y77NUH	B08WKRWNWR	Fluval Bundle of 4 Replacement Medias for 207 Aquarium Filters: Bio-Foam, Ammonia Remover, Phosphate Remover, Nitrite Remover	New	33.99	No		Yes	0	0	0	0	0	0.26	0	0	0	0	0	0
 B3-S42V-KM1K	X0049MDYEZ	B000TZ8VEI	Control Solutions Quali-pro Msm Turf Herbicide 2 Oz	New	17.50	No		Yes	17	11	0	6	17	0.02	0	0	0	0	0	0
 B4-83OW-8D91	X0041WP3H9	B001ODZ5BQ	ANIMED Glucosamine 5000 - Natural Joint Health Supplement with Omega 3, Antioxidant Protection, and Digestive Support for Horses, 5 lbs…	New	54.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
-B5-8J7P-AEQA	X0043DSPJT	B0194CO8TS	Nipro Diagnostics True Metrix Medi NFRs Blood Glucose Test Strips(150 Count)	New	35.50	No		Yes	502	151	0	351	807	0.02	300	0	5	0	0	0
+B5-8J7P-AEQA	X0043DSPJT	B0194CO8TS	Nipro Diagnostics True Metrix Medi NFRs Blood Glucose Test Strips(150 Count)	New	35.50	No		Yes	500	158	0	342	805	0.02	300	0	5	0	0	0
 B6-56CE-GV4B	X00451CG49	B07PHKJTNV	Higgins Pet Food Intune Ferret 4Lb	New	26.99	No		Yes	1	0	0	1	1	0.27	0	0	0	0	0	0
-B8-N7VZ-4SY7	X00462OID9	B002WTHW26	Pentosin 1405116 CHF 11S Long-Life Synthetic Hydraulic Fluid for Audi, Bentley, BMW, Chrysler, Dodge, Jeep, Mercedes-Benz, Mini, Porsche, Saab, Volkswagen, Volvo, and More; 1 Liter	New	27.65	No		Yes	289	91	0	191	289	0.06	0	0	0	7	0	0
+B8-N7VZ-4SY7	X00462OID9	B002WTHW26	Pentosin 1405116 CHF 11S Long-Life Synthetic Hydraulic Fluid for Audi, Bentley, BMW, Chrysler, Dodge, Jeep, Mercedes-Benz, Mini, Porsche, Saab, Volkswagen, Volvo, and More; 1 Liter	New	28.73	No		Yes	289	89	0	193	289	0.06	0	0	0	7	0	0
 B9-RS47-2F32	X0040KUIR7	B08651YXHH	Ricola Honey Herb Herbal Cough Suppressant Throat Drops, 24ct Bag (Pack of 3)	New	14.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 BB-IK9H-34ZK	X004BCPRAR	B01IADZ5M6	Neutrogena The Transparent Facial Bar Original Formula, 3.50 oz (Pack of 3)	New	17.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 BC-8F6O-K9KG	X0047QYKU5	B0018CFRLG	Prevue Bird Perch - 17" x 0.75" Dia - 2 pk	New	9.74	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
@@ -513,10 +513,10 @@ BRANDNAME-26	X003QNNL1J	B07KKNYL9J	Head and Shoulders Men Advanced Series 2in1 C
 BRANDNAME-3	X003PSDYU3	B08SF6Z4P4	Crest Complete Whitening + Scope Toothpaste, 6.5 Ounce (5 Pack)	New	19.99	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 BRANDNAME-4	X003PS64B9	B0BQ7LT5Q4	Crest Complete Whitening Plus Scope Outlast Ultra Toothpaste 6.5 oz (184g) - Pack of 2	New	11.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 BRANDNAME-5	X003PSHPNP	B0BQ7H25XJ	Crest Complete Whitening Plus Scope Outlast Ultra Toothpaste 6.5 oz (184g) - Pack of 3	New	12.00	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-BRANDNAME-7	X003PSSY3F	B01IE43CVC	Huggies Natural Care Fragrance Free Baby Wipes, 112 Total Wipes 56 Count Each (Pack of 2)	New	4.00	No		Yes	40	0	2	28	40	0.1	0	0	0	10	0	0
+BRANDNAME-7	X003PSSY3F	B01IE43CVC	Huggies Natural Care Fragrance Free Baby Wipes, 112 Total Wipes 56 Count Each (Pack of 2)	New	3.56	No		Yes	40	0	2	28	40	0.1	0	0	0	10	0	0
 BRANDNAME-8	X003PSJV9L	B06XZZWTL6	Dove Go Fresh Revive Body Wash, Pomegranate and Lemon Verbena Scent, 33.8 Ounce (1 Liter) International Version	New	18.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 BS-FTUP-WP1E	X0046U2FOP	B087JZGZWQ	DOUXO S3 Calm Itch Relief Dog and Cat Shampoo - Hypoallergenic Fragrance - for Itchy or Irritated Skin - Veterinary Recommended and Clinically Proven - Safe Skincare Selection - 200ml	New	28.50	No		Yes	6	6	0	0	42	0.02	36	0	0	0	0	0
-BT-BPWU-VD9B	X0049MDXW3	B0BLRDYYWY	Fertilome (16112) Fungicide 5 Concentrate, Plant Disease and Bacteria Control, OMRI Listed (16 oz.)	New	21.60	No		Yes	33	4	0	29	33	0.03	0	0	0	0	0	0
+BT-BPWU-VD9B	X0049MDXW3	B0BLRDYYWY	Fertilome (16112) Fungicide 5 Concentrate, Plant Disease and Bacteria Control, OMRI Listed (16 oz.)	New	21.12	No		Yes	33	4	0	29	33	0.03	0	0	0	0	0	0
 BV-LADJ-PBFK	X003ZSOL0Z	B01N5QG9EX	YEOWWW! DuckyWorld 100% ORGANIC CATNIP Leaf & Flower Cat Toy BANANA 3 PACK	New	19.50	No		Yes	152	149	0	2	152	0.14	0	0	0	1	0	0
 BW-6XBN-8Y2G	X0045C6TTV	B0BLLZCDCY	Dr. Marty Nature's Blend Freeze-Dried Raw Dog Food 18 oz (3 Bags x 6 oz), LFCNE	New	42.50	No		Yes	18	17	0	1	18	0.26	0	0	0	0	0	0
 BWI-$4.30	X001SBBZT1	B01C8QOK7C	Fogg-it Nozzle Standard Hose Connection, Fog Spray Hose Attachment (2gpm)	New	16.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -529,7 +529,7 @@ BWI-15	X001UXP5XT	B00ZE4OT0O	Summit 125 Clear-Water Barley Straw Bales, Treats u
 BWI-36	X002J5KFPZ	B07JJHP6BL	Fogg-It Nozzle - Superfine Volume (Pack of 2)	New	22.95	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 BWI-38	X002JKL0VX	B000BQSF6E	Farnam Home and Garden 14680 Starbar Captivator Fly Trap, (1.06 ounces or 30 grams)	New	15.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 BWI-39	X002JW9OYL	B000OWJM44	Voluntary Purchasing Group 10612 Fertilome Concentrate Fish Emulsion Fertilizer, 32-Ounce	New	19.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
-BWI-42	X002KVTXN3	B01LYMCI86	Natural Guard Spinosad Soap	New	19.50	No		Yes	190	46	4	134	224	0.18	0	0	34	6	0	0
+BWI-42	X002KVTXN3	B01LYMCI86	Natural Guard Spinosad Soap	New	22.87	No		Yes	188	69	2	111	222	0.18	0	0	34	6	0	0
 BWI-46	X002M4NPYB	B07S2WTS3R	BIOADVANCED 701290B Insecticide Fungicide Miticide 3-in-1 Insect, Disease & Mite Control, 24 oz, Ready-to-Use (Pack of 2)	New	33.99	No		Yes	0	0	0	0	0	0.14	0	0	0	0	0	0
 BWI-47	X002M4O1M1	B00BEYQH0S	VOLUNTARY PURCHASING GROUP 10027 Tomato/Pepp Set, 32 oz	New	18.99	No		Yes	0	0	0	0	0	0.22	0	0	0	0	0	0
 BWI-52	X002NOVBNH	B082BPQH6Z	Miracle-Gro Indoor Plant Food (Liquid), 8 oz., Instantly Feeds All Indoor Houseplants Including Edibles, 2-Pack	New	17.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -538,7 +538,7 @@ BWI-57	X0038ZF181	B07NZBYYC1	Bayer Expert Care Tapeworm Dewormer for Cats and Ki
 BWI-59	X0038ZO94N	B08KWPB8KR	Foxfarm Cultivation Nation PH Down - 1 Qt.	New	29.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 BWI-60	X00398TMQT	B00061MSI0	Farnam Roll-On Fly Repellent for Horses, Ponies and Dogs 2 Ounces	New	12.99	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 BWI-61	X0039923JV	B0043EA9L4	Pet-Ag PetLac Pet Powder - 10.5 oz - Milk Replacement Powder for All Pets - Easy to Digest	New	18.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
-BWI-63	X003FG5OTJ	B0071DOVKE	Starbar QuikStrike Fly Abatement Strip	New	28.99	No		Yes	46	43	0	3	54	0.08	0	0	8	0	0	0
+BWI-63	X003FG5OTJ	B0071DOVKE	Starbar QuikStrike Fly Abatement Strip	New	28.99	No		Yes	45	43	0	2	53	0.08	0	0	8	0	0	0
 BX-2WR2-SOZX	X00472AI41	B015BSFEAG	Taste of the Wild Grain Free High Protein Real Meat Recipe Pine Forest Premium Dry Dog Food	New	28.99	No		Yes	0	0	0	0	0	0.34	0	0	0	0	0	0
 BX-5E8L-BSQB	X0045YO0EF	B07F44FLRD	Florida Marine Research SFM00005 Hermit Crab Food, 4-Ounce (4-Ounce 2-Pack)	New	9.50	No		Yes	37	37	0	0	83	0.03	0	0	46	0	0	0
 BX-7QLK-Z79S	X003Y3B9SX	B07K77YZFT	ZuPreem FruitBlend Flavor Pellets Bird Food for Large Birds, 3.5 lb (2-pack) - Daily Blend Made in USA for Amazons, Macaws, Cockatoos	New	39.00	No		Yes	5	0	0	4	5	0.6	0	0	0	1	0	0
@@ -551,14 +551,14 @@ C2-TY9T-P5PG	X00493VAGX	B005G5ZR6G	Earthborn Holistic Catalina Catch Grain Free 
 C2-VSL9-2Q97	X0043MMDVL	B0947NS7V9	CeraVe Moisturising Lotion for Dry to Very Dry Skin 473 ml with Hyaluronic Acid and 3 Essential Ceramides	New	29.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 C2-WMJ7-AZVZ	X003WLY5NN	B06XRDPXBB	Suave Men Body Wash, Refresh, 15 Fl Ounce (Pack of 3)	New	17.99	No		Yes	0	0	0	0	0	0.15	0	0	0	0	0	0
 C4-CO8O-K67H	X003X1Q8H3	B00I5MVL5I	Kirk's Castile Bar Soap Clean Soap for Men, Women & Children | Premium Coconut Oil | Sensitive Skin Formula, Vegan | Fragrance-Free/Unscented | 4 oz. Bars - 3 Pack	New	9.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-C5-OO00-GNI5	X0046L5MWV	B09FXWM2TR	Colgate Optic White Pro Series Toothpaste, Stain Prevention, 2.1 Oz	New	6.40	No		Yes	309	297	0	11	1166	0.02	0	0	857	1	0	0
+C5-OO00-GNI5	X0046L5MWV	B09FXWM2TR	Colgate Optic White Pro Series Toothpaste, Stain Prevention, 2.1 Oz	New	6.40	No		Yes	309	295	0	13	1166	0.02	0	0	857	1	0	0
 C5-SC7F-59O7	X0048Z2L0L	B01FXML5NK	Mitchum Clear Gel Antiperspirant & Deodorant for Men, Super Sport - 2.25 oz - 2 pk	New	10.80	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 C5-YMR7-V5GA	X0049GDKSV	B0009IQZTI	FRAM Extra Guard PH4386, 10K Mile Change Interval Spin-On Oil Filter	New	16.25	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 C6-30EM-YU4J	X004357VZB	B076J3H3NC	Nutrisource Grain Free ( Turkey ) Weight Management Dog Food 5Lb	New	34.99	No		Yes	0	0	0	0	0	0.27	0	0	0	0	0	0
 C6-WY33-JIGJ	X003ZLR2D5	B001KYTX6W	Visine All Day Comfort Dry Eye Relief Eye Drops for Up to 10 Hrs of Comfort, 0.5 fl. oz	New	18.99	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
-C7-1ZR5-9NIL	X00452G13Z	B07GV2S79T	Higgins 2 Pack of Vita Seed Natural Blend Cockatiel Food, 2.5 Pounds Each	New	19.50	No		Yes	198	111	0	87	198	0.2	0	0	0	0	0	0
+C7-1ZR5-9NIL	X00452G13Z	B07GV2S79T	Higgins 2 Pack of Vita Seed Natural Blend Cockatiel Food, 2.5 Pounds Each	New	19.50	No		Yes	198	114	0	84	198	0.2	0	0	0	0	0	0
 C7-2459-MQ29	X003U2OLSN	B01MYFKOUG	Medicated Shampoo--Soap-Free --Incredible Marine Collagen—Pet skin Yeast Infections, Ringworm, Rain Rot, Horse Scratches, Dermatitis, Itchy Skin	New	22.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-C8-8BB1-HFXH	X004304VB3	B07Z9JMW91	Redbarn Bully Slices for Dogs | Highly Palatable, Long-Lasting Natural Dental Treats with Functional Ingredients, 9 oz. (Pack of 2) - Original Bully	New	27.12	No		Yes	1	0	0	0	181	0.45	180	0	0	1	0	0
+C8-8BB1-HFXH	X004304VB3	B07Z9JMW91	Redbarn Bully Slices for Dogs | Highly Palatable, Long-Lasting Natural Dental Treats with Functional Ingredients, 9 oz. (Pack of 2) - Original Bully	New	27.10	No		Yes	1	0	0	0	181	0.45	180	0	0	1	0	0
 C8-Y99W-UTKB	X00449CLAL	B00JAKY7WI	Corona Horseman's Dream Vet Cream Jar Horse Minor Wounds Skin Soothe Conditions, 16 oz	New	32.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 C9-DZSZ-L5K3	X0045AVZUB	B00KGON3ZO	Camay Classic Bar Soap 3 Bars in A Pack 3 Pack (9 Bars)	New	16.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 C9-ZPJD-PMCN	X0041DPYBD	B00E4MP4HO	Swim-EAR Drying Aid 1 oz (Pack of 2)	New	14.20	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -567,7 +567,7 @@ CA-NQ1O-RXPG	X0043DXGXT	B00LJWHDAI	Johnson's Baby Powder Regular 300gr/12oz	New	
 CC-LHPH-TMRQ	X0043E5T9R	B07657H4RF	Irish Spring Deodorant Soap (20 Count, Original)	New	30.00	No		Yes	0	0	0	0	0	0.18	0	0	0	0	0	0
 CD-62YZ-6SL1	X003WM2Z1V	B004PYG52Y	AniMed Biotin 100 5 lbs…	New	29.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
 CD-SJ6T-NEKY	X003W2X957	B014G2WPGY	Dove Daily Moisture Shampoo 250 ml	New	11.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-CE-DU2D-9AEI	X0040XH8BD	B08DG796BW	MAXI/GUARD Dental Cleansing Wipes for Dogs, Cats, Horses and Companion Animals (100 Wipes), Light Blue/White	New	23.05	No		Yes	293	148	0	137	312	0.02	0	0	19	8	0	0
+CE-DU2D-9AEI	X0040XH8BD	B08DG796BW	MAXI/GUARD Dental Cleansing Wipes for Dogs, Cats, Horses and Companion Animals (100 Wipes), Light Blue/White	New	24.72	No		Yes	291	147	0	136	310	0.02	0	0	19	8	0	0
 CENTRAL-10	X00218NPGB	B00AWVFK8Y	Aqueon QuietFlow Internal Filter Cartridge Small 2 Count	New	9.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 CENTRAL-55	X0039XE859	B0002AS1CC	Bergan Turbo Scratcher Replacement Pads, 2 Pack	New	12.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 CENTRAL-56	X003FG5OYT	B0050IBXIK	Espree Silky Show Calming Waters Cologne, 4 oz	New	12.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -584,7 +584,7 @@ CENTRAL-70	X003N13E1V	B01EZUGGE4	Espree Vanilla Silk Conditioning Cologne, 4 oz	
 CENTRAL-71	X003PXGW25	B01K8JY1JS	QuietFlow Aqueon 50 LED Pro Power Filter	New	45.99	No		Yes	0	0	0	0	0	0.19	0	0	0	0	0	0
 CENTRAL-72	X003PX840X	B06XPMV43M	Aqueon (2 Boxes) 06087 Filter Cartridge, Large, 3-Pack Each	New	23.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 CENTRAL-73	X003PX6NP1	B01BCPTVS8	Nylabone Dental Advanced Oral Care Tartar Control Toothpaste (Pack of 3)	New	20.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-CENTRAL-74	X003SVFOTB	B07WSFXZDK	Redbarn All-Natural Air Dried Chicken Training Treats for Puppies & Dogs – Grain-Free Single Protein Rewards Made in USA for Small, Medium, & Large Breeds - 8 oz Resealable Bag	New	8.61	No		Yes	55	35	0	19	176	0.06	120	0	1	1	0	0
+CENTRAL-74	X003SVFOTB	B07WSFXZDK	Redbarn All-Natural Air Dried Chicken Training Treats for Puppies & Dogs – Grain-Free Single Protein Rewards Made in USA for Small, Medium, & Large Breeds - 8 oz Resealable Bag	New	8.85	No		Yes	55	35	0	19	176	0.06	120	0	1	1	0	0
 CENTRAL-75	X003SVOH6R	B00379KT4I	TropiClean Fresh Breath Foam for Dogs & Cats | Cat & Dog Dental Foam| Dog Breath Freshener Foam| Oral Care for Dogs & Cats | Made in The USA | 4.5 oz?	New	12.99	No		Yes	1	1	0	0	1	0.02	0	0	0	0	0	0
 CENTRAL-76	X003T9KWBH	B01BCQ8AV6	(3 Pack) Nylabone Advanced Oral Care 4 Ounce Dog Foaming Tartar Remover	New	27.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 CENTRAL-78	X003T9L0K9	B08GKXTV7P	Fieldcrest Farms 3 Pack of Nothin' to Hide Chicken Rings and Bones, 12 Count Each, Rawhide Alternative Dog Chews	New	19.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
@@ -592,14 +592,14 @@ CENTRAL-79	X003T9Q55T	B006T7NJ6U	TropiClean Fresh Breath for Cats | Cat Dental C
 CENTRAL-80	X003T9F82Z	B07GLZXW5D	Savory Prime 400 Natural Duck Jerky Dog Treats, 8 Oz	New	18.99	No		Yes	0	0	0	0	260	0.07	260	0	0	0	0	0
 CENTRAL-81	X003UH9W7N	B00UL885DU	TropiClean Fresh Breath Plaque & Tartar Control Kit for Puppies | Puppy Toothbrush Kit with Puppy Toothbrush & Fingerbrush | Puppy Teeth Cleaning Gel | Help With Bad Puppy Breath	New	16.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 CENTRAL-CA-89	X003K9XHU9	B00076HT3S	HERPTIVITE Multivitamin for reptiles and amphibians (3.3 oz) Blue Bottle, 1 Pack	New	11.24	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-CF-EK0I-9YH9	X0048URA8J	B00JDRWE0K	Jack's Classic 10-30-20 Blossom Booster Water-Soluble Fertilizer with Micronutrients for Increasing Color and Quantity of Blooms in Flowering Plants, 1.5lbs	New	18.58	No		Yes	305	131	0	161	305	0.08	0	0	0	13	0	0
+CF-EK0I-9YH9	X0048URA8J	B00JDRWE0K	Jack's Classic 10-30-20 Blossom Booster Water-Soluble Fertilizer with Micronutrients for Increasing Color and Quantity of Blooms in Flowering Plants, 1.5lbs	New	18.58	No		Yes	304	129	0	162	304	0.08	0	0	0	13	0	0
 CF-GW8G-AKTB	X0049K3KOL	B000GX43BI	NGK 130-119 Stens Spark Plug Compatible with/Replacement for NGK BKR5E M78543 M143270 BKR5E 7938 25 132 14-S 14 132 03-S NGBKR5E BKR5E-11 BKR5E-11 BKR5E B1BKR5E11 B1BKR5E 9872 77-247 39083 268-5861	New	7.20	No		Yes	18	0	0	18	32	0	0	0	14	0	0	0
 CG-KLUN-XAGV	X0048ZD4I9	B00VAB5RGK	Vaseline Original Healing Jelly 100% White Petrolatum Skin Protectant, 1.75 Oz.	New	7.28	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 CH-FFQ7-TP7I	X003YQNLHR	B00XJWPRLI	Fleet Saline Laxative Enema 7.8 oz (Pack of 12), Multicolor	New	32.99	No		Yes	0	0	0	0	0	0.32	0	0	0	0	0	0
-CH-LXIC-NXHM	X0048ZIZBP	B01MSJ2BOC	Sun-In Spray-In Hair Lightener Original - Trpical Breeze 138 ml by Chattem	New	10.90	No		Yes	167	69	0	98	167	0.01	0	0	0	0	0	0
+CH-LXIC-NXHM	X0048ZIZBP	B01MSJ2BOC	Sun-In Spray-In Hair Lightener Original - Trpical Breeze 138 ml by Chattem	New	10.90	No		Yes	167	72	0	95	167	0.01	0	0	0	0	0	0
 CHENEY BROS	X001UWGDVX	B00EZK6L40	1Lb 10oz Morton Popcorn Salt For Green Salad, Corn on the Cob, French Fries, Nuts	New	10.00	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 CJ-OK52-USQ1	X0042CIW1R	B004LRPKJY	Fruitables Pumpkin & Apple/Pumpkin & Cranberry, Crunchy Baked Dog Treats, Combo Pack, 2 7-Ounce Pouches	New	8.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
-CJ-QUAG-YSHD	X0046RIGMN	B009VBSZE2	Zoo Med Betta Banquet Blocks 6 Card (Set Of 2), fish, 0.3 ounces	New	6.40	No		Yes	28	10	0	18	28	0.01	0	0	0	0	0	0
+CJ-QUAG-YSHD	X0046RIGMN	B009VBSZE2	Zoo Med Betta Banquet Blocks 6 Card (Set Of 2), fish, 0.3 ounces	New	6.48	No		Yes	28	9	0	19	28	0.01	0	0	0	0	0	0
 CL-BLMV-U3F3	X0046L7VWF	B0051V8N34	Higgins 466183 Bird Food Formula, One Size	New	19.99	No		Yes	1	0	0	0	1	0.24	0	0	0	1	0	0
 CL-WPXS-AEIQ	X0043CVX3P	B098KRKPR2	Durvet Ivermectin (Apple Flavor) & Duramectin Paste Dewormer - Bundle 6.08g 1.87 - 2 Pack	New	11.00	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 CM-O3QE-IJFL	X0042DRHHV	B01C1QFBUY	Luden's Watermelon Cough Throat Drops, Pectin Lozenge/Oral Demulcent, 25-Count Per Pack (3-Packs Total)	New	12.99	No		Yes	0	0	0	0	0	0.14	0	0	0	0	0	0
@@ -607,7 +607,7 @@ CN-VRRO-JXXR	X0041X7V55	B004QH96NK	ANIPRIN P EQ ASPIRIN 16 OUNCES	New	26.99	No		
 CO-GGZ6-DUZB	X003ZCABBJ	B000P545HE	Ricola Cough Suppressant Throat Drops, Honey-Herb, 24 Drops (Pack of 12)	New	42.99	No		Yes	0	0	0	0	0	0.24	0	0	0	0	0	0
 CP-0R9X-R2OA	X004AH9X49	B000TZ8T9A	Control Solutions - 82005004 - Martin's Viper - Insecticide Concentrate, 1oz	New	14.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 CP-12JI-UOUD	X0046L7S4B	B000052Y0S	UltraSwim Chlorine Removal Shampoo, Moisturizing Formula (Packaging may vary), blue, 7 Fl Oz (Pack of 1)	New	6.29	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
-CP-DBFA-D9HV	X003YVQA0R	B00VU75K7U	Weruva Grain Free Canned Dog Food Variety Pack, 5.5 oz Each, 12 Flavor	New	51.54	No		Yes	16	6	0	2	34	0.33	0	0	18	8	0	0
+CP-DBFA-D9HV	X003YVQA0R	B00VU75K7U	Weruva Grain Free Canned Dog Food Variety Pack, 5.5 oz Each, 12 Flavor	New	52.23	No		Yes	16	6	0	2	34	0.33	0	0	18	8	0	0
 CP-IEFK-M4HU	X0046S40EF	B00WR8VKC0	Tidy Cats Breeze Cat Litter Pellets, Refill 3.5 lb	New	18.99	No		Yes	0	0	0	0	0	0.2	0	0	0	0	0	0
 CQ-8A9M-W3YE	X0045CH6ZR	B006KXSOA4	Creomulsion Adult Cough Medicine	New	25.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 CQ-KDFC-KF8H	X003WM2YXP	B006RZD1NK	Fruitables Skinny Minis Apple Bacon, Pumpkin Berry, Mango - Variety Pack of 3	New	23.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -624,7 +624,7 @@ CU-P9UW-MKWI	X003YVSMBR	B0BRBSCXQY	Kitchen & Love Chocolate Covered Almond Stuff
 CV-JFFD-9XT9	X003ZLU33B	B078Y8S6PP	Oxytrol Women Overactive Bladder Transdermal Oxybutynin Patch, 4 ct	New	22.88	No		Yes	1	0	1	0	2	0.01	0	0	1	0	0	0
 CV-K6JT-MQAY	X0041AL2W1	B000084EEC	Nutri-Pet Research Nupro Dog Supplement, 5-Pound	New	59.99	No		Yes	0	0	0	0	38	0.22	0	0	38	0	0	0
 CV-YKVI-GQIY	X0046W63Y1	B07YFF2R2F	DechraSupply Phycox MAX Soft Chews, Joint Supplement for Dogs (90ct)	New	84.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-CW-ILZV-EH85	X0043E5T7T	B074VH1Z26	True Metrix Blood Glucose Test Strips 6x50 With Monitor System	New	83.90	No		Yes	141	63	0	78	261	0.13	120	0	0	0	0	0
+CW-ILZV-EH85	X0043E5T7T	B074VH1Z26	True Metrix Blood Glucose Test Strips 6x50 With Monitor System	New	85.99	No		Yes	141	63	0	78	261	0.13	120	0	0	0	0	0
 CX-EHEA-V4QJ	X003ZBZIWR	B0029EWC74	Ricola Herb Throat Drops Natural Cherry Honey 24 Each (Pack of 5)	New	23.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 CY-TY57-MY4B	X0043WSTV9	B086L32NCC	Redbarn Protein Puffs for Dogs | High-Protein Training Treat or Food Topper | Made in The USA (Peanut Butter, Pack of 3)	New	20.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 CZ-090T-MHW2	X003ZFN0AZ	B0BGLC9XDQ	Dentemp Recap-It Cap and Crown Repair Dental Kit - Fast Acting Formula Dental Cement for Loose Caps (Pack of 1) - Temporary Cement for Crown and Bridge	New	6.60	No		Yes	588	511	0	72	588	0.01	0	0	0	5	0	0
@@ -651,9 +651,9 @@ DARBY-30	X002EQ8JQV	B009L12MLO	Dental Floss for Bridges and Dental Implants for 
 DARBY-32	X002GORTAD	B00589UFBC	Red-cote Dental Disclosing Tablets - Cherry Flavor 248 Package Tablet, by Sunstar Americas, Inc	New	34.99	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 DB-FQLJ-CFPP	X0042TL4ZL	B0753B3BK5	PREPARATION H Hemorrhoid Symptom Treatment Suppositories, Burning, Itching and Discomfort Relief (48 Count)	New	47.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 DC-5LKP-PAKC	X003WM2XUT	B00J5ZUJW0	C.E.T. Enzymatic Oral Hygiene Chews for Petite Dogs, 90 Count	New	52.99	No		Yes	0	0	0	0	14	0.21	0	0	14	0	0	0
-DE-LX7A-4HN2	X003ZLOPHB	B001G7QVH2	After Bite Xtra Insect Bite Treatment with Antihistamine – Strong Itch Relief for Extra Itchy Bug Bites,Multi,0006-1270	New	9.99	No		Yes	1435	378	1	1056	1988	0.01	500	0	53	0	0	486
+DE-LX7A-4HN2	X003ZLOPHB	B001G7QVH2	After Bite Xtra Insect Bite Treatment with Antihistamine – Strong Itch Relief for Extra Itchy Bug Bites,Multi,0006-1270	New	9.98	No		Yes	1431	428	1	1002	1984	0.01	500	0	53	0	0	486
 DF-FG85-GTHE	X003ZDVBBH	B07D8356SK	Phillips' Milk of Magnesia Liquid Wild Cherry - 12 oz, Pack of 3	New	14.94	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-DF-N29H-Y9UJ	X004606NCF	B01A5TFCRG	Greenies 4 Pack Of Peanut Butter Flavor Pill Pockets for Dogs, Approximately 30 Pockets Per Pack	New	29.99	No		Yes	103	102	0	1	104	0.06	0	0	1	0	0	0
+DF-N29H-Y9UJ	X004606NCF	B01A5TFCRG	Greenies 4 Pack Of Peanut Butter Flavor Pill Pockets for Dogs, Approximately 30 Pockets Per Pack	New	30.17	No		Yes	103	101	0	2	104	0.06	0	0	1	0	0	0
 DF-YMYT-D75Y	X0043EMFLR	B0141NTJ3A	DIA02795 - Dial Pomegranate Antibacterial Hand Soap - 6 Pack	New	19.99	No		Yes	0	0	0	0	0	0.15	0	0	0	0	0	0
 DG-32AM-EYJS	X0046LAVKJ	B0BWBJ2HHB	Vital Essentials Freeze Dried Raw Single Ingredient Cat Treats, Chicken Breast, 1 oz	New	7.00	No		Yes	3	3	0	0	88	0.03	0	0	85	0	0	0
 DG-UPNL-FX5J	X004AV9Q5L	B07YQ5TCNR	Vitakraft 3 Pack of Chicken Mini Meaty Morsels Dog Treats, 1.69 Ounces Each, with Beef and Carrots	New	11.49	No		Yes	0	0	0	0	10	0.06	10	0	0	0	0	0
@@ -666,21 +666,21 @@ DJ-OK8U-GEFY	X004BCV3Z5	B005ECR14C	Lady Speed Stick Deodorant 1.4 Ounce Powder F
 DJ-TWJ5-UP8A	X0041XCQAP	B07RT33ZQL	Whimzees Natural Dental Care Stix Dog Treats Medium - 14 count - (Dogs 25-40 lbs) - Pack of 2	New	33.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 DJ-XIZF-MD73	X0041X82ML	B00N9OCSLS	(3 Pack) Nutri Source Soft and Tender Dog Treat - Chicken 6-Ounce	New	19.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 DK-EGS4-8Q5U	X004762RFZ	B084PCM969	NO NATZ | 16oz. Outdoor Patio Wood Wick Candle | 60-Hour Burn | Ambient Glow | Hand-Crafted Fresh Fragrance (Tin)	New	24.99	No		Yes	0	0	0	0	1	0.03	0	0	1	0	0	0
-DK-SWE0-Z5R2	X0040BD2KB	B07G994H7V	Redbarn All-Natural Protein Puffs Crunchy Treats for Cats and Kittens, Salmon Flavor - Premium Grain-Free High Protein Low Fat Snack - Made in USA with No Artificial Ingredients - 1.8 oz Bag	New	6.83	No		Yes	130	16	0	110	230	0.02	100	0	0	4	0	0
-DM-IEDH-LYVY	X0042TL9M9	B00CJSY0D4	Better Than Bouillon Premium Mushroom Base, Made from Seasoned & Concentrated Mushrooms, Makes 9.5 Quarts of Broth, 38 Servings, 8 OZ (Pack of 1)	New	11.50	No		Yes	51	49	0	2	51	0.03	0	0	0	0	0	0
+DK-SWE0-Z5R2	X0040BD2KB	B07G994H7V	Redbarn All-Natural Protein Puffs Crunchy Treats for Cats and Kittens, Salmon Flavor - Premium Grain-Free High Protein Low Fat Snack - Made in USA with No Artificial Ingredients - 1.8 oz Bag	New	6.80	No		Yes	130	15	0	111	230	0.02	100	0	0	4	0	0
+DM-IEDH-LYVY	X0042TL9M9	B00CJSY0D4	Better Than Bouillon Premium Mushroom Base, Made from Seasoned & Concentrated Mushrooms, Makes 9.5 Quarts of Broth, 38 Servings, 8 OZ (Pack of 1)	New	11.36	No		Yes	51	49	0	2	51	0.03	0	0	0	0	0	0
 DN-LUNO-WJI3	X00485GKSF	B0002568S6	Seachem Prime Fresh and Saltwater Conditioner - Chemical Remover and Detoxifier 250 ml	New	8.75	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 DN-WIR1-VGSV	X0042TLBF9	B0BGSG4BGX	Durvet No Pick'n for Chickens	New	15.00	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 DO-HUTN-NHVI	X0042TOWWD	B004X8MQXY	Capzasin-HP Arthritis Pain Relief 1.5 oz pack of 1	New	18.99	No		Yes	46	46	0	0	46	0.02	0	0	0	0	0	0
 DO-V70I-2JPV	X00449OH2V	B0CBW1T3RT	Fruitables Cat Treat 3 Flavor Variety Pack of 2.5oz Bags, 3 Bags Total	New	14.50	No		Yes	5	5	0	0	5	0.05	0	0	0	0	0	0
-DP-ZR4R-O0T2	X0047NPMCD	B001BAWG6O	ATE Original SL DOT 4 Brake Fluid, 1 Liter Can (705802)	New	20.00	No		Yes	53	53	0	0	53	0.05	0	0	0	0	0	0
-DQ-H2J5-JAZB	X0044I8831	B07G2FK86Z	CEVA Animal Health Breakables Clenz-A-Dent Rawhide Dental Chews for Dogs, Medium/Large/11-50 lb/15 Count	New	19.12	No		Yes	32	24	0	8	113	0.09	80	0	1	0	0	0
+DP-ZR4R-O0T2	X0047NPMCD	B001BAWG6O	ATE Original SL DOT 4 Brake Fluid, 1 Liter Can (705802)	New	19.99	No		Yes	53	53	0	0	53	0.05	0	0	0	0	0	0
+DQ-H2J5-JAZB	X0044I8831	B07G2FK86Z	CEVA Animal Health Breakables Clenz-A-Dent Rawhide Dental Chews for Dogs, Medium/Large/11-50 lb/15 Count	New	19.56	No		Yes	32	23	0	9	113	0.09	80	0	1	0	0	0
 DQ-LAPA-AQL5	X0048NKC8L	B002TDYKW0	Charlee Bear Original Dog Treats, Cheese and Egg, 6 oz	New	4.09	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 DR-YPKE-Q85V	X003SA25Y9	B00886HZ42	Sapporo Noodle Ichiban Chckn	New	20.99	No		Yes	0	0	0	0	0	0.24	0	0	0	0	0	0
 DS-6R99-GJF7	X003ZLTX2N	B00E5QX2HI	Triple Paste Medicated Ointment for Diaper Rash, Hypoallergenic - 2 oz (Pack of 1)	New	12.49	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 DS-TWXF-3M7K	X003Y5BN4B	B08P8Z8WN7	Dr. Marty Nature's Blend Freeze Dried Raw Dog Food, 6 oz	New	20.98	No		Yes	3	0	0	0	3	0.12	0	0	0	3	0	0
 DU-M1NP-FM2Y	X003S9S2OH	B00F99VIUS	Indigo Wild Zum Clean Laundry Soap, Frankincense and Myrrh, 32 Fluid Ounce	New	24.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 DV-ELKV-FEX8	X004AOLQTR	B08X913YJP	PEDIGREE Small Dog Adult Complete Nutrition Roasted Chicken, Rice & Vegetable Flavor Dry Dog Food 3.5 Pounds, Pack of 1L8	New	23.99	No		Yes	0	0	0	0	36	0.21	36	0	0	0	0	0
-DV-KW7C-8T1Y	X003YFSUS3	B076HNT7KC	Advanced Cetyl M Dog Joint Action Tablets 360 Count	New	115.64	No		Yes	29	4	0	25	29	0.07	0	0	0	0	0	0
+DV-KW7C-8T1Y	X003YFSUS3	B076HNT7KC	Advanced Cetyl M Dog Joint Action Tablets 360 Count	New	114.57	No		Yes	29	4	0	25	29	0.07	0	0	0	0	0	0
 DW-8NYU-F5X2	X0044DX6W9	B01M05H7TY	Y Tex Corp Garden Poultry Dust 2lb	New	16.50	No		Yes	1	1	0	0	73	0.04	0	72	0	0	0	0
 DW-OLYV-D6NA	X004A9QFMP	B00OHO0DNO	AniMed Anihist-H to Support Normal Histamine Levels in Horses, 20-Ounce	New	42.96	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 DX-EGB4-IIJ4	X0048Z2IO5	B00XWD0QW4	Just For Me Hair Milk Leave-In Detangler 10 Ounce (295ml) (447876)	New	10.61	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -711,7 +711,7 @@ EC-E046-J97I	X00449CNVN	B0CM9Q9WHZ	TL BUNDLES Ivermectin Paste - Horse Wormer 6.
 EC-IQLX-GQT6	X004743C2T	B00HVLJYVW	Grannicks Bitter Apple 8oz w/Sprayer-2 pack	New	19.50	No		Yes	18	18	0	0	207	0.03	50	100	39	0	0	0
 ED-RGB4-DHML	X0044LIZX1	B005H3AVX6	Temptations Classic Treats For Cats Tasty Chicken Flavor 6.3 Ounces	New	8.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 ED-S8EP-1MV1	X0046TUMKP	B0CVZ1WGN5	AquaIllumination Prime 16 HD LED Saltwater Reef Aquarium Light - Black	New	269.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
-EE-JPR6-V2E5	X003ZDW111	B07XH4C79H	AVEENO Baby Sensitive All Over Wipes, Paraben- & Fragrance-Free, 64 ea (Pack of 2)	New	17.90	No		Yes	45	31	0	13	221	0.11	150	0	26	1	0	42
+EE-JPR6-V2E5	X003ZDW111	B07XH4C79H	AVEENO Baby Sensitive All Over Wipes, Paraben- & Fragrance-Free, 64 ea (Pack of 2)	New	17.65	No		Yes	44	30	0	13	220	0.11	150	0	26	1	0	42
 EF-3ZWJ-VZWA	X0041X7WJ5	B00BXIQ8CW	Durvet 12-Pack Ivermectin Dewormer Paste for Horses	New	110.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 EG-HZQY-JT2Q	X003Y4XM23	B07KY1GFMG	Plink Bin Fresh Odor Eliminators, Fresh Lemon Scent, for Garbage Bins & More, Lasting Freshness up to 30 Days, 6-Count	New	15.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 EH-6G14-4YDP	X003ZXKOFL	B00JAXKNJ6	Nivea Rich Nourishing Body Cream Dry Skin Almond Oil 400 ml	New	10.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -723,10 +723,10 @@ EJ-N32Z-9IMS	X0042AUG6N	B005KSOB6G	ConairPRO Dog & Cat Deluxe Pet Washer	New	23.
 EJ-RLAK-SPP7	X0046RGYK9	B0007A67VE	Moist & Meaty Chopped Burger by Nestle Purina Petcare	New	22.99	No		Yes	0	0	0	0	0	0.15	0	0	0	0	0	0
 EK-3UH3-MV9O	X004AA9YUJ	B084P1XVD4	C.E.T. Cet Enzymatic Oral Chews-Dogs <11 lbs 30Ct 3PK	New	54.99	No		Yes	0	0	0	0	0	0.14	0	0	0	0	0	0
 EK-3YHM-QL3W	X00462K4KF	B0166E6KSE	Temptations Hairball Control, Chicken (Pack of 12)	New	46.99	No		Yes	0	0	0	0	6	0.34	6	0	0	0	0	0
-EK-BCBB-PWZH	X003UYUWE3	B09RX3NB7C	Stram QuikStrike Fly Bait Spray 1lb	New	17.52	No		Yes	98	11	0	86	217	0.03	118	0	1	1	0	0
+EK-BCBB-PWZH	X003UYUWE3	B09RX3NB7C	Stram QuikStrike Fly Bait Spray 1lb	New	18.91	No		Yes	98	10	0	87	217	0.03	118	0	1	1	0	0
 EM-N2L8-J1AD	X0048ZIPF1	B01IAI1NZO	Fixodent Denture Adhesive Cream Original 0.75 oz (Pack of 12)	New	26.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 EN-5U3L-MMXQ	X0049RYD3L	B07CTY1K6Q	Virbac Effipro PLUS Topical Solution For Cats, 3 Month Supply	New	39.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-EN-N61S-JG0P	X00479BW2B	B00QB23FGC	Febi Bilstein for Mercedes 2Lt Hydraulic Fluid for Suspension and Convertible	New	32.01	No		Yes	50	30	0	20	61	0.14	0	0	11	0	0	0
+EN-N61S-JG0P	X00479BW2B	B00QB23FGC	Febi Bilstein for Mercedes 2Lt Hydraulic Fluid for Suspension and Convertible	New	32.01	No		Yes	49	29	0	20	60	0.14	0	0	11	0	0	0
 EP-KOW5-ISZG	X0043CHBHR	B01DJQDB2A	Bic Metal Quality Disposable Men's Shaving Razors, Best Single Blade, 10-Count	New	1.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 EP-NUFI-5M7M	X003Y4KXJN	B07LGZBG8K	Summit Mosquito Dunks (2) 6pks. 12 Dunks Total	New	22.99	No		Yes	325	229	0	95	325	0.05	0	0	0	1	0	0
 EQ-8913-5H3D	X003WM93E3	B0BKB2KN8F	Dove Go Fresh Shower Gel Body Wash, Lavender and Chamomile, 33.8 Ounce Pump Bottle	New	19.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -741,10 +741,10 @@ EV-8FKA-7PP5	X003YTUUFP	B002DVRHMS	Dr. Tim’s Aquatics Saltwater One & Only Nitri
 EV-Z0XZ-LV4R	X003ZKVEUX	B06XYNHBL8	ZuPreem NutBlend Smart Pellets Bird Food for Parrots & Conures, 3.25 lb (Pack of 2) - Made in USA, Daily Nutrition, Vitamins, Minerals for African Greys, Senegals, Amazons, Eclectus, Cockatoos	New	38.99	No		Yes	0	0	0	0	0	0.38	0	0	0	0	0	0
 EX-M5LA-4AR5	X003ZFJI6Z	B009GCSXB6	AB Prosacea Rosacea Treatment Gel 0.75 oz (21.25 g)	New	19.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 EY-SR0G-BYZQ	X0048IAT7F	B0941WM4QV	Northwest Naturals Raw Rewards Freeze-Dried Pork Liver Treats for Dogs and Cats - Bite-Sized Pieces - Healthy, 1 Ingredient, Human Grade Pet Food, All Natural - 10 Oz (Packaging May Vary)	New	32.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
-EZ-FMN1-CAXB	X0043DSPIZ	B0B5FGHDY9	Dr. Marty Nature's Blend Adult Small Breed Freeze-Dried Raw Dog Food 16 oz, 1 Pound (Pack of 1)	New	38.90	No		Yes	230	0	0	226	2290	0.2	1503	390	167	4	0	0
+EZ-FMN1-CAXB	X0043DSPIZ	B0B5FGHDY9	Dr. Marty Nature's Blend Adult Small Breed Freeze-Dried Raw Dog Food 16 oz, 1 Pound (Pack of 1)	New	38.90	No		Yes	227	0	0	223	2287	0.2	1503	390	167	4	0	0
 EZ-HNYD-J0XK	X0046H6W8D	B07P22JNGB	Redbarn Protein Puffs for Dogs | High-Protein Training Treat or Food Topper | Made in The USA (Cheese, Pack of 3)	New	18.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 F0-U3WP-5BDZ	X003VK3L1R	B085122Y11	AJAX Ultra Professional Triple Action, Pot & Pan Degreaser, Orange, 1 Gallon	New	25.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
-F1-16XB-T2XT	X00493VA1N	B07CJXXPWS	Formula 409 Multi-Surface Spray Cleaner, Lemon Scent, 22 Ounces, Pack of 3	New	20.33	No		Yes	25	0	0	25	29	0.27	0	0	4	0	0	0
+F1-16XB-T2XT	X00493VA1N	B07CJXXPWS	Formula 409 Multi-Surface Spray Cleaner, Lemon Scent, 22 Ounces, Pack of 3	New	20.00	No		Yes	25	0	0	25	29	0.27	0	0	4	0	0	0
 F1-H9DO-0BP3	X003YSP1FF	B00A1MOTA4	Pet Naturals of Vermont L-Lysine 60 Fun-Shaped Chews for Cats - 2 pack	New	18.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 F2-BYJW-Q4BC	X0046WBS87	B07GYSLZ8B	Virbac Animal Health C.e.t. Enzymatic Chews for Dogs	New	35.99	No		Yes	0	0	0	0	0	0.34	0	0	0	0	0	0
 F3-O14H-TZRE	X0048NJZ0R	B01M3U4KF5	Earthborn Holistic Wet Cat Food Variety Pack - 3 Flavors (Chicken Jumble with Liver, RanchHouse Stew, and Chicken Fricatssee) - 5.5 Ounces Each (12 Total Cans) by Earthborn Holistic	New	29.99	No		Yes	0	0	0	0	11	0.14	0	0	11	0	0	0
@@ -770,7 +770,7 @@ FC-9M8G-TKHO	X003YJYF2J	B01ETGUQ3G	Dove Silky Nourishment Body Cream 300ml - 4 P
 FF-C4IK-GKJK	X0045OIVFT	B0B65T7CPL	Dr. Marty Nature's Blend For Active Vitality Seniors Freeze Dried Raw Dog Food, 16 oz	New	39.99	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
 FF-LXUQ-CXPC	X004BACOP5	B08M99HVWB	VP Racing Fuels 3043B Replacement O-Ring for VP Racing Fuels 3042 Jug Caps, 5 Pack	New	15.99	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 FG-EOLN-BM6R	X0048LC78V	B00U67QUJM	Zoo Med Eco Earth for Small Animal and Insects [Set of 3] Size: Single Brick	New	18.78	No		Yes	0	0	0	0	0	0.14	0	0	0	0	0	0
-FH-U4XW-8MPJ	X003S9UTRP	B01CKFBNDA	Manna Pro Hen Healer, 2oz	New	9.73	No		Yes	34	7	0	27	34	0.01	0	0	0	0	0	0
+FH-U4XW-8MPJ	X003S9UTRP	B01CKFBNDA	Manna Pro Hen Healer, 2oz	New	9.80	No		Yes	34	7	0	27	34	0.01	0	0	0	0	0	0
 FI-B59F-IM72	X003Y3EAU7	B00D3O5OMY	Higgins Safflower Gold Natural Food Mix for Conures & Cockatiels, 3lbs	New	19.94	No		Yes	0	0	0	0	0	0.18	0	0	0	0	0	0
 FI-DZEN-0D4E	X0043ZLUBH	B00A0LB4VS	Durvet/EQUINE 698454 Ivermectin Paste 1.87% Bulk for Horses Apple, 6.08 gm	New	13.99	No		Yes	10	0	2	6	10	0.03	0	0	0	2	0	0
 FJ-AVFJ-L3OR	X003TXR8X3	B06XRJB7HL	Replens External Comfort Soothing Gel 1.5 Ounce (Pack of 2)	New	38.99	No		Yes	34	34	0	0	34	0.04	0	0	0	0	0	0
@@ -793,20 +793,20 @@ FO-NQIB-6DJA	X0047IWA4V	B00169FKLI	Enviro Pro 1006 Deer Scram Repellent Granular
 FO-QAGK-8XE1	X0040BD0MV	B003ZZJ5LW	Yeowww! Cigar 3 Pack 100% Organic Catnip Cigar Toys	New	19.99	No		Yes	0	0	0	0	7	0.02	0	0	7	0	0	0
 FO-W5QS-CQDA	X004AUA6R9	B012V9PB38	Seachem Aquavitro Fuel Aquarium Treatment, 150ml/5 oz	New	14.73	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 FP-2YW6-GTS5	X003SOLZHD	B00379KT66	TropiClean Clean Teeth Gel for Dogs | Dog Dental Care | Dog Toothpaste | Breath Freshener | Easy Teeth Cleaning | Made in the USA | 4 oz.	New	19.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-FP-FF20-HYY8	X003Y4KV3L	B00O2KYORO	Summit Responsible Solutions Mosquito Bits - Quick Kill, 60-Ounce (2 Pack)	New	32.40	No		Yes	385	234	0	150	385	0.22	0	0	0	1	0	0
-FP-HYK1-LWUQ	X0046N7NDF	B07868H5QN	Bathroom Bleach Foamer Original Spray, Pack of 3	New	25.99	No		Yes	72	16	0	54	108	0.3	0	0	36	2	0	0
+FP-FF20-HYY8	X003Y4KV3L	B00O2KYORO	Summit Responsible Solutions Mosquito Bits - Quick Kill, 60-Ounce (2 Pack)	New	32.40	No		Yes	385	237	0	147	385	0.22	0	0	0	1	0	0
+FP-HYK1-LWUQ	X0046N7NDF	B07868H5QN	Bathroom Bleach Foamer Original Spray, Pack of 3	New	25.99	No		Yes	72	19	0	51	108	0.3	0	0	36	2	0	0
 FR-LB0X-DAWM	X003UE4MSZ	B01A5TJL2S	Greenies Pill Pockets, 30 Count, Chicken Flavor, 3 Pack	New	28.99	No		Yes	0	0	0	0	146	0.06	146	0	0	0	0	0
 FR-SYHZ-KXJH	X004AP2EA1	B01A5TFCRG	Greenies 4 Pack Of Peanut Butter Flavor Pill Pockets for Dogs, Approximately 30 Pockets Per Pack	New	29.98	No		Yes	0	0	0	0	105	0.06	105	0	0	0	0	0
 FS-JNQD-71RM	X0040BWB0D	B0056GIKI2	Ambi Skincare Bars Complexion Cleansing Bar, 3.5 Ounce (Pack of 6)	New	23.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 FT-COU0-UAWA	X0043T84AX	B08ZYXWW7Q	Arm & Hammer Essentials Disinfecting Wipes, Lemon Orchard and Renewing Rain Variety 110 Count (Pack of 4)	New	26.99	No		Yes	0	0	0	0	0	0.48	0	0	0	0	0	0
-FT-MJDX-3PO6	X00420T8VR	B001EWEP04	Mitchum Advanced Gel Anti-Perspirant & Deodorant, Mountain Air, 3.4 Ounce (Pack of 4)	New	19.66	No		Yes	187	45	0	142	193	0.04	0	0	6	0	0	0
+FT-MJDX-3PO6	X00420T8VR	B001EWEP04	Mitchum Advanced Gel Anti-Perspirant & Deodorant, Mountain Air, 3.4 Ounce (Pack of 4)	New	19.69	No		Yes	186	43	0	143	192	0.04	0	0	6	0	0	0
 FU-97WA-TC89	X0045O4UGN	B07WQXYB9L	(2 Pack) Zoo Med Reptisun 10.0 Uvb Mini Compact Fluorescent	New	27.10	No		Yes	31	30	0	0	32	0.04	0	0	1	1	0	0
 FV-9JZ0-R316	X003W6VPC7	B00HRQQNCO	Shea Moisture Raw Shea Butter Shampoo and Conditioner Set, Deep Moisturizing with Sea Kelp & Argan Oil, Sulfate Free & Silicone Free, Curly Hair Products, Family Size, 13 Fl Oz (Pack of 2)	New	24.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-FV-J1AI-E3LO	X00457FO8D	B00993QPJY	Fiebing's Saddle Soap, 12 oz, White	New	11.99	No		Yes	296	138	0	157	299	0.03	0	0	3	1	0	0
+FV-J1AI-E3LO	X00457FO8D	B00993QPJY	Fiebing's Saddle Soap, 12 oz, White	New	11.99	No		Yes	296	139	0	156	299	0.03	0	0	3	1	0	0
 FW-UJK7-8JZJ	X00453UHBV	B00U9VQONM	Celtic Sea Salt Light Grey Pouch 8.0 OZ (Pack of 1)	New	12.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 FX-DPM6-2G87	X0045YMFKV	B0010PCLOC	Florida Marine Research SFM00007 Hermit Crab Treat, 1.5-Ounce	New	5.86	No		Yes	19	19	0	0	19	0.01	0	0	0	0	0	0
 FX-L0F6-CIEY	X0040XLL4D	B00EZLDST0	Equus Magnificus German Horse Muffins in Ziploc Pouch, 6-Pound	New	33.99	No		Yes	25	25	0	0	25	0.41	0	0	0	0	0	0
-FY-1IX2-952T	X0044GWJ6Z	B001J6O5V4	Right Guard Xtreme Defense 5 Antiperspirant Deodorant Gel, Fresh Blast, 4 Ounces (Pack of 6)	New	30.99	No		Yes	182	0	0	182	182	0.05	0	0	0	0	0	0
+FY-1IX2-952T	X0044GWJ6Z	B001J6O5V4	Right Guard Xtreme Defense 5 Antiperspirant Deodorant Gel, Fresh Blast, 4 Ounces (Pack of 6)	New	30.99	No		Yes	186	0	0	186	186	0.05	0	0	0	0	0	0
 FY-ZQTN-1JXD	X0046LDIR7	B002R8UANK	Fruitables Baked Dog Treats – Pumpkin Treats for Dogs – Healthy Low Calorie Treats – Free of Wheat, Corn and Soy – Pumpkin and Cranberry – 7 Ounces	New	6.00	No		Yes	1	1	0	0	1	0.05	0	0	0	0	0	0
 G0-V0TI-JGAO	X00457FNC5	B00MFLY314	Durvet/EQUINE 699696 Sandrid Psyllium Pellets Value Pack for Equine, 2.3 lb	New	15.00	No		Yes	11	11	0	0	11	0.1	0	0	0	0	0	0
 G0-VSYC-UDI5	X0046E1MM7	B093K99BDZ	Ruff Dawg Indestructible Dawg-Cube XL Dog Toy - Crazy Bouncing Toy, Retrieving, Fetch, Made in The USA, Floats, 3.5 inches Square, for Dogs Over 40lbs	New	32.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
@@ -829,7 +829,7 @@ GK-SN06-VQ1F	X0046TT6FR	B07SNRX61V	Supreme Petfoods 3 Pack of Selective Naturals
 GLOBAL-$11.60	X001O9N059	B00LWCIGPG	Pure Dark Mexican Vanilla Extract (Dark, 1 liter, 33.81 fl oz)	New	34.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 GLOBAL-$11.60-Clear	X001O9DBV7	B00L5RLCIG	Pure Mexican Vanilla (Clear 1 liter, 33.81 fl oz)	New	34.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 GM-2SL3-9PIY	X0040BWKYF	B071SJW7BQ	Clorox AC1602 Disinfecting Bathroom Cleaner Spray Bottle, 30 Ounces, Pack of 2	New	16.99	No		Yes	0	0	0	0	0	0.26	0	0	0	0	0	0
-GN-FAMT-TRCJ	X0046U3XLJ	B07L632N49	Probios Vet Plus Dispersible Digestive Powder, 240gm	New	25.96	No		Yes	84	62	0	22	84	0.03	0	0	0	0	0	0
+GN-FAMT-TRCJ	X0046U3XLJ	B07L632N49	Probios Vet Plus Dispersible Digestive Powder, 240gm	New	25.96	No		Yes	84	63	0	21	84	0.03	0	0	0	0	0	0
 GN-U2GK-TTWG	X0046HG71Z	B07CGY7R7G	Redbarn 4oz Chicken Roll for Dogs (1-Count)	New	8.65	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 GO-CURN-AB4I	X00496299H	B09JM51TQ8	Weruva Classic Cat Food, Meow Ya Doin'! Variety Pack, 3oz Can (Pack of 12)	New	30.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 GO-WEB7-NXBD	X0048Z2K4N	B001FB5IIW	Eucerin Daily Protection Moisturizing Face Lotion, SPF 30 4 fl oz (118 ml) (Pack of 2)	New	28.49	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
@@ -866,7 +866,7 @@ GZ-2M54-B954	X0041ASIPF	B01IO8WMCS	Nupro Joint Support 5 Pound	New	63.99	No		Yes
 GZ-NCDE-7CP7	X00467PIWT	B003C5PUCS	Weco Wonder Shell Natural Minerals (3 Pack), Small	New	6.50	No		Yes	118	115	0	1	118	0.01	0	0	0	2	0	0
 H0-43LT-MJVW	X003Z6KTFX	B001IKU3QM	Gilmour 870751-1001 Hose Flat Soaker, 75'	New	27.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 H0-67QC-UZSD	X004517CPR	B01M6WBJYR	ATTITUDE Nourishing Hair Conditioner, For Dry and Damaged Hair, Naturally Derived Ingredients, Vegan Detangler, Dermatologically Tested, Grapeseed Oil and Olive Leaves, 8 Fl Oz	New	15.99	No		Yes	3	0	0	1	3	0.04	0	0	0	2	0	0
-H1-MM18-ATMV	X003ZW8Y5T	B000XVBZH8	After Bite Treatment-Kids	New	7.50	No		Yes	287	46	0	241	324	0.01	0	0	37	0	0	0
+H1-MM18-ATMV	X003ZW8Y5T	B000XVBZH8	After Bite Treatment-Kids	New	7.50	No		Yes	287	45	0	242	324	0.01	0	0	37	0	0	0
 H1-QHGK-2D7L	X003ZNFO6F	B01CTKE7BG	Tea Tree Therapy Tea Tree Oil Ointment, 2 Ounce (Pack of 2)	New	18.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 H3-63KV-MD8W	X0044L5YWB	B0BVJKFXZS	Febreze Plug Refill Limited Edition Apple Cider 26 mL / 0.87 FL OZ	New	11.79	No		Yes	256	0	0	256	256	0.01	0	0	0	0	0	0
 H3-TOG7-VXWQ	X0049R1YPL	B004Z248MA	Crest Tartar Protection Whitening Cool Mint Paste Anticavity Toothpaste 8.2 Ounce Tube (Pack of 4)	New	20.50	No		Yes	120	78	0	40	120	0.06	0	0	0	2	0	0
@@ -876,7 +876,7 @@ H9-LNPB-HGKB	X0045CH7UL	B003055FYS	Pure Vita, Dog Treats, Hip & Joint, 6 Oz	New	
 HB-0EYI-COCF	X004BA3CTR	B005G5R5LQ	VP Racing Fuels 3044 Deluxe Filler Hose	New	14.49	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 HB-FV1D-POAE	X00449CJD5	B09KNZD7V2	Vitalize Alimend K9 - Dog Upset Stomach Relief for Nausea, Vomiting & Diarrhea - 6 Oz	New	33.99	No		Yes	1	0	0	1	1	0.02	0	0	0	0	0	0
 HB-KDK3-PAGF	X0048O1QNZ	B07914CW48	Benereef 40g Jar	New	21.85	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
-HB-S3AS-GRA2	X003ZLOM6P	B01AVJ6DYG	Kaopectate Multi-Symptom Relief Anti-Diarrheal Upset Stomach Reliever Caplets, 28 Count	New	13.99	No		Yes	154	3	1	149	365	0.01	211	0	0	1	0	0
+HB-S3AS-GRA2	X003ZLOM6P	B01AVJ6DYG	Kaopectate Multi-Symptom Relief Anti-Diarrheal Upset Stomach Reliever Caplets, 28 Count	New	13.99	No		Yes	153	5	1	147	364	0.01	211	0	0	0	0	0
 HC-2J3H-V5H3	X003YW6WUT	B07P8VRBSB	Higgins 3 Pack of Sunburst Veggie Stix, 4 Ounces Each, Gourmet Natural Treats for Guinea Pigs Rabbits and Chinchillas	New	11.37	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 HC-WUJZ-M0UO	X0047NU27X	B0002SRORM	Chicago Pneumatic CP875 - Air Die Grinder Tool, Welder, Woodworking, Automotive Car Detailing, Stainless Steel Polisher, Heavy Duty, Right Angle Grinder, 1/4 Inch (6 mm), 0.3 HP / 220 W - 22500 RPM	New	87.00	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 HD-1Q4D-J11W	X0042DZ7RN	B001GCU5LK	Delsym Children's 12 Hr Cough Relief Liquid, Grape, 3 oz (Pack of 2)	New	34.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -906,9 +906,9 @@ HI-K4SQ-1SFK	X0042TEA6L	B00PV2IS6A	FullBucket Daily Dog Probiotic 30 Servings - 
 HI-W4TC-VI6Q	X0048Z6JPJ	B00ZIY0TV8	Softsoap Soothing Aloe Vera Moisturizing Hand Soap, 7.5 Ounce (Pack of 3)	New	15.11	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 HK-GCWY-BSKC	X003Y4XM0Z	B07RZDCYSV	IRON out Rust Stain Remover Powder, Remove Rust Stains in Bathrooms, Kitchens, Appliances, Laundry, and Outdoors, 4.75 Pound Bottle	New	26.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 HK-MFFN-A9SK	X0048NL4F1	B07G1SQ35B	OneTouch Verio Blood Glucose Flex System {Meter Only}	New	39.99	No		Yes	20	19	0	1	20	0.07	0	0	0	0	0	0
-HL-9GIF-JK8T	X003WLGREN	B000A6TWPI	Corona Ointment 14oz	New	22.11	No		Yes	194	61	0	131	194	0.03	0	0	0	2	0	0
+HL-9GIF-JK8T	X003WLGREN	B000A6TWPI	Corona Ointment 14oz	New	22.58	No		Yes	193	58	0	133	193	0.03	0	0	0	2	0	0
 HL-Z554-9J5D	X0043CXNS3	B007UTE55A	MICROBE-LIFT BMC Biological Mosquito Control, Liquid Treatment for Decorative Water Gardens, Fountains and Ponds, 2 Fluid Ounces	New	11.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
-HM-5SAJ-BR3L	X00475PHMB	B01KGID68S	Liqui-Moly Diesel Purge Injection Cleaner (500 ml 16.9 oz set of 2	New	29.40	No		Yes	14	9	0	5	77	0.09	12	0	51	0	0	0
+HM-5SAJ-BR3L	X00475PHMB	B01KGID68S	Liqui-Moly Diesel Purge Injection Cleaner (500 ml 16.9 oz set of 2	New	27.50	No		Yes	14	9	0	5	77	0.09	12	0	51	0	0	0
 HN-81T3-3GND	X00462J30R	B01HMIFQ7O	Swiffer 360 Duster Refills, 10 Ct (Old Version)	New	22.99	No		Yes	0	0	0	0	0	0.22	0	0	0	0	0	0
 HO-ZS9Q-TF87	X00455RCV7	B07256GKZ5	Light Grey Celtic Sea Salt Resealable Bags â€“ Additive-Free, Delicious Sea Salt, Perfect for Cooking, Baking and More - Gluten-Free, Non-GMO Verified, Kosher and Paleo-Friendly, 16 Ounce (Pack of 2)	New	24.99	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 HQ-FRM7-PFCA	X0046U6UK5	B000TZ1REO	RICHDEL MegaMSM Pellets for Horses, 5.6 Pounds	New	31.50	No		Yes	45	44	0	1	45	0.28	0	0	0	0	0	0
@@ -940,7 +940,7 @@ IH-DHAU-4OWP	X004A0FZBL	B001E5CF4E	Swim-Ear Ear-Water Drying Aid, 1 fl oz (29.57
 IH-ZPU7-UQ7S	X00444ZZVN	B01CH01PA4	Victor EZ set mouse trap (Pack of 12)	New	14.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 II-7AX0-O4ZF	X003WNMC27	B07227L8DF	Dove Purely Pampering Body Wash, Shea Butter with Warm, White, Vanilla, 16.9 Oz (Pack of 4)	New	29.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 II-F830-UJ61	X0040FIB5N	B000HHLXM0	Ark Naturals Company Corona Udder Butter - 7 oz	New	10.00	No		Yes	38	37	0	1	38	0.03	0	0	0	0	0	0
-II-OM88-UO2W	X003YOHRAV	B07D5DD4QJ	NutriSource Puppy Food, Made with Chicken Meal and Rice, Small Breed with Wholesome Grains, 5LB, Dry Dog Food	New	30.49	No		Yes	1255	1127	1	105	1319	0.11	0	0	64	22	0	0
+II-OM88-UO2W	X003YOHRAV	B07D5DD4QJ	NutriSource Puppy Food, Made with Chicken Meal and Rice, Small Breed with Wholesome Grains, 5LB, Dry Dog Food	New	30.49	No		Yes	1248	1117	1	108	1312	0.11	0	0	64	22	0	0
 IJ-QI0W-BWWV	X0043DXGWP	B07CGFGY4G	Vaseline Intensive Care Body Lotion, Aloe Soothe, Pack of 6, (13.53 Oz / 400ml Each)	New	32.00	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
 IK-0D88-MKT8	X003WM0FZ9	B09FTF6WC7	N/1 Cat Dewormer, Durvet Wormeze Feline Liquid Wormer for Cats & Kittens 4oz, Cat Wormer for All Worms, 3 Packs	New	26.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 IM-33W1-WUCV	X003ZXUSMP	B07C7NP3S3	Dove Men+Care Micro Moisture Body and Face Wash, Fresh, 13.5 fl oz (3 Pack) (Bundle)	New	24.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -953,7 +953,7 @@ IN-UELT-9DHV	X0040BM9RX	B00J5HCH46	Clorox Disinfecting Bathroom Cleaner Spray - 
 IO-36P8-DVSJ	X004AP0TVR	B073YJQ7BN	Nutro Crunchy Dog Treats with Real Mixed Berries 10oz - 2 Pack	New	21.99	No		Yes	0	0	0	0	76	0.14	76	0	0	0	0	0
 IP-GE4G-9CQ9	X003ZDVBE9	B01IAIIF14	Monistat Comp Care Itch C Size 1z Monistat Complete Care Itch Cream 1z	New	12.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 IP-KW92-XH6J	X003YQMDN5	B009M7ESPA	Mrs. Stewart's Concentrated Liquid Bluing, Non Toxic Laundry Whitener, 8-ounce Bottle (Pack of 2)	New	14.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-IP-QZ53-OF71	X00474J845	B08C5NDCN2	Dove Purely Pampering Body Wash for Dry Skin Shea Butter with Warm Vanilla Effectively Washes Away Bacteria While Nourishing Your Skin, 22 Fl Oz (Pack of 4)	New	33.50	No		Yes	110	48	1	60	110	0.29	0	0	0	1	0	0
+IP-QZ53-OF71	X00474J845	B08C5NDCN2	Dove Purely Pampering Body Wash for Dry Skin Shea Butter with Warm Vanilla Effectively Washes Away Bacteria While Nourishing Your Skin, 22 Fl Oz (Pack of 4)	New	33.50	No		Yes	110	50	1	59	110	0.29	0	0	0	0	0	0
 IR-JQ6P-CEPH	X00420OZGP	B00IAJH4JS	Suave Naturals Body Wash Ocean Breeze - 12 oz, Pack of 5	New	23.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 IR-NEPZ-R4EV	X0043F2JYT	B002V2GKLI	Desert Essence Coconut Shampoo, 8 fl oz - Gluten Free, Vegan, Paraben Free - Nourishing for Dry Hair - Organic Coconut, Hemp & Olive Oils + Shea Butter to Deeply Moisturize - Smooth & Restore Shine	New	5.00	No		Yes	24	0	0	24	24	0.02	0	0	0	0	0	0
 IS-6YU4-45GR	X0040XVTH7	B07YQH86L4	Dechra DermAllay Oatmeal Conditioner for Pets, 12-Ounce	New	26.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
@@ -1010,14 +1010,14 @@ JS-GAKR-LUTB	X0041AL2PD	B002V80QW6	Nupro All Natural Dog Supplement (30 oz)	New	
 JS-Y1LZ-MHA9	X003X1Q0GH	B0014272VI	QUEEN HELENE Masque Mint Julep 8 oz, for Smoothening	New	9.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 JT-6VQ8-F13Y	X00457FNQL	B08MDJJ48P	EQUIDERMA Thrush and White Line Treatment 16 oz	New	24.99	No		Yes	29	27	0	2	29	0.04	0	0	0	0	0	0
 JT-L86F-4PVZ	X003X2HOPR	B01AKMDVFS	Palmolive Ultra Strength Dish Soap - 10 oz (Pack of 3)	New	15.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
-JT-PABM-N27P	X00455HHY9	B079TZ5FQ5	Checkups- Dental Dog Treats, 4Pack (48oz (24 Count Each)) Tgmclx	New	73.36	No		Yes	20	14	0	5	35	0.62	0	0	15	1	0	0
+JT-PABM-N27P	X00455HHY9	B079TZ5FQ5	Checkups- Dental Dog Treats, 4Pack (48oz (24 Count Each)) Tgmclx	New	72.99	No		Yes	20	13	0	6	35	0.62	0	0	15	1	0	0
 JT-Q86V-KQWO	X00486MMTP	B07PLBJGMD	NGK Spark Plug ILZKR7B11 7751 (6 Pack)	New	73.50	No		Yes	21	21	0	0	22	0.03	0	0	1	0	0	0
 JU-BV4J-PP17	X0045OG205	B07Q6Z7MDM	True Chews Premium Jerky Cuts Made with Real Chicken 22 oz. Premium Pack	New	32.99	No		Yes	0	0	0	0	1	0.18	0	0	1	0	0	0
 JV-9HNU-QFX4	X003U8SS4F	B006EHVDWW	Dove Invisible Dry Stick Anti-Perspirant Deodorant 40ml	New	8.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 JV-EAEM-FTP8	X003Y3DTSV	B00KOWG1K2	ZuPreem Smart Selects Bird Food for Parrots & Conures, 4 lb - Everyday Feeding for Caiques, African Greys, Senegals, Amazons, Eclectus, Small Cockatoos	New	27.99	No		Yes	0	0	0	0	0	0.16	0	0	0	0	0	0
 JV-JCQG-EEI9	X003YA3F0V	B0007NZPY6	Conair Pro Yellow Bird Hair Dryer (Model: YB075W)	New	59.99	No		Yes	0	0	0	0	0	0.28	0	0	0	0	0	0
 JV-TDO8-97SO	X003YG148P	B0813T1MB2	TOMLYN Laxatone Tuna-Flavored Hairball Remedy Gel for Cats and Kittens, 4.25oz - Pack of 2	New	20.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-JV-WHXC-7X3O	X0044A10CZ	B000HHS7IS	Durvet Bloat Treatment for Cattle, Sheep, and Goats, 12-Ounce Bottle	New	15.99	No		Yes	57	1	0	56	57	0.04	0	0	0	0	0	0
+JV-WHXC-7X3O	X0044A10CZ	B000HHS7IS	Durvet Bloat Treatment for Cattle, Sheep, and Goats, 12-Ounce Bottle	New	15.99	No		Yes	56	1	0	55	56	0.04	0	0	0	0	0	0
 JW-681R-0TQ6	X003Y33BRF	B00EF5YV3S	Higgins 466160 Nederland'S Vita Seed Bird Food-Finch 5 Lb (1 Pack), One Size	New	19.99	No		Yes	0	0	0	0	0	0.2	0	0	0	0	0	0
 JW-K3OZ-AHMX	X0046L0SYX	B010898KZ4	Gin Gins Double Strength Hard Ginger Candy, 3 oz, 6PK	New	19.99	No		Yes	0	0	0	0	0	0.15	0	0	0	0	0	0
 JW-RVD6-Z8SE	X003TR3CON	B006G2S17A	J-Lube OB Lubric.Pwd 10Oz	New	29.05	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -1037,7 +1037,7 @@ K4-P674-ZBN1	X003ZLU2PF	B01IAIBHJQ	GenTeal Severe Dry Eye Relief Lubricant Eye G
 K8-2LUS-Q2YN	X0045EIGNV	B001RYUCBK	L'oreal Paris Kids Shampoo Tropical Mango 250ml	New	12.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 K8-3QIV-F445	X0045YQYML	B00FQEAX2U	Marshall Pet Products Natural Complete Nutrition Premium Ferret Diet Food with Real Chicken Protein, Highly Digestible, 22 oz	New	20.99	No		Yes	59	59	0	0	59	0.13	0	0	0	0	0	0
 K8-BB1U-D4ZF	X003Y53HHR	B01C7PJS26	Tetra No More Algae Tablets - 24 Tablets Total (3 Packs with 8 Tablets per Pack)	New	14.99	No		Yes	0	0	0	0	0	0.14	0	0	0	0	0	0
-K8-WT20-2PEL	X0043WU8F9	B07YPTDM26	Skout's Honor Probiotic Pet Shampoo & Conditioner with Avocado Oil & Omega-3s, 97% Natural, Paraben & Sulfate-Free, Cruelty-Free, 16oz, Dog of The Woods	New	24.99	No		Yes	126	1	113	12	128	0.02	0	0	2	0	0	0
+K8-WT20-2PEL	X0043WU8F9	B07YPTDM26	Skout's Honor Probiotic Pet Shampoo & Conditioner with Avocado Oil & Omega-3s, 97% Natural, Paraben & Sulfate-Free, Cruelty-Free, 16oz, Dog of The Woods	New	24.99	No		Yes	137	1	124	12	139	0.02	0	0	2	0	0	0
 K9-78JE-CRIQ	X0045YQXHH	B09BLZP31X	Fieldcrest Farms Nothin' to Hide Rings and Bones Chicken Flavored Dog Chew, 2.4 oz., Count of 12	New	8.99	No		Yes	15	14	0	1	15	0.02	0	0	0	0	0	0
 K9-O70D-N77V	X0045OHRJP	B0BD6298TD	Dr. Marty Shine & Luster Seasonal Allergy Support Chewables for Dogs, 60 Ct.	New	23.99	No		Yes	49	0	0	49	49	0.01	0	0	0	0	0	0
 KB-B5PJ-SHBB	X003ZW5PSD	B005KS4N7I	Mennen Afta Pre-Electric Shave Lotion With Skin Conditioners Original, 3 Fl Oz	New	9.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
@@ -1069,7 +1069,7 @@ KING-1	X003FG9M0V	B00TYEXJ4M	MicrocynAH Wound and Skin Care, 16-Ounce	New	26.99	
 KK-TIOK-XW1C	X0047CPO45	B008RSVJFW	Alcolado Glacial Mentholated Splash Lotion 500ml - After Shave & Sore Muscle Relief | Soothe Aches, Reduce Swelling | Refreshing Cooling Down Lotion | Soothing Massage Lotion | Body Coolant 16oz	New	14.99	No		Yes	0	0	0	0	228	0.03	0	228	0	0	0	0
 KL-93HC-MEW7	X0044E2KMZ	B087BCPVRT	Red Sea Reef Energy Plus 500ml (AB+) All in One Coral Food for Saltwater Aquarium Marine Reef Tanks | Food for Soft, LPS, SPS, and Non-Photosynthetic Corals	New	29.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 KL-RNVR-IXO6	X0044NAU3R	B08TBBS1T9	Dial Kids 2-in-1 Body+Hair Wash, Fragrance Free, 24 fl oz (Pack of 4)	New	29.99	No		Yes	0	0	0	0	0	0.24	0	0	0	0	0	0
-KM-1T0Y-8L4T	X00467SWOP	B00QTQCMLE	Redbarn All-Natural Bargain Bag Variety Pack of Premium Dog Chews - Grain-Free Dental Treats for All Breeds- Made in USA with No Artificial Ingredients - 2 lb. Bag	New	23.09	No		Yes	12	12	0	0	12	0.44	0	0	0	0	0	0
+KM-1T0Y-8L4T	X00467SWOP	B00QTQCMLE	Redbarn All-Natural Bargain Bag Variety Pack of Premium Dog Chews - Grain-Free Dental Treats for All Breeds- Made in USA with No Artificial Ingredients - 2 lb. Bag	New	23.09	No		Yes	12	11	0	1	12	0.44	0	0	0	0	0	0
 KO-OF80-MLR5	X003ZXV2Z7	B09L93GT8Y	Dove Men Body Wash Extra Fresh 1 Liter (33.8 Oz) - Pack of 2	New	28.99	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
 KO-Z0M8-CJLG	X0047D6BAF	B005LGYCUW	Old Spice High Endurance Anti-Perspirant & Deodorant, Original 3 oz (Pack of 3)	New	18.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 KQ-13NJ-G04H	X0045C8LSD	B007IW4IG0	Traditional Medicinals Organic Gas Relief Chamomile Mint Herbal Tea, Relieves Gas & Bloating, (Pack of 1) - 16 Tea Bags	New	11.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -1082,7 +1082,7 @@ KV-VG7B-DV7J	X0049QXCIT	B07HMVBRD2	Aveeno Farm-Fresh Oat Milk Leave-In Hair Cond
 KW-7EST-1LSN	X0043J99B1	B07MW6DFVL	Crest Complete Multi-Benefit Fluoride Toothpaste - Extra Whitening and Scope Advanced Freshness - 8.2 oz each, 3 count	New	22.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 KW-CI5A-BXYL	X0045LBT8X	B0CDHYHT5F	Dr. Teal's Rose & Milk Deodorant Gift Set (2 Pack, 2.65oz Ea) - Rose & Milk Formula - Aluminum Free with Magnesium - Essential Oils, Shea Butter & Arrowroot Powder Absorb Moisture, Keep Skin Healthy	New	20.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 KX-JBBV-94PS	X0046RSVMD	B0845RJ7ST	Friskies Party Mix Crunch Gravy-Licious Turkey & Gravy Treats (Pack of 2)	New	12.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-KZ-DMIW-AC28	X0049MAO7Z	B09MDSQQSM	Fertilome (12845) Rose and Flower Food Plus Systemic 14-12-11 (4 lbs.)	New	18.41	No		Yes	59	27	0	32	59	0.17	0	0	0	0	0	0
+KZ-DMIW-AC28	X0049MAO7Z	B09MDSQQSM	Fertilome (12845) Rose and Flower Food Plus Systemic 14-12-11 (4 lbs.)	New	17.99	No		Yes	59	27	0	32	59	0.17	0	0	0	0	0	0
 KZ-JUSP-MSVL	X0044LUKMZ	B00HVB3GH0	Neogen 900 Rodenticide Dramik Refillable Bait Station 16 Ounce 000, 16oz, Black	New	17.99	No		Yes	0	0	0	0	42	0.21	0	42	0	0	0	6
 Kehe-$4.34	X001PTL4IX	B000EISKJ6	Huy Fong Sriracha Hot Chili Sauce Bottle, 17 Ounce (Pack Of 2)	New	12.93	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 L0-T211-P3O4	X003YOXB8D	B09PMD2NTY	Open Farm Dehydrated Pork Dog Treats, 4.5 oz	New	15.50	No		Yes	17	17	0	0	17	0.09	0	0	0	0	0	0
@@ -1121,7 +1121,7 @@ LR-UYD6-UPCN	X0049M8OKT	B00YNJ2XAE	J-B Weld 8265S Cold Weld Steel Reinforced Epo
 LS-OCKV-H2W1	X0046W78L3	B0002YFQXU	DermaPet Malacetic Otic AP - 16 oz	New	36.50	No		Yes	28	26	0	2	28	0.02	0	0	0	0	0	0
 LS-XIDB-QN0S	X0040XF12V	B07PJYSZYH	Supreme Petfoods Selective Naturals Country Loops with Carrot & Timothy Hay (Pack of 4)	New	16.99	No		Yes	128	127	0	1	128	0.08	0	0	0	0	0	0
 LT-ASX4-7OUM	X004B3Z0WL	B01KL1F426	American Health Original Papaya Enzyme - 600 Chewable Tablets, Pack of 2 - The After-Meal Supplement - Non-GMO, Vegan - 400 Total Servings	New	43.89	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
-LU-9MYY-5WX7	X0049Q6U8X	B00KO8ILTA	Soft Scrub Liquid Cleanser With Bleach White 24 Oz	New	13.99	No		Yes	177	68	0	109	180	0.03	0	0	3	0	0	0
+LU-9MYY-5WX7	X0049Q6U8X	B00KO8ILTA	Soft Scrub Liquid Cleanser With Bleach White 24 Oz	New	13.99	No		Yes	177	85	0	92	180	0.03	0	0	3	0	0	0
 LV-10C0-S6ND	X0046L46YB	B0063KFJHK	Old English 75144 Scratch Cover For Dark Woods, 8oz Bottle, Wood Polish	New	5.97	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 LV-LTGG-1DAM	X0049M55H9	B0052OFDOW	Southern Ag Thiomyl Ornamental Systemic Fungicide, 2 Ounce	New	17.13	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 LW-NFF6-DPMX	X0043CXNV5	B091D7P93V	Bob's Red Mill 5 Grain Rolled Hot Cereal, 16 Oz (Pack of 4)	New	8.00	No		Yes	0	0	0	0	0	0.26	0	0	0	0	0	0
@@ -1136,7 +1136,7 @@ M0-PROR-W9BT	X004B4MKBJ	B001FL55OO	Dylon Hand Dye, Fabric Dye Sachet for Clothes
 M1-R1EG-6OHS	X00420OZPV	B00JJ1HLSU	Suave Men 2 in 1 Shampoo and Conditioner, Ocean Charge, 28 Fl Oz (Pack of 2)	New	22.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 M1-X4MC-AEJK	X0046BUKJV	B00BUFXFP6	Copper Power (Endich) ACP0016B Blue Treatment for Marine Fish, 16-Ounce	New	24.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 M2-PZSJ-WW2C	X0048UMJPD	B001REA5NK	Jack's Classic All Purpose 20-20-20 Water Soluble Plant Food (1.5lbs)	New	18.99	No		Yes	0	0	0	0	0	0.22	0	0	0	0	0	0
-M3-RZ80-L9YW	X0040VI4VN	B009PI7DO4	Boudreaux's Butt Paste 16 Oz (2 Pack)	New	17.99	No		Yes	49	14	32	3	49	0.08	0	0	0	0	0	0
+M3-RZ80-L9YW	X0040VI4VN	B009PI7DO4	Boudreaux's Butt Paste 16 Oz (2 Pack)	New	17.99	No		Yes	48	14	32	2	48	0.08	0	0	0	0	0	0
 M4-HETN-C446	X00408QJEF	B002LML47S	The Natural Dentist Healthy Gums Antigingivitis Rinse Peppermint Twist 16.9 Oz (Value Pack of 3)	New	32.99	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
 M4-OPIB-4VDU	X00449CJIZ	B000B9SGPQ	Manna Pro Cut Hoof Heal, 16oz.	New	39.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 M5-5JPB-33WK	X004AU69TX	B012V9PB38	Seachem Aquavitro Fuel Aquarium Treatment, 150ml/5 oz	New	11.52	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
@@ -1167,16 +1167,16 @@ MC-M57S-DOPF	X0049EW1UV	B0064FZAQY	Boudreaux's Boudreaux's Butt Paste, Diaper Ra
 MD-RDCR-PNGK	X0042TL5ZF	B000093HIQ	ARC Laboratories Kwik-Stop Styptic Powder for Dogs, Cats, and Birds, 14 g	New	12.00	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 ME-8QNU-YZZO	X003YS2LPD	B07VMBSC3M	Dove, Baby Rich Moisture Body Lotion - 20.4 Fl Oz (Pack of 3)	New	14.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 ME-DIK2-UTF5	X0045MJCMR	B08VD1GVR9	CloroxPro Disinfecting Wipes, Bleach-Free, Fresh Scent, 70 Count (Pack of 9) (Package May vary)	New	35.99	No		Yes	0	0	0	0	0	0.6	0	0	0	0	0	0
-ME-O5XW-5BUV	X0042TL5Z5	B000YMCBW4	Bausch + Lomb Advanced Eye Relief Eye Wash from, Eye Irrigating Solution, 4 Fl Oz	New	10.69	No		Yes	4	1	0	3	4	0.01	0	0	0	0	0	0
+ME-O5XW-5BUV	X0042TL5Z5	B000YMCBW4	Bausch + Lomb Advanced Eye Relief Eye Wash from, Eye Irrigating Solution, 4 Fl Oz	New	10.04	No		Yes	4	1	0	3	4	0.01	0	0	0	0	0	0
 MF-U5ZJ-BWUU	X004B0CTQT	B077HPJBJM	(2 Packages) Weco Wonder Shell Natural Minerals (3 Pack), Small - Total of 6 Shells	New	11.95	No		Yes	0	0	0	0	36	0.02	36	0	0	0	0	0
 MF-ZS2V-AZ8K	X004467D25	B00OM3BD8Y	Alka-Seltzer Plus Severe Cold Powder, 6 Count	New	12.99	No		Yes	1	0	0	1	1	0.02	0	0	0	0	0	0
 MG-0N7E-B9EX	X0046RMUW5	B00027ZWFO	Zoo Med ReptiSafe Water Conditioner, 64 oz	New	31.50	No		Yes	111	52	10	36	111	0.1	0	0	0	13	0	0
 MG-B0WH-MH2Z	X003YS6SE3	B01DMSYAG6	ACANA Singles Dog Treats - Lamb and Apple, 3.25oz Each (3 Pack)	New	34.99	No		Yes	0	0	0	0	0	0.19	0	0	0	0	0	0
 MG-QB07-9Y22	X003Y3EARP	B08QW3RYK5	Higgins Sunburst Gourmet Blend Parrot Food 3 lbs – Pack of 2	New	33.98	No		Yes	0	0	0	0	0	0.38	0	0	0	0	0	0
-MG-UZCF-5OOX	X0048UXH31	B088BJXQ1V	Jack's Classic Blossom Booster 1.5 lbs, 10-30-20	New	18.76	No		Yes	4	0	0	4	233	0.09	0	0	229	0	0	0
+MG-UZCF-5OOX	X0048UXH31	B088BJXQ1V	Jack's Classic Blossom Booster 1.5 lbs, 10-30-20	New	18.78	No		Yes	4	0	0	4	233	0.09	0	0	229	0	0	0
 MH-2TW6-NFWF	X0046LAW71	B003UEMD1M	Ziploc Flexible Totes Clothes and Blanket Storage Bags, Perfect for Closet Organization and Storing Under Beds, Jumbo, 1 Count	New	8.00	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 MH-H02Z-7SBH	X00420Q18Z	B01IA94VJS	Dove Anti-Perspirant Deodorant Invisible Solid Powder, 2.6 Ounce (Pack of 4)	New	17.96	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
-MI-9JBV-ZH7J	X0047D1I5X	B00G4EOT6C	Mr. Bubble, Bubble Bath Liquid Original - 16 Ounce (Pack of 6)	New	29.74	No		Yes	458	443	1	9	466	0.3	0	0	8	5	0	0
+MI-9JBV-ZH7J	X0047D1I5X	B00G4EOT6C	Mr. Bubble, Bubble Bath Liquid Original - 16 Ounce (Pack of 6)	New	29.64	No		Yes	458	443	1	9	466	0.3	0	0	8	5	0	0
 MI-SCHN-7K0K	X003SXCMOJ	B00U2V0GMO	TropiClean Fresh Breath Original | Dog Oral Care Water Additive | Dog Breath Freshener Additive for Dental Health | VOHC Certified | Made in the USA | 33.8 oz. | Pack of 3	New	54.99	No		Yes	0	0	0	0	0	0.2	0	0	0	0	0	0
 MIACC-1	X003PBJ9EZ	B00FYZ2MGG	Head & Shoulders Dandruff Shampoo, Clinical Strength 14.2 oz (Pack of 3)	New	39.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 MIACC-2	X003PBOBGV	B01MFGTAO5	Head and Shoulders Anti Dandruff Clinical Strength, Seborrheic Dermatitis Shampoo, 3.5 Fl Oz (Pack of 2)	New	34.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
@@ -1211,7 +1211,7 @@ MWIAH-$7.75	X001PHYUU9	B071RC1V89	Virbac Rebound Recuperation Formula for Cats, 
 MWIAH-10	X002EQ0725	B00316P7EY	Optixcare Eye Cleaning Wipes (50 Count)	New	13.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 MWIAH-12	X002FK5REX	B07CQ9MN9Y	Aventix Pet Eye Lube Lubricant 20 Gram Two Pack	New	28.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 MWIAH-13	X002FKDPR9	B07CP4QLYF	Aventix Pet Eye Lube + Hyaluron 20 Gram Two Pack	New	32.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-MWIAH-15	X002G6CYFL	B00BQMINFA	Vet One ChloraZinc Rinse (8 oz)	New	15.99	No		Yes	189	101	0	79	209	0.02	0	0	20	9	0	0
+MWIAH-15	X002G6CYFL	B00BQMINFA	Vet One ChloraZinc Rinse (8 oz)	New	15.99	No		Yes	189	103	0	77	209	0.02	0	0	20	9	0	0
 MWIAH-17	X002HZC9J7	B001M5D1B2	LubriSyn Hyaluronan Joint Supplement (32 oz)	New	74.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 MWIAH-19	X003326DEP	B07SH7T7NY	Durvet Duramectin Equine Wormer Paste - 3 Tubes	New	44.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 MWIAH-20	X0038RD36V	B078K4K813	Cowboy Magic 32 fl oz Super Body Shine Spray Detangler Hair No Water Needed	New	26.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -1221,18 +1221,18 @@ MWIAH-29	X003ERBZID	B07YFF8YVR	DechraTopical TrizULTRA + Keto Flush for Dogs, Ca
 MWIAH-31	X003GS16VV	B079RJWCZ3	Pet-Ag Dyne High Calorie Liquid Nutritional Supplement for Dogs & Puppies 8 Weeks and Older - 16 oz, Pack of 2 - Supports Performance and Endurance - Sweet Vanilla Flavor	New	39.88	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
 MWIAH-32	X003GRPVI1	B01IRM80K4	J-lube a Hand Lubricant Concentrate for Veterinarian Use Only - Pack of 2	New	49.99	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 MWIAH-33	X003N0H6BB	B013CH9M6K	Safe-Guard 0.5% Pellets 1 lb Bag for Use in Horses, Swine, Cows, Zoo and Wildlife Animals	New	17.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
-MWIAH-34	X003N03GC9	B008C2P6XE	Vet One Aurocin CM - Ear Cleanser w/Aloe (Cucumber Melon Scent) 8 oz	New	14.20	No		Yes	60	0	0	60	60	0.07	0	0	0	0	0	0
+MWIAH-34	X003N03GC9	B008C2P6XE	Vet One Aurocin CM - Ear Cleanser w/Aloe (Cucumber Melon Scent) 8 oz	New	14.20	No		Yes	60	5	0	55	60	0.07	0	0	0	0	0	0
 MWIAH-35	X003N13DFN	B07YFFHGWW	DechraTopical DermaBenSs Shampoo for Dogs, Cats & Horses (12oz) - Gentle, Soap-Free, Antiseborrheic and Antimicrobial (1810011)	New	26.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-MWIAH-37	X003N13E11	B00C8RJ30Q	Vet One DuoClenz EnzymeCoated Dog Dental Hygiene Chews for Small Dogs - Clean Teeth & Freshen Breath - 30 Count	New	13.35	No		Yes	16	0	0	16	16	0.07	0	0	0	0	0	0
+MWIAH-37	X003N13E11	B00C8RJ30Q	Vet One DuoClenz EnzymeCoated Dog Dental Hygiene Chews for Small Dogs - Clean Teeth & Freshen Breath - 30 Count	New	14.99	No		Yes	16	0	0	16	16	0.07	0	0	0	0	0	0
 MWIAH-38	X003N102GV	B07YQGXL7Q	Dechra DermAllay Oatmeal Spray Conditioner for Dogs, Cats & Horses (8oz) - Gentle and Soothing, 8 Ounce (1810077)	New	21.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 MWIAH-39	X003MZQCIF	B000HHHCPM	RICHDEL 784299540507 Legacy Pellets Joint Support for Senior Horses, 5 lb	New	43.99	No		Yes	0	0	0	0	0	0.28	0	0	0	0	0	0
 MWIAH-41	X003PZ78NF	B00DCV5E28	VetOne Advita Probiotic Nutritional Supplement for Dogs - 30, 1 g Packets	New	27.29	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-MWIAH-43	X003PYWIIB	B084BVSNX3	Douxo S3 Calm Soothing Dog and Cat Mousse 150ml, Estandar, Black, 5 Fl Oz	New	29.99	No		Yes	43	26	0	17	43	0.02	0	0	0	0	0	0
+MWIAH-43	X003PYWIIB	B084BVSNX3	Douxo S3 Calm Soothing Dog and Cat Mousse 150ml, Estandar, Black, 5 Fl Oz	New	29.59	No		Yes	43	26	0	17	43	0.02	0	0	0	0	0	0
 MWIAH-45	X003PZ9D8X	B000HHLJ24	AniMed Pure MSM Supplement for Horses, 1-Pound…	New	17.99	No		Yes	0	0	0	0	84	0.05	0	84	0	0	0	0
 MWIAH-47	X003PZALYX	B01M1GPOA8	Durvet Ivermectin Paste Dewormer - 6.08g dose @ 1.87% Apple Flavor (6-Pack)	New	53.94	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
-MWIAH-50	X003PYWOSF	B002GJW73G	Durvet 001-0319 Sheep & Goat Selenium Vitamin E Gel, 80ml	New	16.05	No		Yes	175	63	0	112	203	0.07	0	0	28	0	0	0
+MWIAH-50	X003PYWOSF	B002GJW73G	Durvet 001-0319 Sheep & Goat Selenium Vitamin E Gel, 80ml	New	16.39	No		Yes	175	62	0	113	203	0.07	0	0	28	0	0	0
 MWIAH-51	X003PYWNI1	B07G4JXLMN	Goodwinol Vet RX Veterinary Remedy Poultry 2oz	New	15.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-MWIAH-52	X003PZAM6P	B00ELFB72A	J-Jelly Flask 8 Oz. lubricant	New	12.59	No		Yes	36	10	0	26	36	0.01	0	0	0	0	0	0
+MWIAH-52	X003PZAM6P	B00ELFB72A	J-Jelly Flask 8 Oz. lubricant	New	12.31	No		Yes	36	10	0	26	36	0.01	0	0	0	0	0	0
 MWIAH-54	X003QNM985	B07Q74FPF5	Pet-Ag Dyne High Calorie Liquid Nutritional Supplement for Dogs & Puppies 8 Weeks and Older - 16 oz - Supports Performance and Endurance - Sweet Vanilla Flavor	New	21.90	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 MWIAH-55	X003SVIH8L	B07B195QKT	CEVA Derma-3 Softgels, Omega-3 Fatty Acid & Vitamin Supplement for Medium/Large Dogs (60Count)	New	29.99	No		Yes	0	0	0	0	48	0.01	48	0	0	0	0	0
 MWIAH-56	X003SVONQV	B009N4B7KQ	KVP EZ Soft Pet Cloth Recovery Collar, XS Size Fits 3.5" to 10" Neck/4" Depth	New	16.20	No		Yes	76	56	0	20	76	0.11	0	0	0	0	0	0
@@ -1250,18 +1250,18 @@ MZ-ZMLV-FN38	X0046TYR5L	B003J2RMQG	Banixx Horse and Pet Care 16 oz	New	26.99	No	
 N0-8WJ9-V93N	X0043TE0VF	B08HKQ2HSP	Freeze Miser 2 Pack - Outdoor Faucet Freeze Protection | Durable Replacement for Faucet Covers for Winter - Freeze Proof Outdoor Faucet Protector - Low Maintenance & Easy to Install - Saves Water	New	59.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 N1-T1YW-BTLH	X0049VKQN3	B00P1PPSE2	Hikari 330338 Saki-Turtle Sticks, 20 oz, Black	New	20.96	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 N2-DN8Z-FQME	X003X1NT4D	B0002JG2NI	Home Health Castor Oil - 8 fl oz - Conditioning Oil for Body, Skin & Brows - Non-GMO, USDA-Certified Organic - Cold Pressed - Solvent & Hexane Free	New	17.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-N3-URZS-ZL8S	X003WLGRG1	B003Z2ZJ1U	Rooster Booster Poultry Cell, 32-Ounce	New	30.54	No		Yes	113	60	0	53	113	0.07	0	0	0	0	0	0
+N3-URZS-ZL8S	X003WLGRG1	B003Z2ZJ1U	Rooster Booster Poultry Cell, 32-Ounce	New	34.99	No		Yes	113	60	0	53	113	0.07	0	0	0	0	0	0
 N6-5CZ5-JSDY	X0040BUJFR	B001ET7I6U	Biotene Fresh Mint Original Gentle Formula Fluoride Toothpaste, 4.3 Ounces (Value Pack of 4)	New	42.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 N8-BFNI-IPNW	X004AP0UF7	B07D9YD5NN	Sheba Perfect Portions Pate` in Natural Juices Signature Seafood Entree` Wet Cat Food Tray(6-Pack 2.6 Ounce Each Tray)	New	18.99	No		Yes	0	0	0	0	72	0.06	72	0	0	0	0	0
 N9-0ZOI-IDOX	X0041X250V	B0793CQCCJ	Whimzees (2 Pack Natural Grain Free Dental Dog Treats Stix, X-Small, 56 Ct. Per Pack	New	31.64	No		Yes	0	0	0	0	0	0.22	0	0	0	0	0	0
 N9-C49J-SBIV	X00457J097	B0BCVN6D6G	The Freeze Miser® -4 Pack- Outdoor Faucet Freeze Protection | Durable Replacement for Faucet Covers for Winter - Freeze Proof Outdoor Faucet Protector - Low Maintenance & Easy to Install - Saves Water	New	124.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 N9-CMCP-2VNU	X003X1Q0JJ	B01N4FQ91T	Spry Xylitol Toothpaste with Fluoride, Natural Spearmint, Anti-Cavity, 5 oz (3 Pack)	New	25.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-NA-Q8WL-XRKL	X0048Z2HRN	B00H35YYCU	Dial Antibacterial Deodorant Soap Lavender & Twilight Jasmine - 3 CT	New	11.95	No		Yes	300	129	0	171	300	0.02	0	0	0	0	0	0
+NA-Q8WL-XRKL	X0048Z2HRN	B00H35YYCU	Dial Antibacterial Deodorant Soap Lavender & Twilight Jasmine - 3 CT	New	11.95	No		Yes	300	133	0	167	300	0.02	0	0	0	0	0	0
 NB-QDZT-UAM2	X00452EGQJ	B074W6S1SF	Higgins Sunburst Gourmet Natural Treats - Berry Patch, 0.52 oz	New	10.00	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 NB-QYRX-BB5Z	X004A0A7IH	B0057H296Y	Earthborn Holistic Chicken Catcciatori Grain-Free Moist Cat Food 5.5 Ounce (Pack of 24)	New	66.52	No		Yes	1	0	0	1	1	0.29	0	0	0	0	0	0
 ND-SFYM-YPLK	X00462PO6T	B00U38HPX4	Softsoap Body Wash, Juicy Pomegranate and Mango Infusions 18 fl oz(pack of 2)	New	15.00	No		Yes	43	41	1	1	43	0.1	0	0	0	0	0	0
 NE-WZUW-PQAE	X003YOD601	B00016WW8Q	Dickinson's T.N. Astringent, 100% Natural, Witch Hazel & Aloe, 16 Fl Oz	New	12.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
-NF-0CSX-3ON9	X0041X2J3T	B092SQ3751	VL Goldenfeast Amazon Blend, 3 lb Bag	New	22.50	No		Yes	73	68	0	4	73	0.19	0	0	0	1	0	0
+NF-0CSX-3ON9	X0041X2J3T	B092SQ3751	VL Goldenfeast Amazon Blend, 3 lb Bag	New	22.50	No		Yes	73	64	0	8	73	0.19	0	0	0	1	0	0
 NF-FFWM-3RZ9	X003Y53J9N	B0054QW8E6	Laguna Once-A-Year Mini Fertilizer Spike, Aquatic Plant - 6-Pack	New	4.61	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 NG-CFJT-LKX9	X0048LE0EP	B00CYDEARU	Zoo Med Aquatic Turtle UVB Heat Lighting Kit	New	50.49	No		Yes	0	0	0	0	0	0.3	0	0	0	0	0	0
 NH-AKVF-BHX6	X0044LD4M3	B000WUFCY2	Tea Tree Therapy Toothpicks, Cinnamon, 100 Count	New	7.00	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
@@ -1280,14 +1280,14 @@ NO-QEMB-DQUV	X0043CXNUB	B01M35YEK6	Durvet 3 Bottles of Chlorhexidine Solution, 1
 NP-CI6N-7BRR	X003ZDVVY9	B07LCXK2Y3	Robitussin Adult Cough + Chest Congestion DM Liquid Sugar-Free - 4 oz, Pack of 2	New	24.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 NS-72NW-KPVX	X0042TOUI9	B001E96Q40	Viactiv Calcium (500mg) plus Vitamins D & K, Milk Chocolate, 90-Count Soft Chews (Pack of 2)	New	37.00	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 NS-NW7Z-XOUR	X003YFSSKX	B01K26GSKC	(3 Pack) Probios Probiotic Treats For Horses, Apple Flavor, 1 Pound Each	New	49.99	No		Yes	0	0	0	0	0	0.4	0	0	0	0	0	0
-NT-8WX6-11H1	X0048UZDK1	B00BIO560G	Jack's Classic 20-20-20 All Purpose Water-Soluble Fertilizer with Micronutrients to Provide General Growth on All Plants, 1.5lbs	New	18.14	No		Yes	305	97	0	207	337	0.09	30	0	2	1	0	1
+NT-8WX6-11H1	X0048UZDK1	B00BIO560G	Jack's Classic 20-20-20 All Purpose Water-Soluble Fertilizer with Micronutrients to Provide General Growth on All Plants, 1.5lbs	New	18.23	No		Yes	303	98	0	204	335	0.09	30	0	2	1	0	1
 NT-LGW9-R82Y	X003YJTXNP	B001ET76VM	Speed Stick Power Antiperspirant Deodorant for Men, Unscented - 3 Ounce, Pack Of 6 (Packaging May Vary)	New	24.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 NT-WSYP-CWKC	X003Y3DTT5	B07KPB66DL	ZuPreem Pure Fun Bird Food for Large Birds, 2 lb (Pack of 2) - Variety Blend of Fruit, FruitBlend Pellets, Vegetables, Nuts for Amazons, Macaws, Cockatoos	New	36.68	No		Yes	0	0	0	0	0	0.19	0	0	0	0	0	0
 NU-LM20-C5LU	X004A0EZYT	B00JDWG4HY	Dettol Anti-Bacterial Bar Soap, Re-Energize Fresh, 110 Gr / 3.88 Oz (Pack of 12)	New	23.70	No		Yes	18	9	0	9	18	0.09	0	0	0	0	0	0
 NW-0IZ9-5HB7	X0046JLE7F	B005799UUK	Redbarn All-Natural 4-6" Bully Springs Sticks for Dogs - Premium Grain-Free Single Ingredient Boredom Busting Dental Chew Rawhide Alternative - 3 Count	New	24.99	No		Yes	0	0	0	0	72	0.1	72	0	0	0	0	0
 NX-05P2-7VAV	X003UUPYKJ	B07QDBQ7CH	PERT 2-in-1 Hydrating Shampoo and Conditioner 33.8oz With Pump (1 PACK)	New	20.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 NX-PWZV-QRTS	X0041JFNNL	B07JN8LMJ1	Chuckit! Dog Ball Launcher, Sport 14S - 2PK	New	21.04	No		Yes	0	0	0	0	0	0.34	0	0	0	0	0	0
-NX-Y1AO-1LMP	X0046RMUDJ	B007B4XFUU	Zoo Med Tortoise Cacium Banquet Block with Cactus & Vegetables (Pack of 1)	New	7.99	No		Yes	7	2	0	5	53	0.03	46	0	0	0	0	3
+NX-Y1AO-1LMP	X0046RMUDJ	B007B4XFUU	Zoo Med Tortoise Cacium Banquet Block with Cactus & Vegetables (Pack of 1)	New	7.99	No		Yes	7	0	0	7	53	0.03	46	0	0	0	0	3
 NY-2FD2-B5X6	X0046RGRXX	B07CYW8PTR	Purina Fancy Feast with Savory Chicken & Turkey Dry Cat Food, 16 OZ	New	17.99	No		Yes	0	0	0	0	0	0.31	0	0	0	0	0	0
 NY-WIQU-2ZYG	X0043MJ36T	B00DJITPR4	Avon Perfumed Skin Softener - Imari (2 Packs)	New	11.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 O0-60D9-2GP4	X0046JQ3RV	B000633Y4A	Redbarn Large Filled Bone (Peanut Butter, 1 Bone)	New	12.99	No		Yes	45	28	0	17	45	0.02	0	0	0	0	0	0
@@ -1299,15 +1299,15 @@ O4-3AXV-HKSO	X003Z701YB	B00N648M66	Desert Essence Coconut Shampoo & Conditioner 
 O5-2KEG-TD30	X0041WVCX3	B075MNVW24	Whimzees 2 Pack of Stix Grain-Free Dental Dog Treats, 7 Large Chews Each	New	29.00	No		Yes	1	0	0	1	1	0.16	0	0	0	0	0	0
 O5-PB63-JDZP	X003ZXV1CV	B07TQJH8QY	Johnson's Baby Powder, 200g	New	10.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 O6-CDMV-THAB	X004270PT9	B074M77FBY	Homax 41072051033 Self-Adhesive Wall Guard, White, 3-1/4"	New	9.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-O6-OW3S-WMBB	X003YHDZOZ	B07P89D66J	Activ Beta by Natures Ocean, Instant Water for Betta and All Fresh Water Fish- BIO ACTIV Live AQUEOUS Solution- 1 Gallon	New	17.99	No		Yes	380	144	0	236	380	0.25	0	0	0	0	0	0
+O6-OW3S-WMBB	X003YHDZOZ	B07P89D66J	Activ Beta by Natures Ocean, Instant Water for Betta and All Fresh Water Fish- BIO ACTIV Live AQUEOUS Solution- 1 Gallon	New	17.99	No		Yes	380	159	0	221	380	0.25	0	0	0	0	0	0
 O8-78KC-VIIN	X0041X2N0N	B000HHO5OS	Durvet 698468 Vitamins & Electrolytes for Livestock & Poultry 100G	New	11.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 O9-2RC5-9I4A	X003WM7FR5	B00GMO02LA	Soft Scrub Cleanser, Lemon, 24 oz-2 pk	New	19.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
 O9-MOJP-2XW8	X0046WEFTV	B003BCFRPC	Ramard Total Calm and Focus for Horses Supplement - Magnesium & Calming Formula for Horse Show, Training, & Performance Mental Alertness without Drowsiness, Show Safe, Perfect Prep for Horses 1 pack	New	67.99	No		Yes	17	16	0	1	17	0.06	0	0	0	0	0	0
-O9-OEI0-QIZH	X0044E2KCZ	B008RQ4NA2	Probios Horse Soft Chews, Apple Flavor, Net Weight 1.32 lbs(600 Grams)	New	21.99	No		Yes	20	18	0	2	20	0.14	0	0	0	0	0	0
+O9-OEI0-QIZH	X0044E2KCZ	B008RQ4NA2	Probios Horse Soft Chews, Apple Flavor, Net Weight 1.32 lbs(600 Grams)	New	21.99	No		Yes	20	19	0	1	20	0.14	0	0	0	0	0	0
 OB-XTMR-31NK	X0043FD1TV	B014HNOXZS	Dorco Tinkle Eyebrow Razors for Women, Dermaplane Razor 6 Razors, Eyebrow Trimmer Dermaplaning Tool for Safe and Easy Thanksgiving Gift, Stocking Stuffer	New	5.80	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 OD-56K8-G26B	X003ZS4OPH	B0785SFRPT	Checkups- Dental Dog Treats, 24ct 48 oz. for Dogs 20+ pounds 2 Pack akj	New	40.99	No		Yes	388	386	0	2	388	0.42	0	0	0	0	0	0
 OD-WSBT-LTZU	X003XXPL0V	B00Q5HJR4M	Natural Balance L.I.T. Sweet Potato and Venison Formula Dog Treats, Small Breed, 16-Ounce (2 Packs 8-Ounce each)	New	20.95	No		Yes	0	0	0	0	127	0.14	127	0	0	0	0	0
-OD-ZS18-6F64	X004603Y9Z	B077YPPJN2	(3 Pack) Feline Greenies SMARTBITES Hairball Control, Chicken Flavor (4.6 oz Per Pack)3	New	18.11	No		Yes	37	24	0	12	46	0.09	0	0	9	1	0	1
+OD-ZS18-6F64	X004603Y9Z	B077YPPJN2	(3 Pack) Feline Greenies SMARTBITES Hairball Control, Chicken Flavor (4.6 oz Per Pack)3	New	16.99	No		Yes	37	23	0	13	46	0.09	0	0	9	1	0	1
 OE-XY8J-8UPW	X003Y76GL9	B07VXMJ266	Primer Assembly with Cover for 07 Series Filter A20126	New	19.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 OG-F3B1-ZOE7	X003YQCHF9	B017O9TAXM	Standard Disposable Paper Cupcake Liners / Baking Cups For Housewarming, 60-ct / Box (Pack of 4)	New	22.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 OH-6BV3-CASG	X0046TUZC5	B07SJVR8RB	Supreme Petfoods 3 Pack of Selective Naturals Meadow Loops, 2.8 Ounces each, with Timothy Hay and Thyme	New	15.99	No		Yes	93	92	0	1	93	0.08	0	0	0	0	0	0
@@ -1418,7 +1418,7 @@ PJ-5	X003PZ0D05	B07JB46ZYL	Fixodent Ultra Max Hold Dental Adhesive (2.2 oz. 3 pk
 PJ-6	X003PZ9GKD	B00QJ7YMDO	Luvs with Ultra Leak Guards Diapers, Size 1, 48 Count	New	25.99	No		Yes	0	0	0	0	0	0.25	0	0	0	0	0	0
 PJ-9O2U-UWHH	X0048LE1JJ	B07SLDF7F1	Zoo Med Repti Basking Spot Lamp Replacement Bulb 150 Watts - Pack of 4	New	40.09	No		Yes	0	0	0	0	60	0.24	60	0	0	0	0	0
 PK-IDMB-SGXI	X0046RMTRL	B015HU2HF8	(2 Pack) Zoo Med Reptisun 10.0 Uvb Mini Compact Fluorescent	Unknown					0	0	0	0	0	0.06	0	0	0	0	0	0
-PL-5V56-AFIG	X0047D1IHL	B09N7XXGXH	Household OxiClean Laundry Stain Remover Bundle Pack	New	23.99	No		Yes	1	0	1	0	29	0.12	0	0	28	0	0	0
+PL-5V56-AFIG	X0047D1IHL	B09N7XXGXH	Household OxiClean Laundry Stain Remover Bundle Pack	New	23.99	No		Yes	2	0	2	0	30	0.12	0	0	28	0	0	0
 PL-69PO-5XPG	X0048I0SFN	B09C6PJXXR	Northwest Naturals Raw Rewards Freeze-Dried Beef Liver Treats for Dogs and Cats - Bite-Sized Pieces - Healthy, 1 Ingredient, Human Grade Pet Food, All Natural - 10 Oz (Pack of 3) (Packaging May Vary)	New	79.99	No		Yes	0	0	0	0	0	0.53	0	0	0	0	0	0
 PL-QCFD-DFBC	X003ZSQ5QX	B004Q3QQNC	Terro 1806 Outdoor Liquid Ant Baits, 1.0 fl. oz. - 6 count	New	28.99	No		Yes	0	0	0	0	0	0.36	0	0	0	0	0	0
 PL-UW28-7NMX	X00427915X	B07PML81JN	Surrender Fire Ant 1lb	New	39.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
@@ -1431,7 +1431,7 @@ PO-RJ3L-WW0D	X0049SOQFP	B000NUES82	Ford Genuine Ford Fluid XT-M5-QS Full Synthet
 PO-T9BS-IGWC	X0047NTM0B	B005LD2C98	Gumout 800002230 Carb and Choke Cleaner, 16 oz.	New	13.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 PP-8PXG-CLTK	X0044NFO29	B07NTW1HQL	MICE BAIT STATION 3CT	New	38.99	No		Yes	0	0	0	0	0	0.29	0	0	0	0	0	0
 PQ-SQPP-A81Y	X00460B7X5	B071SFNLWK	Greenies Feline SMARTBITES Hairball Control Chicken For Cat (9.2 oz)	New	15.99	No		Yes	70	65	0	0	70	0.08	0	0	0	5	0	0
-PR-CX4X-WJPI	X0043WSSP1	B079C64HD7	Skout's Honor Probiotic Pet Shampoo & Conditioner with Avocado Oil & Omega-3s, 97% Natural, Paraben & Sulfate-Free, Cruelty-Free, 16oz, Lavender	New	19.80	No		Yes	85	45	24	16	86	0.03	0	0	1	0	0	60
+PR-CX4X-WJPI	X0043WSSP1	B079C64HD7	Skout's Honor Probiotic Pet Shampoo & Conditioner with Avocado Oil & Omega-3s, 97% Natural, Paraben & Sulfate-Free, Cruelty-Free, 16oz, Lavender	New	21.47	No		Yes	85	45	24	16	86	0.03	0	0	1	0	0	60
 PR-JZXL-GH1W	X00423524B	B072C5VWDM	RID-X Septic Treatment, 3 Month Supply of Septi-Pacs, 3.2 oz (Pack of 2)	New	29.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 PT-9SNC-NU3X	X0049M54RZ	B0BLR4JDDS	Fertilome (16076) Spinosad Soap Insecticide Ready to Use, Spinosad Bagworm, Tent Caterpiller & Chewing Insect Killer, OMRI Listed (32 oz.)	New	18.99	No		Yes	170	116	0	54	171	0.1	0	0	1	0	0	0
 PT-C3VJ-MA9U	X0046W9YH9	B078YHDQJK	DURVET 2251030 Iron Dextran	New	18.99	No		Yes	66	39	0	27	66	0.01	0	0	0	0	0	0
@@ -1459,7 +1459,7 @@ QD-Z590-LJ9H	X00467SZE7	B07B17J77N	CEVA Animal Health TRP-Tri-COX Soft Chews - J
 QE-70Y4-ZNJ4	X003YSA46L	B01DUYIF8G	Ponds Clarant B3 Cream 7 Ounce (207ml) (3 Pack)	New	27.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 QE-CZNY-VCLO	X0049M561T	B00FRJTTN8	Fertilome (11247) Triple Action RTS (32 oz)	New	50.80	No		Yes	31	22	0	9	31	0.07	0	0	0	0	0	0
 QE-LM7C-6T2V	X0041WTMXP	B0009YUJ8A	Pretty Bird Natural Gold Medium Bird Food, 2.6 Lb.	New	21.99	No		Yes	0	0	0	0	43	0.29	43	0	0	0	0	0
-QE-LNN9-JHPC	X00452EBCN	B079XZTXYV	Higgins Sunburst Fruits & Veggies Gourmet Treats for Small Birds (2 Pack)	New	8.99	No		Yes	367	164	0	203	367	0.02	0	0	0	0	0	0
+QE-LNN9-JHPC	X00452EBCN	B079XZTXYV	Higgins Sunburst Fruits & Veggies Gourmet Treats for Small Birds (2 Pack)	New	8.99	No		Yes	367	177	0	190	367	0.02	0	0	0	0	0	0
 QE-T7EI-GWLO	X0042TL2JJ	B09RJMYSL9	VetOne VetraSeb CeraDerm P Conditioning Shampoo 16oz	New	31.43	No		Yes	0	0	0	0	36	0.02	36	0	0	0	0	0
 QE-VHN5-F22M	X004BG1POZ	B07D6TNCRC	Van Der Hagen Shave Butter- Best Shave 3 pack (6 oz/tube)	New	20.87	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 QF-F2VL-JMWW	X0046TT7CT	B012BSPHS8	VetOne O3 Omega Soft Gel for Cats & Small Dogs - Essential Fatty Acid Support - Skin & Coat Supplement - 60 Capsules	New	17.20	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
@@ -1467,13 +1467,13 @@ QG-LX4T-GCQN	X00449CMYL	B001O4VGYA	Fiebing's White Saddle Soap for Leather (12 o
 QG-T7K5-PKE2	X004962AJB	B09QSQ1H9D	Weruva, The Suppertime Sweepsteaks Variety Pack Canned Cat Food Paté, 3 Ounce, 12 Count	New	30.98	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 QH-SBW7-62XI	X0046WEGE5	B00H359MU4	MiconaHex+ Triz Shampoo for Dogs, Cats and Horses, 16 fl oz,Cream	New	44.99	No		Yes	0	0	0	0	1	0.02	0	1	0	0	0	0
 QJ-FAL1-4QUR	X004A1CQML	B00KGH107O	Fertilome (10363) Fire Blight Spray (2oz)	New	18.99	No		Yes	3	3	0	0	3	0.01	0	0	0	0	0	0
-QJ-QMPV-LZXO	X004AA6BM3	B07622BLD9	Apexa Pyrantel Pamoate Suspension, 50mg / mL, 16 Ounce	New	27.99	No		Yes	297	216	0	81	297	0.04	0	0	0	0	0	0
+QJ-QMPV-LZXO	X004AA6BM3	B07622BLD9	Apexa Pyrantel Pamoate Suspension, 50mg / mL, 16 Ounce	New	27.99	No		Yes	297	215	0	82	297	0.04	0	0	0	0	0	0
 QK-ALFH-VHGD	X003YHEICX	B000SWVKAE	Celtic Sea Salt, Fine Ground Shaker, 8 oz	New	14.94	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 QK-HD9G-JMU8	X003YJYJOX	B00CH7QIX2	Old Spice Deo Stick Wolfthorn 1 x 50 ml	New	10.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 QL-YKEK-ZACB	X0044SL4U5	B084KQ7S4W	ZuPreem PastaBlend Bird Smart Pellets Food for Large Birds, 3 lb bag - Made in The USA, Daily Nutrition, Essential Vitamins, Minerals, for Amazons, Macaws, Cockatoos	New	23.80	No		Yes	0	0	0	0	0	0.22	0	0	0	0	0	0
 QM-GVPB-2CA1	X003YQCJIT	B01253KPFY	2 x PaperChef Parchment Cup Large, 60 ct	New	13.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 QM-JGV5-Y42V	X004680RYR	B0B9ZBWLT1	Dove Body Love Body Cleanser Acne Clear 4 Count For Acne-Prone Skin Body Wash with Salicylic Acid and Bamboo Extract 17.5 fl oz	New	29.99	No		Yes	88	57	2	26	90	0.19	0	0	2	3	0	0
-QM-KQJ6-4Y92	X003YOTP15	B09PM8JHJ7	Open Farm Dehydrated Chicken Dog Treats, 4.5 oz	New	15.34	No		Yes	11	10	0	1	11	0.07	0	0	0	0	0	0
+QM-KQJ6-4Y92	X003YOTP15	B09PM8JHJ7	Open Farm Dehydrated Chicken Dog Treats, 4.5 oz	New	14.95	No		Yes	11	10	0	1	11	0.07	0	0	0	0	0	0
 QN-NJW4-R6GO	X004AP2DWF	B075ZQS5DG	API Powder General Cure 20 pack	New	27.02	No		Yes	0	0	0	0	10	0.05	10	0	0	0	0	0
 QO-G4P0-0J38	X0046E1MFJ	B07B2DWSYT	Ruff Dawg DAWGNUTXL Extra Large Dawgnut dog toy, (Color may vary)	New	20.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 QP-ES8Z-9TAA	X0043SVLNL	B0037Z6VK8	Veterinary Formula Clinical Care Antiparasitic & Antiseborrheic Medicated Dog Shampoo, 16 oz – Paraben, Dye, Soap Free – Hydrating and Antifungal Shampoo for Dogs, White	New	19.79	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
@@ -1493,7 +1493,7 @@ R0-ETMC-PACZ	X0041WOZOV	B092SX2MMN	Goldenfeast VL Caribbean Blend, 3 lb Bag	New	
 R0-V5US-TGPH	X0044IZTB5	B09BCHMGJP	Van Beek Natural Science Synacore Canine - All Natural Formula to Provide Immune Support for Dogs & Help Maintain Digestive Health - Probiotics and Vitamins for Dogs - Pet Products - (30 Count)	New	40.99	No		Yes	35	34	0	1	35	0.06	0	0	0	0	0	0
 R3-HIK3-7HO3	X0046VERVN	B07B5SJ65T	Stella & Chewy's, Cage-Free Duck Recipe Raw Coated Kibble Dry Dog Food, 3.5 Pound	New	28.50	No		Yes	26	26	0	0	26	0.22	0	0	0	0	0	0
 R5-TZ7P-RUD7	X00493V86F	B004PA5QB4	Eco Style Moroccan Argan Oil Styling Gel - Promotes Healthy Hair - Nourishes And Repairs Hair - Delivers Long Lasting Shine - Provides Maximum Hold and Helps Tame Frizz - Ideal For All Hair - 80 oz	New	4.00	No		Yes	24	0	0	24	28	0.21	0	4	0	0	0	0
-R5-YWHX-U9ZP	X0044LITD7	B005SRVNRO	Mop & Glo Triple Action Floor Shine-32 oz	New	13.50	No		Yes	0	0	0	0	300	0.07	300	0	0	0	0	299
+R5-YWHX-U9ZP	X0044LITD7	B005SRVNRO	Mop & Glo Triple Action Floor Shine-32 oz	New	13.50	No		Yes	0	0	0	0	300	0.06	300	0	0	0	0	299
 RC-F23P-6C8G	X0042DYRGF	B0792QP69H	Softish Throat Drops Natural Honey - 30 Count, Pack of 6	New	35.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 RC-IPAQ-RLC3	X004ARCXB9	B07GRH31RY	Natural Balance Limited Ingredient Diets Mini Rewards Soft and Chewy Dog Treats (Salmon, 3 Pack / 5.3-Ounces Each)	New	22.29	No		Yes	0	0	0	0	40	0.06	40	0	0	0	0	0
 RD-UE1C-J7AU	X004BE13ML	B07RBS6DQ6	16529606861 Bathroom Cleaner Spray, 17-oz. - Quantity 1	New	12.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
@@ -1513,7 +1513,7 @@ RI-W9Z7-7WAI	X00467SWQ3	B0CF3T24QT	Zoo Med Axolotl & Aquatic Newt Food, 11 oz.	N
 RI-Z40T-60LO	X0045QBYLP	B0057H28JW	Earthborn Holistic Chicken Catcciatori Grain-Free Moist Cat Food 3 Ounce (Pack of 24)	New	44.99	No		Yes	9	9	0	0	9	0.32	0	0	0	0	0	0
 RK-EP9H-UJDJ	X0048NNJ9F	B0BWBMGPDZ	Vital Essentials Freeze Dried Raw Single Ingredient Cat Treats, Chicken Hearts, 0.8 OZ	New	6.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 RK-ZVX8-V4R7	X00420NBOR	B008L3761O	Ultra Brite Advanced Whitening Anticavity Fluoride Toothpaste, Clean Mint Flavor, 6 oz. (Pack of 12)	New	31.99	No		Yes	0	0	0	0	0	0.31	0	0	0	0	0	0
-RM-GJ4M-7JFY	X0046X5YGX	B01NCUO6LI	Nair Hair Remover Lotion Cocoa Butter & Vitamin E 255g by Nair	New	7.43	No		Yes	391	106	0	283	391	0.03	0	0	0	2	0	0
+RM-GJ4M-7JFY	X0046X5YGX	B01NCUO6LI	Nair Hair Remover Lotion Cocoa Butter & Vitamin E 255g by Nair	New	7.43	No		Yes	390	106	0	282	390	0.03	0	0	0	2	0	0
 RM-Z017-S33Q	X0040QMLWB	B007TU9COE	Higgins Mayan Harvest Yucatan Food Mix for Cockatiels, Lovebirds & Conures, 3 lbs.	New	19.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
 RO-37N6-2Y9U	X003WNMC1N	B06XRBBVBG	Dove go fresh Refreshing Body Wash Revitalizes and Refreshes Skin Cucumber and Green Tea Effectively Washes Away Bacteria While Nourishing Your Skin 12 oz	New	9.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 RO-DX6U-HCG1	X0040BNRDX	B00LI3LF1G	Degree Men Anti-Perspirant & Deodorant, Cool Comfort 2.7 Ounce (Pack of 3) packaging may vary	New	10.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
@@ -1521,26 +1521,26 @@ RO-QEGD-GZZ4	X0042TEB47	B003JRZ4RU	ONE Touch ULTRA2 System KIT Size: 1	New	42.00
 RO-REJM-X2IQ	X00479TFED	B01BX8MSM0	Toyota Oil Filter 3-Pack with Gaskets Genuine OE OEM 90915-YZZD3 & 90430-12031	New	27.45	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 RP-68RQ-YP4A	X00485W5WZ	B0013N3S8E	Cloud Star Soft & Chewy Buddy Biscuits - Peanut Butter Flavor - 6Oz.	New	12.49	No		Yes	35	35	0	0	56	0.04	0	0	21	0	0	0
 RP-NHVF-T0SI	X0041X27YZ	B018LBPBDA	Redbarn Grain Free 3lb Dog Food Roll - Beef -(1-Count)	New	25.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-RQ-OE3N-55NC	X0042TMON7	B06W53ZLTK	CONTOUR NEXT ONE Blood Glucose Monitoring System	New	30.24	No		Yes	245	219	2	24	266	0.05	0	0	21	0	0	0
+RQ-OE3N-55NC	X0042TMON7	B06W53ZLTK	CONTOUR NEXT ONE Blood Glucose Monitoring System	New	30.22	No		Yes	245	219	2	24	266	0.05	0	0	21	0	0	0
 RQ-X3NY-O0IP	X0048XXYEF	B01LVWREWJ	MARTIN'S 825686 s Pen Poultry Insecticide Spray 32oz QUART, 1 Count (Pack of 1), White Bottle	New	21.00	No		Yes	96	34	0	62	114	0.14	0	0	18	0	0	0
 RQ-XFQN-KIRX	X0046U2DKL	B075X22RQK	Bag Balm Ointment, 8 Oz.	New	15.99	No		Yes	26	11	0	1	122	0.01	96	0	0	14	0	94
 RR-WYUM-YU0G	X0044LIVIF	B00TPPNU94	Temptations 3 Pack of Classic Cat Treats, 6.3 Ounces each, Tasty Chicken Flavor	New	19.99	No		Yes	7	0	7	0	7	0.06	0	0	0	0	0	0
 RS-MII2-7BJ7	X003UE3BUZ	B00S3FODFC	Greenies 3 Pack of Feline Chicken Flavored Pill Pockets, 1.6 Ounces Per Pack	New	17.99	No		Yes	0	0	0	0	107	0.06	107	0	0	0	0	0
 RV-1S6V-FYU9	X004721YCL	B07V4P6ZNN	Taste of the Wild Ancient Wetlands Canine Recipe with Roasted Fowl and Ancient Grains 5lb	New	22.99	No		Yes	144	135	0	2	144	0.33	0	0	0	7	0	0
 RV-6XKQ-B6UR	X0042TLE0L	B001EAYDM6	Diagel Diarrhea Control Gel for Dogs (Large) 5 mL Syringe	New	26.00	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
-RV-LYLG-R4N6	X003TJ7OGN	B01BSZNYQM	Temptations Treats for Cats Bundle: Seafood Medley (16 oz) and Tasty Chicken (16 oz)	New	22.78	No		Yes	286	275	0	11	286	0.17	0	0	0	0	0	0
+RV-LYLG-R4N6	X003TJ7OGN	B01BSZNYQM	Temptations Treats for Cats Bundle: Seafood Medley (16 oz) and Tasty Chicken (16 oz)	New	22.78	No		Yes	286	274	0	12	286	0.17	0	0	0	0	0	0
 RV-M9WG-X60T	X0045YQNPT	B06WV6TDG9	Piscine Energetics PE Pellets Saltwater Fish Food, 1mm 2 oz/ 56g (Pouch)	New	10.00	No		Yes	1	0	0	1	1	0.01	0	0	0	0	0	0
 RX-YID9-R1XD	X004BABZ6T	B000POWDJM	American Health Dietary Fiber Supplements, Tam Herbal Laxative, 250 Count	New	22.26	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 RY-MT5O-AOVR	X003SA1PNL	B07RYXPC5Z	Milk Products Llc Sav-A-Chick 18 Pack of Electrolyte and Vitamin Supplement for Poultry6	New	14.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 RY-SVKB-EJAH	X004BA3FX5	B003LZTZKW	Herpecin L Real Relief from Real Medicine 0.1 Oz (Pack of 5)	New	28.41	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 RZ-3SWC-AP9D	X0040BD2FB	B005DL7KEA	Redbarn All-Natural 4" Bully Stick Rings for Dogs - Premium Grain-Free & Rawhide-Free Single Ingredient Long Lasting Low Odor Dental Treat for Chewers - 3 Count	New	29.50	No		Yes	26	25	0	1	204	0.07	170	0	8	0	0	0
-RZ-NM41-O55E	X003S9S3VJ	B01K27VJ8C	Sav-A-Chick 9 Pack of Electrolyte and Vitamin Supplement Strip for Poultry , Birds, Chickens, Ducks, Turkeys	New	11.75	No		Yes	121	43	1	77	121	0.01	0	0	0	0	0	0
+RZ-NM41-O55E	X003S9S3VJ	B01K27VJ8C	Sav-A-Chick 9 Pack of Electrolyte and Vitamin Supplement Strip for Poultry , Birds, Chickens, Ducks, Turkeys	New	11.68	No		Yes	121	43	1	77	121	0.01	0	0	0	0	0	0
 RZ-O1AS-BKFL	X00492JW9B	B0829NCPYM	Omega 3 Fish Oil Liquid - Nutritional Fatty Acids EPA & DHA, Omega 3 for Dogs & Cats, Builds Immune & Joint Health, Skin and Coat Supplement for Dogs, Cat Vitamins, 8 oz Omega 3 Liquid - VetOne	New	18.99	No		Yes	0	0	0	0	7	0.05	0	0	7	0	0	0
 S1-VFNS-3EI5	X003Z6DBPN	B07N32DSFV	Gilmour Solid Metal Hose Spray Nozzle with Threaded Front - Garden Watering - 573TF, 4 Pack	New	26.99	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 S3-IHBC-LHA4	X004AA9X41	B000RI63N8	For-Bid for Dogs and Cats | Stool Eating & Coprophagia Deterrent | Dog & Cat Food Powder Additive to Prevent Dogs from Eating Poop | Safe for Your Pets | Vet Recommended Formula for Anti-Coprophagia	New	22.99	No		Yes	27	25	0	2	27	0.01	0	0	0	0	0	0
 S6-KVRY-DB6B	X00466BLZX	B019QBG0AC	Durvet 698920 Levamed Soluble Pig Wormer, 20.17g	New	23.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 S7-D4EI-INXW	X00486QF6L	B09WZDTH79	St. Ives Blackhead Clearing Face Scrub, Clears Blackheads & Unclogs Pores, Green Tea & Bamboo, Salicylic Acid Acne Treatment Facial Scrub, Moderate Exfoliator with Natural Exfoliants 6 oz, 6 Pack	New	27.99	No		Yes	11	11	0	0	11	0.11	0	0	0	0	0	0
-S7-OKTY-XWKG	X0048LVBDN	B00GYCEH1Q	Natural Cork Background in 12 X 18	New	21.50	No		Yes	4	4	0	0	32	0.15	0	0	28	0	0	0
+S7-OKTY-XWKG	X0048LVBDN	B00GYCEH1Q	Natural Cork Background in 12 X 18	New	21.51	No		Yes	4	4	0	0	32	0.15	0	0	28	0	0	0
 S8-0RGS-74S8	X00467SX9J	B00UPCV9YO	Redbarn Filled Dog Bones | Natural Long-Lasting Dental Treats; Suitable for Aggressive Chewers | Large (6") - 5 Bones (Cheese N' Bacon)	New	39.99	No		Yes	16	16	0	0	26	0.13	10	0	0	0	0	0
 S8-LZ2F-8SKA	X0046UGATB	B013JM76YS	LIQUI MOLY Special Tec AA SAE 5W-20 | 5 L | Synthesis technology motor oil | SKU: 2259	New	41.99	No		Yes	1	0	0	1	177	0.19	0	176	0	0	0	120
 S8-Q0QJ-HGZ8	X003YSAO4X	B07R8WVJ1C	ACANA 3 Pack of Beef and Pumpkin Dog Treats, 3.25 Ounces Each, Freeze-Dried Raw Single-Source Protein	New	35.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
@@ -1551,12 +1551,12 @@ SB-95PL-SCY0	X0046RUXCT	B004IN7DO6	Beggin' Strips Bacon & Beef Flavors Dog Treat
 SB-IRDZ-GJ6L	X0046ITQ21	B00BS94ZJE	Aquarium Pharmaceuticals 93B Bettafix Remedy, 1.7 oz.	New	7.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 SB-RIKZ-CPGR	X00490VI9P	B01HYIK5H8	NEOGEN RODENTICIDE (2 Pack) Ramik Mouse and Rat Nuggets Pouch (4 Pounds Per Pack)	New	48.91	No		Yes	0	0	0	0	60	0.48	0	60	0	0	0	0
 SC-5YVB-0UQV	X0043CVDZN	B00LRKS0FE	Lafebercares Avi-Cakes [Set of 2] Size: 7"	New	25.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
-SC-89B0-A1T1	X0044DE5W9	B06X1937K5	Sheba Perfect Portions Cuts in Gravy Multipack Salmon & Tuna Wet Cat Food 2.6 oz.	New	22.58	No		Yes	68	2	1	61	305	0.1	224	0	13	4	0	0
+SC-89B0-A1T1	X0044DE5W9	B06X1937K5	Sheba Perfect Portions Cuts in Gravy Multipack Salmon & Tuna Wet Cat Food 2.6 oz.	New	22.08	No		Yes	67	0	1	62	304	0.1	224	0	13	4	0	0
 SE-M65D-EA61	X004962CXF	B00FSI2EQC	Jack's Classic 17-6-6 Acid Special Water-Soluble Fertilizer with Micronutrients to Promote Vegetative Growth and Blooms in Acid Loving Plants, 1.5lbs	New	17.99	No		Yes	109	56	0	53	109	0.07	0	0	0	0	0	0
 SE-NUXD-GI1Y	X0041XD1WH	B00OC213DA	Nutri-Vet Aspirin Chewables for Large Dogs, 75 Count, Pack of 2	New	19.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 SE-OGNZ-PM9A	X0049K6F9D	B07RCBJB36	WD-40 Specialist Silicone Spray Smart Straw, 300012, 11 Oz	New	31.40	No		Yes	0	0	0	0	6	0.06	6	0	0	0	0	0
 SF-8TCX-QVOZ	X003X1NT3T	B00MUEGNT6	Tom's of Maine Antiplaque Tartar Control plus Whitening Toothpaste Trial Size, Peppermint - 1 oz - 2 pk	New	9.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-SF-EDI8-CUA1	X003ZXKLV3	B001EWEP3Q	Mitchum Men Gel Antiperspirant Deodorant, Sport, 2.25 Ounce (Pack of 6)	New	21.40	No		Yes	110	0	0	110	110	0.05	0	0	0	0	0	0
+SF-EDI8-CUA1	X003ZXKLV3	B001EWEP3Q	Mitchum Men Gel Antiperspirant Deodorant, Sport, 2.25 Ounce (Pack of 6)	New	21.40	No		Yes	107	0	0	107	107	0.05	0	0	0	0	0	0
 SH-XJKG-72WH	X0048ICCFR	B09C6QNMVC	Northwest Naturals Raw Rewards Freeze-Dried Pork Liver Treats for Dogs and Cats - Bite-Sized Pieces - Healthy, 1 Ingredient, Human Grade Pet Food, All Natural - 10 Oz (Pack of 3)	New	76.99	No		Yes	0	0	0	0	0	0.49	0	0	0	0	0	0
 SK-QAZV-BR1Y	X003S9RZIL	B0049K99RW	Blue Lotus Chai Tea - Traditional Masala Chai - Makes 100 Cups - 3 Ounce Masala Spiced Chai Powder with Organic Spices - Instant Indian Tea No Steeping - No Gluten	New	20.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 SK-WEPM-9MZE	X00452EH1X	B07P5P1Q98	Higgins 3 Pack of Sunburst Gourmet Natural Bird Treats, 5 Ounces Each, True Fruits Flavor, for Conures Parrots and Macaws	New	14.99	No		Yes	0	0	0	0	0	0.11	0	0	0	0	0	0
@@ -1565,15 +1565,15 @@ SM-491F-85XU	X0048O3RWD	B00BC46ZFW	NUTRO Crunchy Dog Treats with Real Apple, 10 
 SM-ANGS-DD9F	X004AP49J5	B016YGY2XE	Nutro Perfect Portions Grain Free Soft Loaf Cat Food 2 Flavor 8 Can Variety Bundle, (4) Each: Salmon & Tuna, and Chicken & Liver - 2.6 Ounces (8 Cans Total)	New	24.00	No		Yes	0	0	0	0	36	0.06	36	0	0	0	0	0
 SM-C3MW-LI6Q	X0048OU73F	B07KQZ6ZZ9	Stewart Freeze Dried Treats, yellow, 4.2 oz. (401718)	New	17.63	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 SM-MWRB-WBQG	X0044GUG4H	B07X3H3LW3	Colgate Colgate Total Advanced Whitening Toothpaste with Fluoride, Multi Benefit Toothpaste with Sensitivity Relief and Cavity Protection - 5.1 ounce (2 Pack), 5.1 Ounce (Pack of 2), 10.2 Ounce	New	15.99	No		Yes	0	0	0	0	1	0.05	0	1	0	0	0	0
-SO-3680-S4LD	X0040BG5X7	B000HHU8QC	Redbarn White Bone for Dogs, Large (1-Count)	New	8.99	No		Yes	65	52	0	11	265	0.03	200	0	0	2	0	0
+SO-3680-S4LD	X0040BG5X7	B000HHU8QC	Redbarn White Bone for Dogs, Large (1-Count)	New	8.99	No		Yes	65	54	0	9	265	0.03	200	0	0	2	0	0
 SO-VUT6-UQTY	X004BG5663	B08WCJ7FHR	PanOxyl Oil Control Daily Moisturizer, Mattifying Lightweight Facial Moisturizer, Shine Control, Non Comedogenic, Won’t Clog Pores, SPF 30, 1.7 Oz	New	20.14	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 SO-W8KZ-6AC7	X00472AHHT	B07V2K5WFX	Taste Of The Wild Ancient Stream Canine Recipe With Smoke-Flavored Salmon And Ancient Grains 5lb	New	28.99	No		Yes	0	0	0	0	0	0.34	0	0	0	0	0	0
 SP-23Q7-IFK3	X0048I0RYZ	B09C6QJH44	Northwest Naturals Raw Rewards Freeze-Dried Beef Liver Treats for Dogs and Cats - Bite-Sized Pieces - Healthy, 1 Ingredient, Human Grade Pet Food, All Natural - 3 Oz (Pack of 3) (Packaging May Vary)	New	34.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
-SP-47GD-JQ5M	X0048UZDF1	B009YOIABY	Jack's Classic 10-30-20 Blossom Booster Water-Soluble Fertilizer with Micronutrients for Increasing Color and Quantity of Blooms in Flowering Plants, 8oz	New	13.32	No		Yes	825	302	0	523	825	0.05	0	0	0	0	0	0
+SP-47GD-JQ5M	X0048UZDF1	B009YOIABY	Jack's Classic 10-30-20 Blossom Booster Water-Soluble Fertilizer with Micronutrients for Increasing Color and Quantity of Blooms in Flowering Plants, 8oz	New	13.27	No		Yes	825	318	0	507	825	0.05	0	0	0	0	0	0
 SP-HNVX-XNFC	X0049VJE1D	B00M4Q923E	Hikari Blood Red Parrot+ Fish Food, Medium Pellet, 11.7 oz. (333g)	New	23.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
 SS-69Y7-NEW1	X003U9BVRF	B00NFUCQ2M	Pantene Conditioner Daily Moisture Renewal 12 Ounce (2 Pack)	New	23.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 SS-MSDZ-T261	X003YFN9B1	B00IF4CL46	AniMed Vitamin E Powder Supplement for Horses, 2.5-Pound	New	24.99	No		Yes	0	0	0	0	60	0.08	0	60	0	0	0	0
-SS-SAD9-RXHJ	X0045MB72P	B017WJ9HHS	Vaseline Intensive Care Healthy Hands + Stronger Nails Hand Cream 75Ml - Pack of 2	New	6.51	No		Yes	471	118	0	351	575	0.02	0	0	104	2	0	0
+SS-SAD9-RXHJ	X0045MB72P	B017WJ9HHS	Vaseline Intensive Care Healthy Hands + Stronger Nails Hand Cream 75Ml - Pack of 2	New	6.53	No		Yes	471	117	0	352	575	0.02	0	0	104	2	0	0
 ST-985T-BWRR	X00446C00F	B01BDST9AY	Victor Rat Traps M326 (Pack of 4)	New	18.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 ST-XFBY-FHHX	X0046FR07R	B01IEM7QPW	Redbarn All-Natural Premium Rolled Dog Food, Chicken Recipe - Soft Semi-Moist Wet Formula for High Protein Diet, Training Rewards, & Treat Pill Concealer - 4 lb. (1 Count)	New	24.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
 SU-VHM6-D1P8	X0049K875N	B08CS1P8NJ	Idemitsu ATF Type HP Automatic Transmission Fluid for Subaru - 5QT	New	52.99	No		Yes	12	7	0	5	48	0.28	36	0	0	0	0	0
@@ -1596,7 +1596,7 @@ TB-JDSL-ZUA0	X0042II1VH	B08FXW584N	Parodontax Complete Protection Whitening Toot
 TC-CKM4-H2NK	X00479NNRD	B006MZM6UE	Voluntary Purchasing Group Fertilome 10864 Tree and Shrub Food, 19-8-10, 4-Pound	New	16.80	No		Yes	111	82	0	27	158	0.2	0	0	47	2	0	0
 TD-HSG7-ZI2W	X004960PK7	B07RQVY8R1	RESCUE! Big Bag Fly Trap – Disposable, Outdoor Use - 2 Traps	New	18.29	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
 TD-NG1T-SDAZ	X004B4JKQ7	B008RST90Y	Alcolado Glacial Mentholated Splash Lotion -8.4oz	New	11.99	No		Yes	0	0	0	0	72	0.03	72	0	0	0	0	0
-TE-45VK-V8YN	X0044Y3NYJ	B00119R20K	Suave Sculpting Gel, Max Hold 8, 9 oz.	New	7.00	No		Yes	119	40	0	79	119	0.03	0	0	0	0	0	0
+TE-45VK-V8YN	X0044Y3NYJ	B00119R20K	Suave Sculpting Gel, Max Hold 8, 9 oz.	New	7.00	No		Yes	119	38	0	80	119	0.03	0	0	0	1	0	0
 TF-NTLU-4HDQ	X001TZ0LQT	B07CG89TFG	2 Pack Malco Dual-Sided Reversible Hex Driver #MSHC	New	15.00	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
 TG-EKFS-088S	X00435HYCV	B075M4FK7R	NutriSource Dog Food, Made with Beef and Brown Rice, Wholesome Grains, 5LB, Dry Dog Food	New	28.99	No		Yes	55	41	0	11	63	0.31	0	0	8	3	0	0
 TG-IK8O-O5WN	X003WM0HDT	B00ON3AC3A	AniMed Histall-H to Support Respiratory Health in Horses, 20-Ounce…	New	36.99	No		Yes	0	0	0	0	114	0.09	0	114	0	0	0	0
@@ -1674,7 +1674,7 @@ UD-GVC9-29IU	X0046TQ8K3	B07KXJT152	Disney Encanto 219624 Disney Doll, Family Pac
 UD-KH4S-DIKW	X0045M4YKH	B09CW921BS	3 pack- Grace Cock Flavored Soup Mix - 1.76 OZ	New	8.99	No		Yes	1	0	0	1	1	0.02	0	0	0	0	0	0
 UD-SZDO-50U5	X004762NEZ	B00N2H6KQQ	Cutter All Family Mosquito Repellent Wipes, 15 Wipes, (Pack of 3)	New	22.99	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 UF-04G8-EHL0	X0040BM11R	B00E4MJHHC	Brut Splash-On Lotion Classic Fragrance, 7 oz., 2 Piece	New	22.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
-UG-0HOX-QMI4	X0047IPAZH	B00JDRWFF4	Jack's Classic 10-30-20 Blossom Booster Water-Soluble Fertilizer with Micronutrients for Increasing Color and Quantity of Blooms in Flowering Plants, 4lbs	New	32.64	No		Yes	170	45	0	124	170	0.18	0	0	0	1	0	0
+UG-0HOX-QMI4	X0047IPAZH	B00JDRWFF4	Jack's Classic 10-30-20 Blossom Booster Water-Soluble Fertilizer with Micronutrients for Increasing Color and Quantity of Blooms in Flowering Plants, 4lbs	New	32.64	No		Yes	170	44	0	125	170	0.18	0	0	0	1	0	0
 UG-1SY0-7PV2	X003YL25L5	B0BQCVC1DP	Brach's Nips Coffee 3.25 oz. Bag	New	9.99	No		Yes	3	0	0	2	421	0.02	384	0	34	1	0	0
 UJ-S4II-G4VS	X004455EPT	B01C3B82P8	Victor 100061105 TRAP-4/PACK Easy Set Mouse Trap (4 Pack)	New	8.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 UK-W85D-9WDS	X003Y2POFX	B000HHQ960	Durvet 01 0027 Biotin Daily Horse Hoof Care, 2.5 lb	New	23.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
@@ -1682,17 +1682,17 @@ UL-D3HI-I64G	X003YOXACP	B001EHGDRM	Polyplab - Reef-Roids- Coral Food For Faster 
 UL-MBZX-CNWL	X0048ZIYYN	B00JIS50W8	Sportin Waves Gel Pomade, 3.5 oz, 2 pk	New	11.99	No		Yes	123	53	0	70	123	0.03	0	0	0	0	0	0
 UL-R709-UZG5	X0045QBYKL	B0086VJ0S8	Earthborn Holistic Harbor Harvest Grain-Free Moist Cat Food (Case of 24)	New	64.99	No		Yes	0	0	0	0	0	0.28	0	0	0	0	0	0
 UN-PDCQ-EWJI	X00467VQJ3	B01FRFEKSA	Tricox Trp Joint Support by VetOne - 120 Soft Chews,	New	74.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-UO-3E3M-B3F4	X0040X7WH3	B01LW0EJUU	Duralactin Canine 1000mg 180ct Chewable Tabs for Dogs Vanilla Flavored	New	71.11	No		Yes	21	9	0	12	22	0.06	0	0	1	0	0	0
+UO-3E3M-B3F4	X0040X7WH3	B01LW0EJUU	Duralactin Canine 1000mg 180ct Chewable Tabs for Dogs Vanilla Flavored	New	71.13	No		Yes	21	7	0	14	22	0.06	0	0	1	0	0	0
 UO-7MN9-QSOA	X00451CFN1	B00G55TL7W	Higgins Intune Natural Hand Feeding Formula for All Baby Birds 10 Oz	New	10.91	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 UO-LZPN-TFMI	X004A83D67	B01BPG0X68	Dog quad dewormer	New	33.47	No		Yes	0	0	0	0	36	0.01	0	36	0	0	0	0
 UO-WC8M-BPIH	X00485GZN5	B07J3ZG4R6	NGK (3346) BR7EF V-Power Spark Plug (10 PACK)	New	33.40	No		Yes	34	33	0	1	34	0.02	0	0	0	0	0	0
 UP-HXOV-WMVE	X00467VPL7	B00AZOU4W0	Redbarn Bully Springs for Dogs (Pack of 12)	New	69.99	No		Yes	14	14	0	0	28	0.15	14	0	0	0	0	0
-UP-QVYJ-996D	X0042TIHCJ	B07KNBJHTP	Horse Shave - Disposable Grooming Razor. Easier, Safer, Better (6-Pack)	New	14.00	No		Yes	164	94	0	70	164	0.01	0	0	0	0	0	0
+UP-QVYJ-996D	X0042TIHCJ	B07KNBJHTP	Horse Shave - Disposable Grooming Razor. Easier, Safer, Better (6-Pack)	New	14.00	No		Yes	164	96	0	68	164	0.01	0	0	0	0	0	0
 UP-SVKI-VEJS	X0042CKLEN	B07CRHCSVB	Fruitables Baked Dog Treats Pumpkin & Apple Flavor (3 Pack) 7 oz Each	New	9.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 UQ-0BKM-KRCK	X0048LC817	B00B39QEDO	Reptisun 10.0 Uvb Mini Compact Fluorescent 13 Watt	New	17.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 UQ-ZBPZ-IOQT	X003YOTOXT	B00R1MJ4PW	Polyplab - Professional Reef-Roids - Coral Food for Faster Growth - 150g	New	28.99	No		Yes	52	52	0	0	52	0.04	0	0	0	0	0	0
 UR-FT7J-XG1B	X00485F1VR	B000B7RCLM	Champion Copper Plus Small Engine 863 (RCJ8Y) Pack of 1 (UPC 037551001125)	New	8.89	No		Yes	0	0	0	0	0	0	0	0	0	0	0	0
-US-BICJ-NOKP	X0043149ZF	B008DXYTGW	Vet One Ketohex Spray, 8 oz	New	15.99	No		Yes	126	29	0	97	126	0.01	0	0	0	0	0	0
+US-BICJ-NOKP	X0043149ZF	B008DXYTGW	Vet One Ketohex Spray, 8 oz	New	15.96	No		Yes	125	29	0	96	125	0.01	0	0	0	0	0	0
 US-EMSL-COUL	X0045YO30L	B0006G5M4W	Pretty Pets Premium Hedgehog Food 3 lb	New	20.80	No		Yes	14	7	0	7	14	0.22	0	0	0	0	0	0
 USTANDARD-1	X003V0GE1L	B003B6MTB8	Alaffia EveryDay Shea Body Wash - Naturally Helps Moisturize and Cleanse without Stripping Natural Oils with Shea Butter, Neem, and Coconut Oil, Fair Trade Vanilla Mint, 32 Fl Oz	New	19.98	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 USTANDARD-2	X003V0PM2X	B01JLVSDCA	Ampro Pro Styl Protein Styling Gel, Super Hold, 32 oz.	New	14.00	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
@@ -1709,7 +1709,7 @@ UY-XE8Q-1K3Y	X0046UFGTV	B07G2FK86Z	CEVA Animal Health Breakables Clenz-A-Dent Ra
 UY-ZT7B-WL2O	X0044NAUQT	B00DS4JR0O	Johnson Baby Cotton Buds - Total of 600 Buds by Johnson's Baby	New	13.99	No		Yes	0	0	0	0	0	0.09	0	0	0	0	0	0
 UY-ZXFG-YRJW	X003ZDS99J	B07GC6QPY4	Citrucel Sugar Free Orange Flavor Methylcellulose Fiber Therapy Powder for Regularity, 16.9 ounce (Pack of 3)	New	79.99	No		Yes	14	12	0	2	14	0.25	0	0	0	0	0	0
 UZ-9TGQ-GDBB	X004BADXQ9	B07PBL9QCJ	VP Racing Fuels Stay Frosty Race-Ready Coolant 64 Ounces for High-Compression, High-Heat Engines. Reduce Engine Temps by Up to 30 Degrees.	New	29.99	No		Yes	0	0	0	0	0	0.1	0	0	0	0	0	0
-UZ-N0QV-XPQ9	X0042IJAZN	B06W53ZLTK	CONTOUR NEXT ONE Blood Glucose Monitoring System	New	30.24	No		Yes	322	179	4	139	714	0.05	392	0	0	0	0	0
+UZ-N0QV-XPQ9	X0042IJAZN	B06W53ZLTK	CONTOUR NEXT ONE Blood Glucose Monitoring System	New	30.22	No		Yes	322	178	4	140	714	0.05	392	0	0	0	0	0
 UZ-YUL9-XYV1	X00457FN11	B074P6MX9T	Virbac Allergroom Pet Shampoo For Dogs, Cats & Horses (16 oz) - For Normal or Dry Skin	New	32.99	No		Yes	59	46	0	13	59	0.02	0	0	0	0	0	0
 V0-9V11-28IG	X0048V2VH3	B07GK7PDBS	Ortho 0221310 Home Defense MAX Insect Killer for Indoor and Perimeter RTU Trigger (2)	New	22.99	No		Yes	9	8	0	0	12	0.16	0	0	3	1	0	0
 V0-BWFA-EE3Q	X0046L5URX	B001FSJCPK	Greenies Feline Pill Pockets for Cats Natural Soft Cat Treats, Chicken Flavor, 1.6 oz. Pack (45 Treats)	New	6.31	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -1725,7 +1725,7 @@ V6-13RL-AH59	X004BDYS8D	B085N8GYGC	Hefty Ultra Strong Multipurpose Trash Bags, B
 V8-2IX5-N3FG	X0044IZUHD	B01LBGIRMY	16 oz of DMSO 99.99%. Absolutely Odorless	New	26.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 V9-84O9-TUM1	X003ZE0F77	B08KH87R7B	Burt's Bees Baby Shampoo & Wash, Calming, 12 Ounces (Packaging May Vary)	New	18.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 VA-34PW-1D6X	X00449VC3N	B000HHQ4MY	AniMed Vita-Calm Horse Care, 2 Pound Container	New	25.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
-VA-E7GQ-8FDV	X00462GOIB	B09JZGZG8F	Pentosin CHF 11S (2 x 1L Bottles) Power Steering Hydraulic System Synthetic Oil	New	54.98	No		Yes	70	34	0	35	72	0.1	0	0	2	1	0	0
+VA-E7GQ-8FDV	X00462GOIB	B09JZGZG8F	Pentosin CHF 11S (2 x 1L Bottles) Power Steering Hydraulic System Synthetic Oil	New	50.40	No		Yes	70	33	0	36	72	0.1	0	0	2	1	0	0
 VA-HGP4-ERCG	X0043T1HCF	B0014291SA	American Health Original Papaya Digestive Enzyme Chewable Tablets - Promotes Nutrient Absorption and Helps Digestion - 600 Count (200 Total Servings)	New	30.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 VB-A2KS-DAWF	X0043CVDS5	B00M49R51W	Lafebercares Avi-Cakes [Set of 2] Size: 6.5"	New	23.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 VB-LP5V-9VK2	X0044A0RBZ	B000HHMCQ6	Fiebing's Gylcerine Saddle Soap for Leather (7 oz) - Leather Cleaner & Conditioner to Soften, Preserve & Restore Leathercraft - Leather Soap Bar for Car Seat, Couch, Shoe, Purse, Boot, Bag, & Saddles	New	9.50	No		Yes	1	1	0	0	157	0.1	0	156	0	0	0	0
@@ -1741,16 +1741,16 @@ VL-I21Q-9179	X0044NY36H	B0171YFRBE	Finish Dishwasher Salt Helps Soften Water to 
 VL-RSSL-1FUL	X0043FA1OT	B01CTKDR0S	Tea Tree Therapy, Soap Bar, Vegetable Base, 3.9 oz (4-Pack)	New	17.10	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 VL-X4HB-KN4M	X00486MLGT	B0716788M2	(8-Pack) NGK Spark Plugs LTR7IX-11 (Stock # 6510)	New	63.50	No		Yes	19	0	0	19	21	0.03	2	0	0	0	0	0
 VM-7MFE-MWZH	X003S9WRDT	B01C3DYMM8	Weber Salt Free Chicken Seasoning, 2.50 Ounces, Pack of 3	New	19.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
-VM-Z1IR-1K2B	X00467T0K5	B0173QF0FS	Wormers Dewormer 8 in 1 Safe Guard Canine Anti Parasite Small Dog Puppies 3 Day	New	8.99	No		Yes	353	201	0	152	363	0.01	0	0	10	0	0	0
+VM-Z1IR-1K2B	X00467T0K5	B0173QF0FS	Wormers Dewormer 8 in 1 Safe Guard Canine Anti Parasite Small Dog Puppies 3 Day	New	8.99	No		Yes	353	202	0	151	363	0.01	0	0	10	0	0	0
 VN-0J9G-I4AY	X0044GVMRR	B07JHV6LS2	Colgate Total Whitening Toothpaste Gel - 4.8 ounce (Pack of 4)	New	24.99	No		Yes	0	0	0	0	0	0.08	0	0	0	0	0	0
 VN-AX2T-JHQC	X0048O1QFX	B07914DW2Q	Benereef 80g Jar	New	36.95	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 VN-D5NI-U2K8	X003ZZGF9D	B00D3O5NES	Higgins Safflower Gold Natural Food Mix for Parrots 3lbs	New	19.99	No		Yes	0	0	0	0	0	0.19	0	0	0	0	0	0
-VO-CQFH-WFEH	X0049R6H2L	B00TUPLLP4	St. Ives Fresh Skin Invigorating Apricot Scrub 6 Oz (2 Pack) by St. Ives	New	9.50	No		Yes	1059	629	0	430	1104	0.04	0	0	45	0	0	0
+VO-CQFH-WFEH	X0049R6H2L	B00TUPLLP4	St. Ives Fresh Skin Invigorating Apricot Scrub 6 Oz (2 Pack) by St. Ives	New	9.50	No		Yes	1059	626	0	433	1104	0.04	0	0	45	0	0	0
 VQ-7PDG-PEOP	X0048P25G1	B00YMVUS2S	Pro-Treat Freeze Dried Dog Treats - 14 Ounce	New	37.95	No		Yes	0	0	0	0	0	0.16	0	0	0	0	0	0
 VQ-FHEG-IE4S	X0046RV15H	B00X7WORHU	Fancy Feast cats Gourmet - Savory Chicken and Turkey Formula - 1 Lb	New	10.99	No		Yes	0	0	0	0	0	0.13	0	0	0	0	0	0
 VQ-JK8G-NTNB	X0049M8OJZ	B07RCBJB36	WD-40 Specialist Silicone Spray Smart Straw, 300012, 11 Oz	New	30.56	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
 VQ-OUEU-A3NY	X004AOLMFZ	B09QFB42X2	(8 Pack) Temptation Indoor Care Crunchy and Soft Cat Treats, Chicken Flavor Crunchy Cat Treats (2.1 oz, 60 g)	New	30.99	No		Yes	0	0	0	0	9	0.18	9	0	0	0	0	0
-VR-6N4Q-ZY77	X003YFV373	B000HHQ42Y	Fiebing's Golden Mink Oil for Leather Boots (6 oz) - Leather Cleaner & Conditioner - Waterproof, Preserve, Soften All Smooth Leathercraft & Vinyl - Prevents Salt Stains - Use On Couch, Shoe, Purse	New	8.99	No		Yes	698	389	3	303	701	0.03	0	0	3	3	0	0
+VR-6N4Q-ZY77	X003YFV373	B000HHQ42Y	Fiebing's Golden Mink Oil for Leather Boots (6 oz) - Leather Cleaner & Conditioner - Waterproof, Preserve, Soften All Smooth Leathercraft & Vinyl - Prevents Salt Stains - Use On Couch, Shoe, Purse	New	8.99	No		Yes	698	401	3	291	701	0.03	0	0	3	3	0	0
 VU-5EJF-80R5	X00493R6HZ	B0BWBJ42FX	Vital Essentials Freeze Dried Raw Single Ingredient Dog Treats, Minnows, 1 oz	New	12.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 VU-LVLS-ZCTN	X003ZFMYJD	B000052Y8Z	DENTEMP Maximum Strength Dental Repair 2.2 g	New	6.99	No		Yes	10	10	0	0	10	0.01	0	0	0	0	0	0
 VU-XID7-ZJ20	X0040QH3EH	B005OCY5VO	Higgins Sunburst Gourmet Food Mix for Guinea Pigs, 3 Pound	New	16.99	No		Yes	0	0	0	0	0	0.15	0	0	0	0	0	0
@@ -1760,7 +1760,7 @@ VV-6RP2-A2S5	X0049KBL0L	B00PWTBJ36	Nutri Source Soft & Tender Natural Formula Wi
 VV-JCZC-AVDV	X0043CXNOH	B001E0T02Y	Alvera Roll On Deod Aloe and BlkSd - 2 Pack 3 Ounce	New	4.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 VW-RPEB-I5U5	X0046ISOOR	B01LMOURWI	Toothpaste Peppermint Dr. Bronner's 5 oz Paste Pack of 2 (2) by Dr. Bronner's	New	16.99	No		Yes	4	0	0	3	6	0.04	0	0	2	1	0	0
 VX-9Q2Y-3F4G	X00435YG5J	B005CFL8W2	Tuffy'S Pet Food 131542 Nutri Cat/Kitten Chicken/Rice Dry Food, 1.5-Pound	New	16.99	No		Yes	0	0	0	0	0	0.12	0	0	0	0	0	0
-VX-HMTC-MIG1	X003ZZKGZR	B003C5JOWK	Kaytee Wild Bird No Mess Food Seed Blend For Blue Jays, Woodpeckers, Juncos, Cardinals, Grosbeaks, Sparrows, and Finches, 5 Pound	New	14.99	No		Yes	22	12	0	10	22	0.16	0	0	0	0	0	0
+VX-HMTC-MIG1	X003ZZKGZR	B003C5JOWK	Kaytee Wild Bird No Mess Food Seed Blend For Blue Jays, Woodpeckers, Juncos, Cardinals, Grosbeaks, Sparrows, and Finches, 5 Pound	New	14.99	No		Yes	22	11	0	11	22	0.16	0	0	0	0	0	0
 VY-94WB-9BNZ	X0046RGS73	B01N6XX8KP	Fancy Feast Purina Gourmet Cat Food Flavor Variety Bundle (Fish + Chicken Turkey)	New	18.99	No		Yes	0	0	0	0	0	0.18	0	0	0	0	0	0
 VY-OV2B-2SMI	X0046W9SST	B007TTXPY8	Safe/easy Aquarium Cleaner (Package May Vary)	New	9.99	No		Yes	23	23	0	0	43	0.01	0	0	20	0	0	0
 VY-YE5D-XATR	X0043WKE7L	B0853C99JS	SKOUT'S HONOR Probiotic Pet Balm, 2 oz.	New	18.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -1779,7 +1779,7 @@ W9-UCSA-HYCP	X0043CVX7L	B06XX94CHT	Combat Large + Small Roaches Roach Killing Ba
 WA-BBRA-INDS	X0044MTTNP	B0021WZJD8	Oxbow Animal Health Critical Care, Herbivore, Anise Flavor, 141 Gram Bag (70100), Multi-colored, 4.97 Ounce (Pack of 1)	New	18.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 WA-N6BG-INVP	X0049VKRVJ	B0006JLPCC	Hikari Prazipro 16oz	New	43.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 WA-RL3J-LD4L	X004BCV3DR	B002T59NOS	Keri Nourishing Shea Butter Body Lotion, 15 Ounce	New	20.37	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
-WB-3RAK-5M2O	X0049K3N43	B007PHNUOE	Sedgehammer Plus Turf Herbicide 13.5 Grams (2 Packs)	New	30.99	No		Yes	159	55	0	101	164	0.02	0	0	5	3	0	0
+WB-3RAK-5M2O	X0049K3N43	B007PHNUOE	Sedgehammer Plus Turf Herbicide 13.5 Grams (2 Packs)	New	30.99	No		Yes	154	54	0	97	162	0.02	0	0	8	3	0	0
 WB-YP7B-9MFO	X0048UR9Z3	B001OELXR0	Espoma Organic Tree-tone 6-3-2 Natural & Organic Fertilizer and Plant Food; 4 lb. Bag; Organic Fertilizer for all Trees. Use for Fruit Trees like Peach & Apple Trees and all Shade Trees.	New	14.50	No		Yes	70	50	0	20	80	0.18	0	0	10	0	0	0
 WC-GH85-TGJK	X004AZAVSN	B01GQDZYE6	Zoo Med Spirulina 20 Flake Fish Food, 4-Ounce (3 Pack)	New	30.35	No		Yes	0	0	0	0	29	0.18	29	0	0	0	0	0
 WC-UHHQ-V133	X004603YHR	B01MUG17DO	Greenies Grain Free Teenie Natural Dental Care Dog Treats, 36 oz. Pack (130 Treats)	New	60.99	No		Yes	0	0	0	0	0	0.19	0	0	0	0	0	0
@@ -1856,10 +1856,10 @@ XQ-6M18-CEMA	X0040BE4XF	B082BF1PFN	AquaTop O-Ring Silicone Lubricant	New	8.50	No
 XQ-8A37-HVGH	X00457GHF7	B00MW9R3QG	(2 Pack) Yeowww Catnip Toy, Rainbow 6"	New	16.40	No		Yes	5	5	0	0	5	0.01	0	0	0	0	0	0
 XQ-BQJ4-MHCW	X004AHFHTT	B0892N12FF	Lucas Oil 10005 Red 'N' Tacky Grease - 14 Ounce	New	65.99	No		Yes	6	3	0	3	6	0.31	0	0	0	0	0	0
 XQ-VHC8-FS4G	X004602S8X	B0B6D4N4HR	Greenies Smartbites Salmon Flavor Skin & Fur Health Crunchy and Soft Natural Cat Treats, 16 oz.	New	24.99	No		Yes	0	0	0	0	0	0.07	0	0	0	0	0	0
-XR-7II7-7OWI	X0044J3AZ1	B01LY3JI7T	REScue One Step Ready-to-Use Disinfectant Cleaner & Deodorizer for Veterinary Use, Animal Shelters, Pet Foster Homes, Kennels, Litter Box – 32 Ounce	New	23.99	No		Yes	3	0	0	0	513	0.07	498	0	12	3	0	0
+XR-7II7-7OWI	X0044J3AZ1	B01LY3JI7T	REScue One Step Ready-to-Use Disinfectant Cleaner & Deodorizer for Veterinary Use, Animal Shelters, Pet Foster Homes, Kennels, Litter Box – 32 Ounce	New	23.99	No		Yes	2	0	0	0	512	0.07	498	0	12	2	0	0
 XR-H6BS-LYOD	X0040BWZPT	B09NMWY3WY	Arm & Hammer Clean Burst, 107 Loads Liquid Laundry Detergent, 144.5 Fl Oz	New	25.99	No		Yes	0	0	0	0	0	0.31	0	0	0	0	0	0
 XR-PIE9-UMDO	X004B0CZXV	B004LODAXA	Zoo Med Laboratories SZMWO14 Wipe Out 1 Terrarium Cleaner, 4.25-Ounce	New	9.75	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-XR-Y4NN-Y34T	X0049RTXXV	B003YJGIE6	McGrayel Algatec 10064 Super Algaecide for Green, Yellow and Black Algae, 64-Ounce	New	43.99	No		Yes	121	33	0	88	122	0.13	0	0	1	0	0	0
+XR-Y4NN-Y34T	X0049RTXXV	B003YJGIE6	McGrayel Algatec 10064 Super Algaecide for Green, Yellow and Black Algae, 64-Ounce	New	43.99	No		Yes	121	40	0	81	122	0.13	0	0	1	0	0	0
 XS-NNJO-BCCI	X0046U3JZJ	B06XXSWRNW	Winding Way Farms Llc Dimples Horse Treats with Pill Dimples 3 LB	New	29.99	No		Yes	1	0	0	1	1	0.17	0	0	0	0	0	0
 XT-P2KC-ZMXB	X003TY4U47	B00JGZATDI	Yes To Face Wipes for Women and Men, Sensitive Facial Cleansing Wipes for use as a MakeUp Remover, Cleaning, Soothing, Cucumbers (Pack of 3)	New	18.99	No		Yes	0	0	0	0	0	0.16	0	0	0	0	0	0
 XU-NRAC-Q7YK	X0049E9T0V	B00NS6I5F0	Procter & Gamble 12051603 Swiffer Dusters Kit	New	10.92	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
@@ -1887,9 +1887,9 @@ Y6-WZCX-TWDP	X0041J2WNF	B07822Z7H5	Charlee Bear 840235167884 Dog Treat with Chee
 Y7-IKYO-QG6C	X003ZNKA9L	B001E107P2	Tea Tree Therapy - Suppository with Tea Tree Oil For Vaginal Hygiene (2-Pack of 6)	New	19.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 Y7-TVVS-TKUD	X00420NBP1	B00AETZ5JI	Close-Up Toothpaste, Refreshing Red Gel, Anticavity Fluoride, Cinnamon, 6 Ounce (Pack of 6)	New	18.70	No		Yes	3	1	0	2	7	0.11	0	0	4	0	0	0
 Y8-A9FI-SIRA	X004A9IJUL	B000QFRKRA	AniMed ULC-R-Aid 4 lb	New	45.99	No		Yes	0	0	0	0	0	0.21	0	0	0	0	0	0
-YA-B2Q3-CIZW	X003TY4U5V	B071GNNJQM	NOVA Inflatable Donut Cushion, Easy to Inflate and Deflate Seat Cushion, Durable Rubber and Easy to Clean,Red 18 Inch (Pack of 1)	New	23.50	No		Yes	74	59	1	14	74	0.15	0	0	0	0	0	0
+YA-B2Q3-CIZW	X003TY4U5V	B071GNNJQM	NOVA Inflatable Donut Cushion, Easy to Inflate and Deflate Seat Cushion, Durable Rubber and Easy to Clean,Red 18 Inch (Pack of 1)	New	23.50	No		Yes	74	58	1	15	74	0.15	0	0	0	0	0	0
 YC-FWP5-3IV9	X0046XUFJJ	B00W97Y4L8	Red Line 60103 SI-1 Complete Fuel System Cleaner - 15 Ounce (1 Pack)	New	20.99	No		Yes	1	0	0	1	58	0.03	50	0	7	0	0	0
-YC-PXJ1-OP2L	X0042HAMDD	B001T4UMM2	Checkups Dental Dog Treats, 24 Treats - 48 oz.	New	23.99	No		Yes	570	547	0	10	587	0.21	0	0	17	13	0	0
+YC-PXJ1-OP2L	X0042HAMDD	B001T4UMM2	Checkups Dental Dog Treats, 24 Treats - 48 oz.	New	23.99	No		Yes	569	547	0	9	586	0.21	0	0	17	13	0	0
 YC-VJHJ-P9FA	X003Y59APF	B016V7DN68	ZuPreem FruitBlend Flavor Pellets Bird Food for Small Birds, 2 lb (2-pack) - Powerful Pellets Made in USA, Naturally Flavored for Parakeets, Budgies, Parrotlets	New	23.99	No		Yes	36	34	0	2	36	0.23	0	0	0	0	0	0
 YD-3C95-6ZDL	X0047NTOCH	B00NRAZWB2	Savory Prime Natural Duck Jerky, 4 Oz	New	11.68	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 YD-40Q5-VOWE	X003ZXV0O5	B01MFGC7TE	Pantene Pro-v Classic Clean Shampoo With Pump, 30.4 Fluid Ounce	New	21.99	No		Yes	0	0	0	0	0	0.06	0	0	0	0	0	0
@@ -1897,12 +1897,12 @@ YE-JNLD-VUU2	X0049K3HUN	B000TZ8VEI	Control Solutions Quali-pro Msm Turf Herbicid
 YF-24JZ-XEPP	X00415GIHF	B001E6F31K	Clorox Disinfecting Wipes, Fresh Scent, 75 Wipes Per Tub, Box Of 6 Tubs	New	28.74	No		Yes	0	0	0	0	0	0.52	0	0	0	0	0	0
 YF-EPKO-VXTP	X004BC7T7V	B07DQ1DYRW	ATTITUDE Baby Lotion, EWG Verified Moisturizer, Dermatologically Tested Moisturizing Cream, Vegan and Cruelty-Free, Good Night, 16 Fl Oz	New	18.99	No		Yes	0	0	0	0	4	0.04	0	4	0	0	0	0
 YF-FZBP-AQS2	X003YJYJO3	B08Q6DFTWZ	Old Spice Wolfthorn Deoderant Stick 50 ml / 1.7 oz (Pack of 6)	New	32.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
-YG-DOE3-8ZW9	X00457FOBF	B07HCHNDVH	Virbac C.E.T. Enzymatic Oral Hygiene Dog Chews Large 26-50 lb 30 Count	New	34.52	No		Yes	206	26	0	178	206	0.29	0	0	0	2	0	0
+YG-DOE3-8ZW9	X00457FOBF	B07HCHNDVH	Virbac C.E.T. Enzymatic Oral Hygiene Dog Chews Large 26-50 lb 30 Count	New	34.47	No		Yes	206	27	0	177	206	0.29	0	0	0	2	0	0
 YH-KFZA-R1BU	X004A9PFPD	B016IVIJLG	BONIDE PRODUCTS 775 Ready-to-Use Copper Fungicide, 32-Ounce [2-Pack]	New	31.80	No		Yes	0	0	0	0	100	0.21	100	0	0	0	0	0
 YI-OYRD-KG1W	X0048UZF6D	B07SCWPMVJ	Espoma Organic Plant-Tone 5-3-3 Natural & Organic All Purpose Plant Food; 4 lb. Bag; The Original Organic Fertilizer for All Flowers, Vegetables, Trees, and Shrubs. - Pack of 2	New	23.50	No		Yes	1	1	0	0	1	0.24	0	0	0	0	0	0
 YI-XYKU-CLRE	X004A0LL7N	B07PXGFM4J	Dettol Original Antibacterial Soap, 3.5 Ounce/100 gr (Pack of 6)	New	11.98	No		Yes	35	14	0	21	35	0.05	0	0	0	0	0	0
 YJ-PO6X-4JXT	X00472AFFD	B0018CLVZ2	Diamond Naturals Lamb Dinner Can Dog 12/13.2oz	New	52.99	No		Yes	0	0	0	0	0	0.26	0	0	0	0	0	0
-YK-AKGP-BTNP	X0049VSN97	B00KYXQ0DO	Advantage II Flea Control Large Cat (for Cats Over 9 lbs.) - 2 Month	New	34.48	No		Yes	142	125	0	17	143	0.02	0	0	1	0	0	0
+YK-AKGP-BTNP	X0049VSN97	B00KYXQ0DO	Advantage II Flea Control Large Cat (for Cats Over 9 lbs.) - 2 Month	New	34.48	No		Yes	142	128	0	14	143	0.02	0	0	1	0	0	0
 YK-G85J-1PCB	X003ZXN43F	B00VAAVSQ4	Johnson's Baby Powder Blossoms 500g (17.5oz)	New	13.99	No		Yes	0	0	0	0	0	0.04	0	0	0	0	0	0
 YL-KACC-LOOS	X00486NSXJ	B01HSS377Y	Seachem Flourish Advance Growth Supplement - Aquatic Plant Aid 250 ml (28679),brown	New	15.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 YM-OJSS-ERMG	X004BG1N3N	B00OZ7J2J4	Trojan Pleasure Fire & ICE Dual Action Ultrasmooth Lubricated Premium Latex Condoms 12 pc 4 Pack	New	16.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -1923,14 +1923,14 @@ YU-5CLM-DBKV	X00485GIRN	B010UNMS9M	Seachem Prime Fresh and Saltwater Conditioner
 YU-L0IE-4GIA	X003R5D9XV	B01N4CBWJX	St Ives Scrub, Even & Bright Pink Lemon & Mandarin Orange 6 Ounce (Pack of 3) by St. Ives	New	17.99	No		Yes	0	0	0	0	0	0.05	0	0	0	0	0	0
 YU-PCK7-V2F4	X0045MKS4N	B019YJGHVI	Nylabone (3 Pack) Just for Puppies Petite Pink Dental Bone Chew Toy	New	18.99	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 YU-SMP8-0YJT	X0042DZ7TB	B06XK71PNZ	Ferrous Sulfate 325mg Iron Supplement (2-PACK) | Iron Pills | | 100 Iron Tablets per Bottle, 2-Pack	New	10.00	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
-YU-XBTY-QY2G	X0048ZBADF	B003VR41JA	African Pride Braid Sheen Extra Spray, 12 Ounce	New	11.84	No		Yes	263	84	16	155	272	0.03	0	0	9	8	0	0
+YU-XBTY-QY2G	X0048ZBADF	B003VR41JA	African Pride Braid Sheen Extra Spray, 12 Ounce	New	11.84	No		Yes	262	96	16	142	272	0.03	0	0	10	8	0	0
 YV-8MLH-ULYB	X004357VLP	B07D5CTTMF	Nutrisource Lamb & Rice Adult Dog Food 5Lb	New	28.40	No		Yes	12	6	0	5	12	0.3	0	0	0	1	0	0
 YV-JSTY-8ZMJ	X004ARO88P	B07GRDMRD2	Natural Balance Limited Ingredient Diets Mini Rewards Soft and Chewy Dog Treats (Chicken, 3 Pack / 5.3-Ounces Each)	New	20.65	No		Yes	0	0	0	0	24	0.06	24	0	0	0	0	0
 YV-L1WY-EDTU	X003TY4V9B	B0002ARQZA	Safari® Bristle Brush, Small	New	10.94	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
 YX-CXDL-4BFJ	X0047ND8U1	B07CPDJG7M	Savory Prime 401 Natural Duck Jerky Dog Treats, 16 Oz	New	23.49	No		Yes	0	0	0	0	222	0.12	222	0	0	0	0	0
 YX-EUDA-UOPY	X0049MAP0B	B0078P7XKK	Fertilome (10586) Dipel Dust Biological Insecticide (1 lb.)	New	14.99	No		Yes	13	0	0	13	13	0.06	0	0	0	0	0	0
 YX-KEZF-4FJD	X004ARTEZR	B07JYQ635W	Whiskas Temptations Classic Treats for Cats Hearty Beef Flavor (Pack of 4)	New	17.02	No		Yes	0	0	0	0	42	0.1	42	0	0	0	0	0
-YZ-BJ0W-0JSI	X0042TL5CD	B07JJHLD59	Vet One Aurocin cm Ear Cleanser (Cucumber Melon) with Aloe 8oz	New	14.31	No		Yes	34	0	0	34	34	0.02	0	0	0	0	0	0
+YZ-BJ0W-0JSI	X0042TL5CD	B07JJHLD59	Vet One Aurocin cm Ear Cleanser (Cucumber Melon) with Aloe 8oz	New	13.99	No		Yes	34	0	0	34	34	0.02	0	0	0	0	0	0
 YZ-XNCN-NCEY	X003TY6VPN	B07P3ST8D4	Aquatop Pisces Replacement Carbon Cartirdge 2 Pack, Fits All Pisces All in One Aquarium Models, PCS-RCI	New	12.00	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 Z0-VIUA-XAGQ	X0045QGF0Z	B07TJKQGTT	Earthborn Holistic Grain Free Cat Food in 2 Flavors: (5) Harbor Harvest and (5) Monterey Medley (10 Cans Total, 3 Ounces Each)	New	22.50	No		Yes	6	6	0	0	29	0.12	0	0	23	0	0	0
 Z3-GEKI-8X4B	X0040KUK9N	B005GHI2QQ	RICOLA THR/DRP CHERRY-HONEY 24	New	9.00	No		Yes	0	0	0	0	0	0.02	0	0	0	0	0	0
@@ -1978,11 +1978,11 @@ ZT-W1DK-E8ZF	X0048ZBBGL	B07V3NRWT6	Eucerin Roughness Relief Body Cream for Rough
 ZT-YQ24-QNRP	X0047NLZKV	B00E58M8J4	Dorman 800-955 GM Air Conditioning Schrader Valve M12 X 1.50 Compatible with Select Models	New	10.84	No		Yes	12	12	0	0	12	0.01	0	0	0	0	0	0
 ZU-KAGV-OW3E	X004BAFBCX	B00IG0W8VU	Herpecin L Lip Protectant SPF 30 0.10 oz (Pack of 6)	New	31.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 ZV-E5Q9-CQKT	X003ZFJH9X	B00E4MQ19Y	Cystex UTI Pain Relief, 48 Tablets (Pack of 3)	New	37.99	No		Yes	1	0	0	1	3	0.04	0	0	2	0	0	0
-ZW-D8O3-GS22	X00462HI09	B074CLJJWM	Nutro All Natural Crunchy Training Treats for Dogs 2 Flavor Variety Bundle: (1) Mixed Berries, and (1) Apple, 16 Oz. Ea. (2 Bags Total)	New	24.40	No		Yes	180	165	0	2	258	0.15	0	0	78	13	0	0
+ZW-D8O3-GS22	X00462HI09	B074CLJJWM	Nutro All Natural Crunchy Training Treats for Dogs 2 Flavor Variety Bundle: (1) Mixed Berries, and (1) Apple, 16 Oz. Ea. (2 Bags Total)	New	24.44	No		Yes	180	165	0	2	258	0.15	0	0	78	13	0	0
 ZW-Y8IU-9XPO	X00467SWMR	B007PGOGS4	San Francisco Bay Brand ASF71104 Freeze Dried Brine Shrimp for Fresh and Saltwater Fish, 10gm	New	8.20	No		Yes	2	2	0	0	2	0.01	0	0	0	0	0	0
 ZX-6NG7-APVG	X00408N2BX	B01FFOY006	Philips OneBlade Replacement Blade QP220/50	New	25.99	No		Yes	0	0	0	0	0	0.01	0	0	0	0	0	0
 ZX-7FMK-OHBO	X00449VAHL	B08TSS9LFT	ZuPreem Bundle FruitBlend Flavor Pellets & Sensible Seed for Medium Birds, 2 lb (Pack of 2) - Essential Nutrition & Enriching Variety	New	32.99	No		Yes	0	0	0	0	0	0.27	0	0	0	0	0	0
 ZX-DML7-I7TG	X0040KUSZJ	B0CH1WW692	Tide Laundry Stain Remover Refill with Oxi, Rescue Clothes, Upholstery, Carpet and more from Tough Stains, Stain Treater, 52 Oz (Pack of 2)	New	25.99	No		Yes	2	0	2	0	2	0.23	0	0	0	0	0	0
 ZX-JASF-NBJK	X003ZSLXBZ	B009UZAEEI	Terro 3200 Spider Traps 4 in a package, (Pack of 4, 16 Traps Total)	New	16.00	No		Yes	0	0	0	0	0	0.03	0	0	0	0	0	0
 ZY-Q8EU-PL79	X00462PN3N	B081J5FD57	Charmin Freshmates Flushable Wipes with Refillable Tub (Pack of 6)	New	26.99	No		Yes	0	0	0	0	0	0.17	0	0	0	0	0	0
-ZZ-YWCC-NEFT	X0046WC9FN	B01JSNNBG4	API (3 Pack) 14-Day Pyramid Fish Feeders	New	14.19	No		Yes	45	13	0	32	46	0.04	1	0	0	0	0	0
+ZZ-YWCC-NEFT	X0046WC9FN	B01JSNNBG4	API (3 Pack) 14-Day Pyramid Fish Feeders	New	13.79	No		Yes	44	12	0	32	45	0.04	1	0	0	0	0	0

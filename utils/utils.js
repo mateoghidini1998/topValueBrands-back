@@ -36,18 +36,18 @@ const createReport = asyncHandler(async (req, reportType) => {
     };
   } */
 
-    const dataEndTime = moment().utc().endOf('day').toISOString();
-    const dataStartTime = moment()
-      .utc()
-      .subtract(30, 'days')
-      .startOf('day')
-      .toISOString();
-    requestBody = {
-      ...requestBody,
-      dataStartTime,
-      dataEndTime,
-      custom: true,
-    };
+  const dataEndTime = moment().utc().endOf('day').toISOString();
+  const dataStartTime = moment()
+    .utc()
+    .subtract(30, 'days')
+    .startOf('day')
+    .toISOString();
+  requestBody = {
+    ...requestBody,
+    dataStartTime,
+    dataEndTime,
+    custom: true,
+  };
 
   const response = await axios.post(url, requestBody, {
     headers: {
@@ -236,9 +236,9 @@ const parseReportToJSON = (dataString) => {
 
 const sendCSVasJSON = asyncHandler(async (req, res, next) => {
   try {
-    const csvFile = await downloadCSVReport(req, res, next);
+    // const csvFile = await downloadCSVReport(req, res, next);
     // For testing
-    // const csvFile =  './reports/report_1717441611342.csv'
+    const csvFile = './reports/report_1721053509338.csv'
 
     const results = [];
     let keys = [];
