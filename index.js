@@ -8,7 +8,7 @@ const app = express();
 //Body parser
 app.use(express.json());
 
-const  corsOptions = {
+/* const  corsOptions = {
 
   origin: "*",
   
@@ -16,10 +16,10 @@ const  corsOptions = {
   
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept"],
   
-};
+}; */
 
 //Enable CORS
-app.use(cors(corsOptions));
+app.use(cors());
 
 //Cookie Parser
 app.use(cookieParser());
@@ -39,6 +39,7 @@ const { addAccessTokenHeader } = require('./middlewares/lwa_token');
 const { syncDBWithAmazon } = require('./controllers/reports.controller');
 const logger = require('./logger/logger');
 const { generateTrackedProductsData } = require('./controllers/trackedproducts.controller');
+const { importJSON } = require('./utils/utils')
 
 //Mount routers
 app.use('/api/v1/auth', auth);
@@ -56,12 +57,13 @@ dotenv.config({
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(5000, () => {
+app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('30 16 * * *', async () => {
-    logger.info('running a task every day at 5am');
+  cron.schedule('30 19 * * *', async () => {
+    logger.info('running a task every day at 6:30pm');
+
     // Mock request, response, and next for the cron job context
     const req = { headers: {} };
     const res = {
@@ -94,6 +96,15 @@ app.listen(5000, () => {
       });
     } catch (error) {
       console.error('Error during scheduled generate tracked products:', error);
+    }
+
+    // import JSON cronjob
+    try {
+      logger.info('3. Scheduling cron job to import JSON data...');
+      await importJSON();
+      logger.info('Cron job for importing JSON data completed.');
+    } catch (error) {
+      console.error('Error during scheduled import JSON data:', error);
     }
   });
 });
