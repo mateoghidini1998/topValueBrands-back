@@ -5,7 +5,7 @@ const readline = require('readline/promises');
 const zlib = require('zlib');
 const moment = require('moment');
 const asyncHandler = require('../middlewares/async');
-const inventory = require('../data/NewInventory.json');
+const inventory = require('../data/Inventory.json');
 const { Product } = require('../models');
 
 const createReport = asyncHandler(async (req, reportType) => {
@@ -278,7 +278,7 @@ const importJSON = asyncHandler(async (req, res, next) => {
         {
           supplier_item_number: item.MPN,
           supplier_id: item.Supplier,
-          product_cost: item['Cost '][' Unit'],
+          product_cost: item.Cost,
         },
         {
           where: {
