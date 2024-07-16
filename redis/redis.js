@@ -1,4 +1,4 @@
-const redis = require("redis");
+/* const redis = require("redis");
 const dotenv = require('dotenv');
 
 dotenv.config({ path: './.env' });
@@ -48,3 +48,4 @@ exports.connect = async () => {
 
   return client;
 }
+ */

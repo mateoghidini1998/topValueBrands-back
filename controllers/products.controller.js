@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
-const { connect } = require('../redis/redis');
+/* const { connect } = require('../redis/redis'); */
 
 dotenv.config({
   path: './.env',
