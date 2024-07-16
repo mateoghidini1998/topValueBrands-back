@@ -5,6 +5,7 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const {
     syncDBWithAmazon,
 } = require('../controllers/reports.controller');
+const { importJSON } = require('../utils/utils');
 
 
 /**
@@ -45,6 +46,7 @@ const {
  *                   example: "An error occurred."
  */
 router.get('/sync', addAccessTokenHeader, syncDBWithAmazon);
+router.get('/import', importJSON)
 
 
 module.exports = router;
