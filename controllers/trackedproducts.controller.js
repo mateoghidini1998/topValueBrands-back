@@ -19,7 +19,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //@desc  Get all tracked products
 //@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
-  logger.info('Executing getTrackedProducts', { query: req.query });
+  logger.info('Executing getTrackedProducts...');
 
   const { supplier_id } = req.query;
 
@@ -73,7 +73,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
       data: flattenedTrackedProducts,
     });
 
-    logger.info('Tracked products sent successfully', { response: flattenedTrackedProducts });
+    logger.info('Tracked products sent successfully');
   } catch (error) {
     logger.error('There was an error while obtaining tracked products', { error: error.message });
     res.status(500).json({
@@ -176,7 +176,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 });
 //Function to group asins into groups of GROUPS_ASINS
 
-const GROUPS_ASINS = 50;
+const GROUPS_ASINS = 20;
 
 const getProductsTrackedData = async (products) => {
   const asinGroups = [];

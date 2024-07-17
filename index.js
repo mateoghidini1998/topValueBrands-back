@@ -61,8 +61,9 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('0 5 * * *', async () => {
-    logger.info('running a task every day at 6:30pm');
+  cron.schedule('31 11 * * *', async () => {
+    logger.info('Cron executed at ' + new Date().toLocaleString());
+
 
     // Mock request, response, and next for the cron job context
     const req = { headers: {} };
