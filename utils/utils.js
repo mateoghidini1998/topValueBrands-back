@@ -7,8 +7,11 @@ const moment = require('moment');
 const asyncHandler = require('../middlewares/async');
 const inventory = require('../data/Inventory.json');
 const { Product } = require('../models');
+const logger = require('../logger/logger');
 
 const createReport = asyncHandler(async (req, reportType) => {
+  logger.info('Executing createReport...');
+  console.log('Executing createReport...');
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
 
   let requestBody = {
@@ -60,13 +63,18 @@ const createReport = asyncHandler(async (req, reportType) => {
 });
 
 const pollReportStatus = async (reportId, accessToken) => {
+  logger.info('Executing pollReportStatus...');
+  console.log('Executing pollReportStatus...');
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
   console.log('URL: ', url)
   let reportStatus = '';
   let reportDocument = '';
+
   while (reportStatus !== 'DONE') {
     if (reportStatus === 'FATAL' || reportStatus === 'CANCEL') {
       console.log(reportStatus);
+      logger.error('Error fetching report with status' + reportStatus);
+      console.log('Error fetching report with status' + reportStatus);
       return new Error('Error fetching report');
     }
 
@@ -85,6 +93,8 @@ const pollReportStatus = async (reportId, accessToken) => {
 };
 
 const getReportById = asyncHandler(async (req, reportType) => {
+  logger.info('Executing getReportById...');
+  console.log('Executing getReportById...');
   const reportId = await createReport(req, reportType);
   const accessToken = req.headers['x-amz-access-token'];
 
@@ -100,6 +110,8 @@ const getReportById = asyncHandler(async (req, reportType) => {
 });
 
 const generateOrderReport = asyncHandler(async (req, res, next) => {
+  logger.info('Executing generateOrderReport...');
+  console.log('Executing generateOrderReport...');
   const reportData = await getReportById(
     req,
     'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL'
@@ -154,6 +166,8 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
 });
 
 const generateInventoryReport = asyncHandler(async (req, res, next) => {
+  logger.info('Executing generateInventoryReport...');
+  console.log('Executing generateInventoryReport...');
   const report = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
   console.log('REPORT:', report);
   /* if (!report) {
@@ -176,6 +190,8 @@ const generateInventoryReport = asyncHandler(async (req, res, next) => {
 });
 
 const downloadCSVReport = asyncHandler(async (req, res, next) => {
+  logger.info('Executing downloadCSVReport...');
+  console.log('Executing downloadCSVReport...');
   try {
     let documentUrl = await generateInventoryReport(req, res, next);
 
@@ -216,6 +232,8 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
 });
 
 const parseReportToJSON = (dataString) => {
+  logger.info('Executing parseReportToJSON...');
+  console.log('Executing parseReportToJSON...');
   const results = [];
   const lines = dataString.split('\n');
   const keys = lines[0].split('\t');
@@ -229,16 +247,19 @@ const parseReportToJSON = (dataString) => {
       });
       results.push(obj);
     }
-  }
 
+  }
+  console.log('parseReportToJSON results: ' + results.length)
   return results;
 };
 
 const sendCSVasJSON = asyncHandler(async (req, res, next) => {
+  logger.info('Executing sendCSVasJSON...');
+  console.log('Executing sendCSVasJSON...');
   try {
     const csvFile = await downloadCSVReport(req, res, next);
     // For testing
-    /* const csvFile = './reports/report_1721053509338.csv' */
+    // const csvFile = './reports/report_1721053509338.csv'
 
     const results = [];
     let keys = [];
@@ -263,7 +284,8 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
       }
     }
     // res.json({ count: results.length, items: results });
-    console.log(results);
+    console.log(`Se envio el documento como JSON correctamente con ${results.length} registros`);
+    logger.info('Se envio el documento como JSON correctamente con %d registros', results.length);
     return results;
   } catch (error) {
     // console.error(error.message);
@@ -272,6 +294,9 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
 });
 
 const importJSON = asyncHandler(async (req, res, next) => {
+  logger.info('Executing importJSON...');
+  console.log('Executing importJSON...');
+
   try {
     for (const item of inventory) {
       await Product.update(
