@@ -61,7 +61,7 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('30 19 * * *', async () => {
+  cron.schedule('0 5 * * *', async () => {
     logger.info('running a task every day at 6:30pm');
 
     // Mock request, response, and next for the cron job context
@@ -99,12 +99,12 @@ app.listen(PORT, () => {
     }
 
     // import JSON cronjob
-    try {
+    /* try {
       logger.info('3. Scheduling cron job to import JSON data...');
       await importJSON();
       logger.info('Cron job for importing JSON data completed.');
     } catch (error) {
       console.error('Error during scheduled import JSON data:', error);
-    }
+    } */
   });
 });
