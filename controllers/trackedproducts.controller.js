@@ -7,8 +7,8 @@ const logger = require('../logger/logger');
 
 dotenv.config({ path: './.env' });
 
-const fetchProducts = async ({ limit = LIMIT_PRODUCTS }) => {
-  return await Product.findAll({ limit });
+const fetchProducts = async ({ limit = LIMIT_PRODUCTS, offset = OFFSET_PRODUCTS }) => {
+  return await Product.findAll({ limit, offset });
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -177,9 +177,10 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
 // });
 
 const BATCH_SIZE = 20; // Tamaño del batch para la segunda etapa
-const LIMIT_PRODUCTS = 100; // Límite de productos para fetch
-const MAX_REQUESTS_BEFORE_DELAY_ESTIMATE_FEES = 20; // Límite de solicitudes antes de aplicar un delay
-const DELAY_TIME_MS_ESTIMATE_FEES = 10000; // Tiempo de delay en milisegundos
+const LIMIT_PRODUCTS = 250; // Límite de productos para fetch
+const OFFSET_PRODUCTS = 335; // Límite de productos para fetch
+const MAX_REQUESTS_BEFORE_DELAY = 20; // Límite de solicitudes antes de aplicar un delay
+const DELAY_TIME_MS = 30000; // Tiempo de delay en milisegundos
 
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info('Start generateTrackedProductsData');
@@ -233,15 +234,15 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       const productBatch = products.slice(i, i + BATCH_SIZE);
       console.log('fetching get estimate fees for batch for' + productBatch.length);
 
-      console.log('waiting 1min')
+      console.log('waiting 1 min')
       // await delay(DELAY_TIME_MS_ESTIMATE_FEES);
-      await new Promise((resolve) => setTimeout(resolve, 60000));
+      await new Promise((resolve) => setTimeout(resolve, DELAY_TIME_MS));
       console.log('finished waiting 1min')
 
       const feeEstimates = await getEstimateFees(req, res, next, productBatch).catch((error) => {
         logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
         console.log(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
-        throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
       });
       logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE + 1} successfully`);
 
@@ -333,7 +334,7 @@ const getProductsTrackedData = async (products) => {
     console.log('getting keepadata for', asinGroup)
     const keepaDataResponse = await getKeepaData(asinGroup);
     keepaResponses.push(keepaDataResponse);
-    await delay(65000); // Delay between API calls
+    await delay(10000); // Delay between API calls
   }
 
   const processedData = keepaResponses.flatMap((response) =>
@@ -417,9 +418,9 @@ const getEstimateFees = async (req, res, next, products) => {
   // logger.info("Executing getEstimateFees... for products: ", products.length + " products")
   const feeEstimate = await Promise.all(
     products.map(async (product, index) => {
-      console.log(`Executing getEstimateFees... for product ${product.ASIN}...`);
+      console.log(`Executing getEstimateFees... for product ${product.seller_sku}...`);
       // logger.info(`Executing getEstimateFees... for product ${product.ASIN}...`);
-      const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
+      const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/listings/${product.seller_sku}/feesEstimate`;
       const trackedProduct = await TrackedProduct.findOne({
         where: { product_id: product.id },
       });
@@ -434,7 +435,7 @@ const getEstimateFees = async (req, res, next, products) => {
         FeesEstimateRequest: {
           MarketplaceId: 'ATVPDKIKX0DER',
           IsAmazonFulfilled: true,
-          Identifier: product.ASIN,
+          Identifier: product.seller_sku,
           PriceToEstimateFees: {
             ListingPrice: {
               Amount: trackedProduct.lowest_fba_price.toString(),
