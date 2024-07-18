@@ -132,6 +132,8 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         'product_velocity',
         'lowest_fba_price',
       ],
+    }).catch((error) => {
+      throw new Error(`TrackedProduct.bulkCreate failed during initial save: ${error.message}`);
     });
     logger.info('Combined data saved successfully');
 
@@ -142,9 +144,10 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       where: {
         id: trackedProductIds,
       },
+    }).catch((error) => {
+      throw new Error(`Product.findAll failed for related products: ${error.message}`);
     });
     logger.info('Fetched related products successfully');
-
 
     // Encontrar y registrar los productos no registrados como TrackedProducts
     const allProductIds = products.map(product => product.id);
@@ -154,19 +157,17 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       logger.warn(`Products not tracked: ${untrackedProductIds.join(', ')}`);
     }
 
-
     // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
     for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE) {
       const productBatch = relatedProducts.slice(i, i + BATCH_SIZE);
-      console.log('fetching get estimate fees for batch for' + productBatch.length);
+      logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE + 1} with ${productBatch.length} products`);
 
-      console.log('waiting 1 min');
       await new Promise((resolve) => setTimeout(resolve, DELAY_TIME_MS));
-      console.log('finished waiting 1min');
+      logger.info(`Finished waiting ${DELAY_TIME_MS}ms`);
 
       const feeEstimates = await getEstimateFees(req, res, next, productBatch).catch((error) => {
         logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
-        console.log(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
       });
       logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE + 1} successfully`);
 
@@ -176,7 +177,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         },
         attributes: ['id', 'product_cost'],
       }).catch((error) => {
-        throw new Error(`Product.findAll failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        throw new Error(`Product.findAll failed for product costs in batch ${i / BATCH_SIZE + 1}: ${error.message}`);
       });
       logger.info(`Fetched product costs for batch ${i / BATCH_SIZE + 1} successfully`);
 
@@ -219,13 +220,19 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({
       message: 'Data combined and saved successfully.',
+      success: true,
+      data: combinedData,
     });
     logger.info('Response sent successfully');
   } catch (error) {
-    logger.error('Error combining and saving data', { error: error.message });
+    logger.error('Error combining and saving data', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       success: false,
       message: error.message,
+      error: error.stack,
     });
   }
 });
@@ -237,8 +244,12 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 //Function to group asins into groups of GROUPS_ASINS
 
 const GROUPS_ASINS = 20;
+const MS_DELAY_KEEPA = 10000 // 10 seconds
 
 const getProductsTrackedData = async (products) => {
+  logger.info(`Starting getProductsTrackedData with ${products.length} products`);
+  logger.info(`Groups of ${GROUPS_ASINS} ASINs will be processed in batches of ${GROUPS_ASINS} products`);
+  logger.info(`MS_DELAY_KEEPA: ${MS_DELAY_KEEPA}`);
   const asinGroups = [];
 
   for (let i = 0; i < products.length; i += GROUPS_ASINS) {
@@ -255,7 +266,7 @@ const getProductsTrackedData = async (products) => {
     console.log('getting keepadata for', asinGroup)
     const keepaDataResponse = await getKeepaData(asinGroup);
     keepaResponses.push(keepaDataResponse);
-    await delay(10000); // Delay between API calls
+    await delay(MS_DELAY_KEEPA); // Delay between API calls
   }
 
   const processedData = keepaResponses.flatMap((response) =>
@@ -294,6 +305,7 @@ const getKeepaData = async (asinGroup) => {
 const saveOrders = async (req, res, next, products) => {
   console.log("Executing saveOrders...")
   logger.info("Executing saveOrders...")
+
   const jsonData = await generateOrderReport(req, res, next);
 
   if (!jsonData) {
@@ -331,6 +343,7 @@ const saveOrders = async (req, res, next, products) => {
     })
   );
 
+  logger.info("The final json is: ", finalJson)
   return finalJson;
 };
 
