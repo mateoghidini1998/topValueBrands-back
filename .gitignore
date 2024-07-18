@@ -3,3 +3,6 @@ node_modules/
 # Ignorar la carpeta config en la raíz del proyecto
 /logger/combined.log
 /logger/error.log
+/logger/info.log
+/logger/debug.log
+/logger/logs
