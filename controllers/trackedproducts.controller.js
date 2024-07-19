@@ -347,14 +347,72 @@ const saveOrders = async (req, res, next, products) => {
   return finalJson;
 };
 
+// const getEstimateFees = async (req, res, next, products) => {
+//   console.log("Executing getEstimateFees... for products: ", products.length + " products")
+//   // logger.info("Executing getEstimateFees... for products: ", products.length + " products")
+//   const feeEstimate = await Promise.all(
+//     products.map(async (product, index) => {
+//       console.log(`Executing getEstimateFees... for product ${product.seller_sku}...`);
+//       // logger.info(`Executing getEstimateFees... for product ${product.ASIN}...`);
+//       const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/listings/${product.seller_sku}/feesEstimate`;
+//       const trackedProduct = await TrackedProduct.findOne({
+//         where: { product_id: product.id },
+//       });
+
+//       if (!trackedProduct) {
+//         throw new Error(
+//           `TrackedProduct not found for product id ${product.id}`
+//         );
+//       }
+
+//       const body = {
+//         FeesEstimateRequest: {
+//           MarketplaceId: 'ATVPDKIKX0DER',
+//           IsAmazonFulfilled: true,
+//           Identifier: product.seller_sku,
+//           PriceToEstimateFees: {
+//             ListingPrice: {
+//               Amount: trackedProduct.lowest_fba_price.toString(),
+//               CurrencyCode: 'USD',
+//             },
+//           },
+//         },
+//       };
+
+//       if (index % 2) {
+//         await delay(1000);
+//       }
+
+
+//       const response = await axios.post(url, body, {
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'x-amz-access-token': req.headers['x-amz-access-token'],
+//         },
+//       });
+
+//       const feesEstimate =
+//         response.data?.payload?.FeesEstimateResult?.FeesEstimate
+//           ?.TotalFeesEstimate?.Amount || null;
+
+//       return {
+//         product_id: product.id,
+//         fees: feesEstimate,
+//       };
+//     })
+//   );
+
+//   return feeEstimate;
+// };
+
 const getEstimateFees = async (req, res, next, products) => {
-  console.log("Executing getEstimateFees... for products: ", products.length + " products")
-  // logger.info("Executing getEstimateFees... for products: ", products.length + " products")
-  const feeEstimate = await Promise.all(
-    products.map(async (product, index) => {
-      console.log(`Executing getEstimateFees... for product ${product.seller_sku}...`);
-      // logger.info(`Executing getEstimateFees... for product ${product.ASIN}...`);
-      const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/listings/${product.seller_sku}/feesEstimate`;
+  const feeEstimate = [];
+
+  for (let i = 0; i < products.length; i += 2) {
+    const batch = products.slice(i, i + 2);
+
+    const promises = batch.map(async (product) => {
+      const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
       const trackedProduct = await TrackedProduct.findOne({
         where: { product_id: product.id },
       });
@@ -369,7 +427,7 @@ const getEstimateFees = async (req, res, next, products) => {
         FeesEstimateRequest: {
           MarketplaceId: 'ATVPDKIKX0DER',
           IsAmazonFulfilled: true,
-          Identifier: product.seller_sku,
+          Identifier: product.ASIN,
           PriceToEstimateFees: {
             ListingPrice: {
               Amount: trackedProduct.lowest_fba_price.toString(),
@@ -394,8 +452,15 @@ const getEstimateFees = async (req, res, next, products) => {
         product_id: product.id,
         fees: feesEstimate,
       };
-    })
-  );
+    });
+
+    const batchResults = await Promise.all(promises);
+    feeEstimate.push(...batchResults);
+
+    if (i + 2 < products.length) {
+      await delay(1000); // Espera 1 segundo antes del siguiente lote
+    }
+  }
 
   return feeEstimate;
 };
