@@ -7,9 +7,12 @@ const {
   getTrackedProducts,
   getEstimateFees,
 } = require('../controllers/trackedproducts.controller');
-const { getProductsTrackedData } = require('../controllers/prueba');
+const { getProductsTrackedData, addProductVelocityAndUnitsSold } = require('../controllers/prueba');
 
-router.get('/ranks', addAccessTokenHeader, getProductsTrackedData);
+router.get('/ranks', getProductsTrackedData);
+router.get('/velocity', addAccessTokenHeader, addProductVelocityAndUnitsSold);
+
+
 router.get('/', getTrackedProducts);
 router.get('/fees', addAccessTokenHeader, getEstimateFees)
 
