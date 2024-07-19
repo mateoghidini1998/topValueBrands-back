@@ -82,11 +82,11 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
   }
 });
 
-const LIMIT_PRODUCTS = 400; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 800; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
-const BATCH_SIZE = 20; // Tamaño del batch para la segunda etapa
-const DELAY_TIME_MS = 30000; // Tiempo de delay en milisegundos
+const BATCH_SIZE_FEES = 50; // Tamaño del batch para la segunda etapa
+const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
 
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info('Start generateTrackedProductsData');
@@ -98,9 +98,17 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     // Primera etapa: Guardar los productos combinados sin usar BATCH_SIZE
     const [orderData, keepaData] = await Promise.all([
       saveOrders(req, res, next, products).catch((error) => {
+        logger.error('saveOrders failed', {
+          error: error.message,
+          stack: error.stack,
+        });
         throw new Error(`saveOrders failed: ${error.message}`);
       }),
       getProductsTrackedData(products).catch((error) => {
+        logger.error('getProductsTrackedData failed line 108', {
+          error: error.message,
+          stack: error.stack,
+        });
         throw new Error(`getProductsTrackedData failed: ${error.message}`);
       }),
     ]);
@@ -153,23 +161,82 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     const allProductIds = products.map(product => product.id);
     const untrackedProductIds = allProductIds.filter(id => !trackedProductIds.includes(id));
 
+
+    // Proceso para registrar los productos que no se registraron como TrackedProducts porque tenian ASIN repetidos.
     if (untrackedProductIds.length > 0) {
-      logger.warn(`Products not tracked: ${untrackedProductIds.join(', ')}`);
+      logger.warn(`Products ID's not tracked:[ ${untrackedProductIds.join(', ')} ]`);
+      const fixedProducts = [];
+      const unfixedProducts = [];
+
+      // const trackedProducts = await TrackedProduct.findAll();
+      // for (const productId of untrackedProductIds) {
+      //   // 1. Buscar su ASIN
+      //   const product = products.find(p => p.id === productId);
+      //   if (!product) {
+      //     logger.error(`Product not found for ID: ${productId}`);
+      //     continue;
+      //   }
+      //   const asin = product.ASIN;
+
+      //   // 2. Encontrar todos los productos con ese ASIN
+      //   const productsWithSameAsin = products.filter(p => p.ASIN === asin);
+
+      //   if (productsWithSameAsin.length < 2) {
+      //     logger.error(`No multiple products found with ASIN: ${asin}`);
+      //     continue;
+      //   }
+
+      //   // 3. Encontrar el trackedProduct que tiene asignado el primer producto encontrado con ese ASIN
+      //   const firstProductWithSameAsin = productsWithSameAsin[0];
+      //   const trackedProduct = trackedProducts.find(tp => tp.product_id === firstProductWithSameAsin.id);
+
+      //   if (!trackedProduct) {
+      //     logger.error(`Tracked product not found for first product with ASIN: ${asin}`);
+      //     continue;
+      //   }
+
+      //   // 4. Para el resto de los productos crear un nuevo trackedProduct con los mismos datos
+      //   for (let i = 1; i < productsWithSameAsin.length; i++) {
+      //     const productWithSameAsin = productsWithSameAsin[i];
+      //     const newTrackedProduct = {
+      //       ...trackedProduct,
+      //       product_id: productWithSameAsin.id, // Asignar el nuevo product_id
+      //     };
+      //     // Crear el nuevo trackedProduct (aquí deberías llamar a la función o lógica que maneja la creación de trackedProducts en tu base de datos)
+      //     // await createTrackedProduct(newTrackedProduct);
+      //     try {
+      //       await TrackedProduct.create(newTrackedProduct);
+      //       logger.info(`TrackedProduct.create successful: ${JSON.stringify(newTrackedProduct)}`);
+      //       fixedProducts.push(newTrackedProduct.product_id);
+      //     } catch (error) {
+      //       unfixedProducts.push(newTrackedProduct.product_id);
+      //       logger.error(`TrackedProduct.create failed: ${error.message, JSON.stringify(newTrackedProduct)}`);
+      //     }
+      //   }
+
+      //   // 5. Mostrar los id de los productos actualizados y no actualizados
+      //   logger.info(`Fixed products: [ ${Array.from(fixedProducts).join(', ')} ]`);
+      //   logger.info(`Unfixed products: [ ${Array.from(unfixedProducts).join(', ')} ]`);
+
+      // }
+
+      fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts);
     }
 
-    // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
-    for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE) {
-      const productBatch = relatedProducts.slice(i, i + BATCH_SIZE);
-      logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE + 1} with ${productBatch.length} products`);
 
-      await new Promise((resolve) => setTimeout(resolve, DELAY_TIME_MS));
-      logger.info(`Finished waiting ${DELAY_TIME_MS}ms`);
+    // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
+    for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
+      const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
+      logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
+
+      await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
+      logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
 
       const feeEstimates = await getEstimateFees(req, res, next, productBatch).catch((error) => {
-        logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
-        throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+        throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
       });
-      logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE + 1} successfully`);
+      logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
 
       const productCosts = await Product.findAll({
         where: {
@@ -177,9 +244,9 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         },
         attributes: ['id', 'product_cost'],
       }).catch((error) => {
-        throw new Error(`Product.findAll failed for product costs in batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        throw new Error(`Product.findAll failed for product costs in batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
       });
-      logger.info(`Fetched product costs for batch ${i / BATCH_SIZE + 1} successfully`);
+      logger.info(`Fetched product costs for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
 
       const costMap = productCosts.reduce((acc, product) => {
         acc[product.id] = product.product_cost;
@@ -211,9 +278,9 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
           'profit',
         ],
       }).catch((error) => {
-        throw new Error(`TrackedProduct.bulkCreate failed for batch ${i / BATCH_SIZE + 1}: ${error.message}`);
+        throw new Error(`TrackedProduct.bulkCreate failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
       });
-      logger.info(`Batch ${i / BATCH_SIZE + 1} updated with fees and profit successfully`);
+      logger.info(`Batch ${i / BATCH_SIZE_FEES + 1} updated with fees and profit successfully`);
     }
 
     logger.info('All batches saved successfully');
@@ -225,10 +292,10 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
     logger.info('Response sent successfully');
   } catch (error) {
-    logger.error('Error combining and saving data', {
+    logger.error('line 236 error: ', {
       error: error.message,
       stack: error.stack,
-    });
+    }.toString());
     res.status(500).json({
       success: false,
       message: error.message,
@@ -239,8 +306,8 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
 //Function to group asins into groups of GROUPS_ASINS
 
-const GROUPS_ASINS = 20;
-const MS_DELAY_KEEPA = 10000 // 10 seconds
+const GROUPS_ASINS = 60;
+const MS_DELAY_KEEPA = 65000 // 10 seconds
 
 const getProductsTrackedData = async (products) => {
   logger.info(`Starting getProductsTrackedData with ${products.length} products`);
@@ -259,9 +326,23 @@ const getProductsTrackedData = async (products) => {
 
   const keepaResponses = [];
   for (const asinGroup of asinGroups) {
-    console.log('getting keepadata for', asinGroup)
-    const keepaDataResponse = await getKeepaData(asinGroup);
-    keepaResponses.push(keepaDataResponse);
+    try {
+      console.log('getting keepadata for', asinGroup)
+      const keepaDataResponse = await getKeepaData(asinGroup);
+      keepaResponses.push(keepaDataResponse);
+      logger.info(`getKeepaData succeeded for group number ${asinGroups.indexOf(asinGroup) + 1} / ${asinGroups.length}: [ ${asinGroup} ]`);
+    } catch (error) {
+      logger.error(`getKeepaData failed. Group: ${asinGroup}: ${error.message}`);
+      try {
+        await delay(MS_DELAY_KEEPA * 2); // delay
+        const keepaDataResponse = await getKeepaData(asinGroup);
+        keepaResponses.push(keepaDataResponse);
+      } catch (error) {
+        logger.error(`getKeepaData failed after 2 (second) try. Group: ${asinGroup}: ${error.message}`);
+      }
+      // Log the error but continue with the next group
+      continue;
+    }
     await delay(MS_DELAY_KEEPA); // Delay between API calls
   }
 
@@ -287,15 +368,34 @@ const getProductsTrackedData = async (products) => {
   return processedData;
 };
 
+
 //Function to retrieve sales ranks from keepa API. Each request receives a group of 20 ASINs
-const getKeepaData = async (asinGroup) => {
+const getKeepaData = async (asinGroup, retryCount = 0) => {
   const apiKey = process.env.KEEPA_API_KEY;
   const url = `https://api.keepa.com/product?key=${apiKey}&domain=1&asin=${asinGroup}&stats=1&offers=20`;
-  const response = await axios.get(url);
-  if (!response.data) {
-    throw new Error('No data received from Keepa');
+  try {
+    const response = await axios.get(url);
+    if (!response.data) {
+      throw new Error('No data received from Keepa');
+    }
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 429) {
+
+      if (retryCount < 3) { // Intenta un máximo de 3 veces
+        if (retryCount == 2) {
+          await delay(60000); // Espera 60 segundos antes de reintentar
+        } else {
+          await delay(5000); // Espera 5 segundos antes de reintentar
+        }
+        return getKeepaData(asinGroup, retryCount + 1);
+      } else {
+        throw new Error(`Failed after 3 retries: ${error.message}`);
+      }
+    } else {
+      throw error;
+    }
   }
-  return response.data;
 };
 
 const saveOrders = async (req, res, next, products) => {
@@ -344,199 +444,143 @@ const saveOrders = async (req, res, next, products) => {
 };
 
 const getEstimateFees = async (req, res, next, products) => {
-  const feeEstimate = [];
+  try {
+    const feeEstimate = [];
 
-  for (let i = 0; i < products.length; i += 2) {
-    const batch = products.slice(i, i + 2);
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
 
-    const promises = batch.map(async (product) => {
-      const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
-      const trackedProduct = await TrackedProduct.findOne({
-        where: { product_id: product.id },
-      });
+      const estimateFeesForProduct = async () => {
+        const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
+        const trackedProduct = await TrackedProduct.findOne({
+          where: { product_id: product.id },
+        });
 
-      if (!trackedProduct) {
-        throw new Error(
-          `TrackedProduct not found for product id ${product.id}`
-        );
-      }
+        if (!trackedProduct) {
+          throw new Error(
+            `TrackedProduct not found for product id ${product.id}`
+          );
+        }
 
-      const body = {
-        FeesEstimateRequest: {
-          MarketplaceId: 'ATVPDKIKX0DER',
-          IsAmazonFulfilled: true,
-          Identifier: product.ASIN,
-          PriceToEstimateFees: {
-            ListingPrice: {
-              Amount: trackedProduct.lowest_fba_price.toString(),
-              CurrencyCode: 'USD',
+        const body = {
+          FeesEstimateRequest: {
+            MarketplaceId: 'ATVPDKIKX0DER',
+            IsAmazonFulfilled: true,
+            Identifier: product.ASIN,
+            PriceToEstimateFees: {
+              ListingPrice: {
+                Amount: trackedProduct.lowest_fba_price.toString(),
+                CurrencyCode: 'USD',
+              },
             },
           },
-        },
+        };
+
+        const response = await axios.post(url, body, {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-amz-access-token': req.headers['x-amz-access-token'],
+          },
+        });
+
+        const feesEstimate =
+          response.data?.payload?.FeesEstimateResult?.FeesEstimate
+            ?.TotalFeesEstimate?.Amount || null;
+
+        feeEstimate.push({
+          product_id: product.id,
+          fees: feesEstimate,
+        });
+
+        logger.info(`Fees estimated for product id ${product.id}`);
       };
 
-      const response = await axios.post(url, body, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-amz-access-token': req.headers['x-amz-access-token'],
-        },
-      });
+      try {
+        await estimateFeesForProduct();
+      } catch (error) {
+        logger.error(`Error estimating fees for product id ${product.id}, retrying in 5 seconds: ${error.message}`);
+        await delay(5000);
+        try {
+          await estimateFeesForProduct();
+        } catch (retryError) {
+          logger.error(`Retry failed for product id ${product.id}: ${retryError.message}`);
+          feeEstimate.push({
+            product_id: product.id,
+            fees: null,
+            // error: retryError.message
+          });
+        }
+      }
 
-      const feesEstimate =
-        response.data?.payload?.FeesEstimateResult?.FeesEstimate
-          ?.TotalFeesEstimate?.Amount || null;
-
-      return {
-        product_id: product.id,
-        fees: feesEstimate,
-      };
-    });
-
-    const batchResults = await Promise.all(promises);
-    feeEstimate.push(...batchResults);
-
-    if (i + 2 < products.length) {
-      await delay(1000); // Espera 1 segundo antes del siguiente lote
+      // Esperar 2100ms después de cada dos peticiones
+      if (i % 2 === 1) {
+        await delay(2100);
+      }
     }
-  }
 
-  return feeEstimate;
+    return feeEstimate;
+  } catch (err) {
+    logger.error(`Unexpected error in getEstimateFees: ${err.message}`);
+    next(err);
+  }
 };
 
-exports.getEstimateFees = asyncHandler(async (req, res, next) => {
+async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
+  for (const productId of untrackedProductIds) {
+    try {
+      // 1. Buscar el asin del producto no trackeado
+      const untrackedProduct = await Product.findOne({ where: { id: productId } });
 
-  const products = await TrackedProduct.findAll();
+      console.log(untrackedProduct.ASIN);
+
+      if (!untrackedProduct) {
+        logger.warn(`Product with ID ${productId} not found.`);
+        continue;
+      }
+
+      const { ASIN } = untrackedProduct;
+
+      // 2. Encontrar todos los productos con ese asin
+      const productsWithSameAsin = await Product.findAll({ where: { ASIN } });
+
+      // 3. Encontrar el TrackedProduct del primer producto encontrado con ese asin
+      const firstProduct = productsWithSameAsin[0];
+      const trackedProduct = await TrackedProduct.findOne({ where: { product_id: firstProduct.id } });
+
+      if (!trackedProduct) {
+        logger.warn(`TrackedProduct for Product with ID ${firstProduct.id} not found.`);
+        continue;
+      }
+
+      // 4. Crear un nuevo TrackedProduct para cada uno de los productos restantes
+      for (const product of productsWithSameAsin.slice(1)) {
+        const newTrackedProductData = {
+          ...trackedProduct.dataValues, // Copiar todos los valores del trackedProduct original
+          product_id: product.id, // Asignar el nuevo product_id
+          createdAt: new Date(), // Actualizar la fecha de creación
+          updatedAt: new Date() // Actualizar la fecha de actualización
+        };
+
+        delete newTrackedProductData.id; // Eliminar el ID para que se genere uno nuevo
+
+        try {
+          const newTrackedProduct = await TrackedProduct.create(newTrackedProductData);
+          fixedProducts.push(product.id);
+          logger.info(`TrackedProduct.create successful: ${JSON.stringify(newTrackedProduct)}`);
 
 
-  console.log("Executing getEstimateFees... for products: ", products.length + " products")
-  logger.info("Executing getEstimateFees... for products: ", products.length + " products")
+        } catch (error) {
+          unfixedProducts.push(product.id);
+          logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
+        }
 
-  const feeEstimate = [];
-  let requestCount = 0;
-
-  for (const product of products) {
-    console.log(`Executing getEstimateFees... for product ${product.ASIN}...`);
-    logger.info(`Executing getEstimateFees... for product ${product.ASIN}...`);
-    const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
-    const trackedProduct = await TrackedProduct.findOne({
-      where: { product_id: product.id },
-    });
-
-    console.log(trackedProduct.toString());
-
-    if (!trackedProduct) {
-      throw new Error(
-        `TrackedProduct not found for product id ${product.id}`
-      );
+      }
+    } catch (error) {
+      logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
     }
-
-    const body = {
-      FeesEstimateRequest: {
-        MarketplaceId: 'ATVPDKIKX0DER',
-        IsAmazonFulfilled: true,
-        Identifier: product.ASIN,
-        PriceToEstimateFees: {
-          ListingPrice: {
-            Amount: trackedProduct.lowest_fba_price.toString(),
-            CurrencyCode: 'USD',
-          },
-        },
-      },
-    };
-
-    if (requestCount > 0 && requestCount % MAX_REQUESTS_BEFORE_DELAY_ESTIMATE_FEES === 0) {
-      await delay(DELAY_TIME_MS_ESTIMATE_FEES);
-    }
-
-    const response = await axios.post(url, body, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
-      },
-    });
-
-    requestCount++;
-
-    if (!response.data || !response.data.FeesEstimateResult) {
-      throw new Error(`Failed to retrieve fee estimate for ${product.ASIN}`);
-    }
-
-    const feesEstimateResult = response.data.FeesEstimateResult;
-
-    if (
-      !feesEstimateResult ||
-      !feesEstimateResult.FeesEstimateIdentifier ||
-      !feesEstimateResult.FeesEstimate
-    ) {
-      throw new Error(
-        `Invalid fee estimate result for product id ${product.id}`
-      );
-    }
-
-    const feesEstimate = feesEstimateResult.FeesEstimate.TotalFeesEstimate.Amount;
-    feeEstimate.push({
-      product_id: product.id,
-      fees: feesEstimate,
-    });
   }
-  return feeEstimate;
-});
 
-
-// const getEstimateFees = async (req, res, next, products) => {
-//   console.log("Executing getEstimateFees... for products: ", products.length + " products")
-//   // logger.info("Executing getEstimateFees... for products: ", products.length + " products")
-//   const feeEstimate = await Promise.all(
-//     products.map(async (product, index) => {
-//       console.log(`Executing getEstimateFees... for product ${product.seller_sku}...`);
-//       // logger.info(`Executing getEstimateFees... for product ${product.ASIN}...`);
-//       const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/listings/${product.seller_sku}/feesEstimate`;
-//       const trackedProduct = await TrackedProduct.findOne({
-//         where: { product_id: product.id },
-//       });
-
-//       if (!trackedProduct) {
-//         throw new Error(
-//           `TrackedProduct not found for product id ${product.id}`
-//         );
-//       }
-
-//       const body = {
-//         FeesEstimateRequest: {
-//           MarketplaceId: 'ATVPDKIKX0DER',
-//           IsAmazonFulfilled: true,
-//           Identifier: product.seller_sku,
-//           PriceToEstimateFees: {
-//             ListingPrice: {
-//               Amount: trackedProduct.lowest_fba_price.toString(),
-//               CurrencyCode: 'USD',
-//             },
-//           },
-//         },
-//       };
-
-//       if (index % 2) {
-//         await delay(1000);
-//       }
-
-
-//       const response = await axios.post(url, body, {
-//         headers: {
-//           'Content-Type': 'application/json',
-//           'x-amz-access-token': req.headers['x-amz-access-token'],
-//         },
-//       });
-
-//       const feesEstimate =
-//         response.data?.payload?.FeesEstimateResult?.FeesEstimate
-//           ?.TotalFeesEstimate?.Amount || null;
-
-//       return {
-//         product_id: product.id,
-//         fees: feesEstimate,
-//       };
-//     })
-//   );
-
-//   return feeEstimate;
-// };
+  // 5. Mostrar los id de los productos actualizados y no actualizados
+  logger.info(`Fixed products: [ ${Array.from(fixedProducts).join(', ')} ]`);
+  logger.info(`Unfixed products: [ ${Array.from(unfixedProducts).join(', ')} ]`);
+}
