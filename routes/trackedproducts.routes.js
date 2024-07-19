@@ -9,11 +9,13 @@ const {
 } = require('../controllers/trackedproducts.controller');
 const { getProductsTrackedData, addProductVelocityAndUnitsSold } = require('../controllers/prueba');
 
-router.get('/ranks', getProductsTrackedData);
+router.get('/ranks', generateTrackedProductsData);
 router.get('/velocity', addAccessTokenHeader, addProductVelocityAndUnitsSold);
 
 
 router.get('/', getTrackedProducts);
 router.get('/fees', addAccessTokenHeader, getEstimateFees)
+
+router.get('/ranks-test', getProductsTrackedData);
 
 module.exports = router;
