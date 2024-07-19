@@ -29,18 +29,22 @@ module.exports = {
       },
       units_sold: {
         type: Sequelize.INTEGER,
+        default: 0
       },
       product_velocity: {
         type: Sequelize.FLOAT,
+        default: 0
       },
       lowest_fba_price: {
         type: Sequelize.FLOAT,
       },
       fees: {
         type: Sequelize.FLOAT,
+        default: 0
       },
       profit: {
         type: Sequelize.FLOAT,
+        default: 0
       },
       createdAt: {
         allowNull: false,
