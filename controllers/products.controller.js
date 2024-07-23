@@ -206,25 +206,13 @@ exports.getProducts = asyncHandler(async (req, res) => {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
 
-  // const redis = await connect();
-
-  // const key = 'products'
-  // const redisProducts = await redis.get(key)
-
-  // if (redisProducts) {
-  //   console.log('Products from Redis')
-  //   return res.status(200).json({
-  //     success: true,
-  //     data: JSON.parse(redisProducts)
-  //   })
-  // }
-
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
   const supplier = req.query.supplier || null;
-  let products = [];
+  const orderBy = req.query.orderBy || 'supplier_item_number';
+  const orderWay = req.query.orderWay || 'ASC';
 
   const includeSupplier = {
     model: Supplier,
@@ -232,65 +220,53 @@ exports.getProducts = asyncHandler(async (req, res) => {
     attributes: ['supplier_name'],
   };
 
+  // Construcción dinámica de la consulta
+  const whereConditions = {
+    is_active: true,
+  };
+
   if (keyword) {
-    products = await Product.findAll({
-      order: [
-        ['supplier_item_number', 'ASC'],
-        ['product_cost', 'ASC'],
-        [{ model: Supplier, as: 'supplier' }, 'supplier_name', 'ASC'],
-        ['supplier_item_number', 'ASC'],
-        ['pack_type', 'ASC'],
-      ],
-      where: {
-        [Op.or]: [
-          { supplier_item_number: { [Op.like]: `${keyword}%` } },
-          { '$supplier.supplier_name$': { [Op.like]: `${keyword}%` } },
-          { pack_type: { [Op.like]: `%${keyword}%` } },
-          { product_cost: { [Op.like]: `${keyword}%` } },
-          { seller_sku: { [Op.like]: `${keyword}%` } },
-          { ASIN: { [Op.like]: `${keyword}%` } },
-          { product_name: { [Op.like]: `${keyword}%` } },
-        ],
-        [Op.and]: [{ is_active: true }],
-      },
-      include: [includeSupplier],
-    });
-  } else {
-    products = await Product.findAll({
-      offset: offset,
-      limit: limit,
-      order: [
-        ['supplier_item_number', 'ASC'],
-        ['product_cost', 'ASC'],
-        [{ model: Supplier, as: 'supplier' }, 'supplier_name', 'ASC'],
-        ['supplier_item_number', 'ASC'],
-        ['pack_type', 'ASC'],
-      ],
-      where: { is_active: true },
-      include: [includeSupplier],
-    });
+    whereConditions[Op.or] = [
+      { supplier_item_number: { [Op.like]: `${keyword}%` } },
+      { '$supplier.supplier_name$': { [Op.like]: `${keyword}%` } },
+      { pack_type: { [Op.like]: `%${keyword}%` } },
+      { product_cost: { [Op.like]: `${keyword}%` } },
+      { seller_sku: { [Op.like]: `${keyword}%` } },
+      { ASIN: { [Op.like]: `${keyword}%` } },
+      { product_name: { [Op.like]: `${keyword}%` } },
+    ];
   }
 
   if (supplier) {
-    products = await Product.findAll({
-      where: {
-        supplier_id: supplier
-      }
-    })
+    whereConditions.supplier_id = supplier;
   }
 
-  const totalProducts = keyword !== '' ? products.length : await Product.count();
-  const totalPages = Math.ceil(totalProducts / limit);
+  try {
+    const products = await Product.findAndCountAll({
+      offset,
+      limit,
+      order: [[orderBy, orderWay]],
+      where: whereConditions,
+      include: [includeSupplier],
+    });
 
-  // console.log('Users From DB')
-  // await redis.set(key, JSON.stringify(products));
-  return res.status(200).json({
-    success: true,
-    total: totalProducts,
-    pages: totalPages,
-    currentPage: page,
-    data: products,
-  });
+    const totalPages = Math.ceil(products.count / limit);
+
+    return res.status(200).json({
+      success: true,
+      total: products.count,
+      pages: totalPages,
+      currentPage: page,
+      data: products.rows,
+    });
+  } catch (error) {
+    // Manejo centralizado de errores
+    return res.status(500).json({
+      success: false,
+      msg: 'Error fetching products',
+      error: error.message,
+    });
+  }
 });
 
 // Function to add images to all products
