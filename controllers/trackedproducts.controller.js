@@ -4,6 +4,7 @@ const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
 const dotenv = require('dotenv');
 const logger = require('../logger/logger');
+const { Op } = require('sequelize');
 
 dotenv.config({ path: './.env' });
 
@@ -20,7 +21,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
   console.log('Executing getTrackedProducts...');
   logger.info('Executing getTrackedProducts...');
 
-  const { supplier_id } = req.query;
+  const { supplier_id, keyword } = req.query;
 
   const findAllOptions = {
     include: [
@@ -42,15 +43,23 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
             attributes: ['supplier_name'],
           },
         ],
+        where: {},
       },
     ],
   };
 
   if (supplier_id) {
-    findAllOptions.include[0].where = {
-      supplier_id: supplier_id,
-    };
+    findAllOptions.include[0].where.supplier_id = supplier_id;
     logger.info('Filtering by supplier_id', { supplier_id });
+  }
+
+  if (keyword) {
+    findAllOptions.include[0].where[Op.or] = [
+      { product_name: { [Op.like]: `%${keyword}%` } },
+      { ASIN: { [Op.like]: `%${keyword}%` } },
+      { seller_sku: { [Op.like]: `%${keyword}%` } },
+    ];
+    logger.info('Filtering by keyword', { keyword });
   }
 
   try {
