@@ -223,6 +223,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
+  const supplier = req.query.supplier || null;
   let products = [];
 
   const includeSupplier = {
@@ -270,8 +271,15 @@ exports.getProducts = asyncHandler(async (req, res) => {
     });
   }
 
-  const totalProducts =
-    keyword !== '' ? products.length : await Product.count();
+  if (supplier) {
+    products = await Product.findAll({
+      where: {
+        supplier_id: supplier
+      }
+    })
+  }
+
+  const totalProducts = keyword !== '' ? products.length : await Product.count();
   const totalPages = Math.ceil(totalProducts / limit);
 
   // console.log('Users From DB')
