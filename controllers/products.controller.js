@@ -359,18 +359,22 @@ const addImageToProducts = async (products, accessToken) => {
       } catch (error) {
         errorCount++;
 
-        switch (error.response.status) {
-          case 404:
-            break;
-          case 403:
-            error403Count++;
-            break;
-          case 429:
-            error429Count++;
-            break;
-          default:
-            console.error({ msg: error.message });
-            break;
+        if (error.response) {
+          switch (error.response.status) {
+            case 404:
+              break;
+            case 403:
+              error403Count++;
+              break;
+            case 429:
+              error429Count++;
+              break;
+            default:
+              console.error({ msg: error.message });
+              break;
+          }
+        } else {
+          console.error('Request error without response:', error.message);
         }
 
         productsWithoutImage.push(product);
@@ -395,6 +399,7 @@ const addImageToProducts = async (products, accessToken) => {
     productsWithoutImage: productsWithoutImage,
   };
 };
+
 
 exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   // const user = await User.findOne({ where: { id: req.user.id } });

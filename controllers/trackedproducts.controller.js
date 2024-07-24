@@ -5,6 +5,7 @@ const { generateOrderReport } = require('../utils/utils');
 const dotenv = require('dotenv');
 const logger = require('../logger/logger');
 const { Op } = require('sequelize');
+const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
 
@@ -91,7 +92,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
   }
 });
 
-const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 1000; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 const BATCH_SIZE_FEES = 50; // Tamaño del batch para la segunda etapa
@@ -177,58 +178,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       const fixedProducts = [];
       const unfixedProducts = [];
 
-      // const trackedProducts = await TrackedProduct.findAll();
-      // for (const productId of untrackedProductIds) {
-      //   // 1. Buscar su ASIN
-      //   const product = products.find(p => p.id === productId);
-      //   if (!product) {
-      //     logger.error(`Product not found for ID: ${productId}`);
-      //     continue;
-      //   }
-      //   const asin = product.ASIN;
-
-      //   // 2. Encontrar todos los productos con ese ASIN
-      //   const productsWithSameAsin = products.filter(p => p.ASIN === asin);
-
-      //   if (productsWithSameAsin.length < 2) {
-      //     logger.error(`No multiple products found with ASIN: ${asin}`);
-      //     continue;
-      //   }
-
-      //   // 3. Encontrar el trackedProduct que tiene asignado el primer producto encontrado con ese ASIN
-      //   const firstProductWithSameAsin = productsWithSameAsin[0];
-      //   const trackedProduct = trackedProducts.find(tp => tp.product_id === firstProductWithSameAsin.id);
-
-      //   if (!trackedProduct) {
-      //     logger.error(`Tracked product not found for first product with ASIN: ${asin}`);
-      //     continue;
-      //   }
-
-      //   // 4. Para el resto de los productos crear un nuevo trackedProduct con los mismos datos
-      //   for (let i = 1; i < productsWithSameAsin.length; i++) {
-      //     const productWithSameAsin = productsWithSameAsin[i];
-      //     const newTrackedProduct = {
-      //       ...trackedProduct,
-      //       product_id: productWithSameAsin.id, // Asignar el nuevo product_id
-      //     };
-      //     // Crear el nuevo trackedProduct (aquí deberías llamar a la función o lógica que maneja la creación de trackedProducts en tu base de datos)
-      //     // await createTrackedProduct(newTrackedProduct);
-      //     try {
-      //       await TrackedProduct.create(newTrackedProduct);
-      //       logger.info(`TrackedProduct.create successful: ${JSON.stringify(newTrackedProduct)}`);
-      //       fixedProducts.push(newTrackedProduct.product_id);
-      //     } catch (error) {
-      //       unfixedProducts.push(newTrackedProduct.product_id);
-      //       logger.error(`TrackedProduct.create failed: ${error.message, JSON.stringify(newTrackedProduct)}`);
-      //     }
-      //   }
-
-      //   // 5. Mostrar los id de los productos actualizados y no actualizados
-      //   logger.info(`Fixed products: [ ${Array.from(fixedProducts).join(', ')} ]`);
-      //   logger.info(`Unfixed products: [ ${Array.from(unfixedProducts).join(', ')} ]`);
-
-      // }
-
       fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts);
     }
 
@@ -243,7 +192,15 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
       const feeEstimates = await getEstimateFees(req, res, next, productBatch).catch((error) => {
         logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-        throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+
+        // Si el error es 403, agregar en el header el access token nuevamente
+        if (error.response && error.response.status === 403) {
+          addAccessTokenHeader(req, res, next);
+          // reiterar el proceso con el nuevo access token
+          return getEstimateFees(req, res, next, productBatch);
+        }
+
+        // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
       });
       logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
 
@@ -316,14 +273,14 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 //Function to group asins into groups of GROUPS_ASINS
 
 const GROUPS_ASINS = 60;
-const MS_DELAY_KEEPA = 65000 // 10 seconds
+const DEFAULT_DELAY = 10000; // 10 seconds default delay
+const MAX_RETRIES = 3;
 
 const getProductsTrackedData = async (products) => {
   logger.info(`Starting getProductsTrackedData with ${products.length} products`);
   logger.info(`Groups of ${GROUPS_ASINS} ASINs will be processed in batches of ${GROUPS_ASINS} products`);
-  logger.info(`MS_DELAY_KEEPA: ${MS_DELAY_KEEPA}`);
-  const asinGroups = [];
 
+  const asinGroups = [];
   for (let i = 0; i < products.length; i += GROUPS_ASINS) {
     const group = products
       .slice(i, i + GROUPS_ASINS)
@@ -331,39 +288,85 @@ const getProductsTrackedData = async (products) => {
       .join(',');
     asinGroups.push(group);
   }
-  console.log(asinGroups)
+
+  logger.info(`Total ASIN groups to process: ${asinGroups.length}`);
 
   const keepaResponses = [];
-  for (const asinGroup of asinGroups) {
+  let tokensLeft = 400;
+  let refillIn = 0;
+  let totalTokensConsumed = 0;
+  let tokensConsumedForTheLastRequest = 0;
+  let refillRate = 0;
+  let lastRequestTime = Date.now();
+
+  for (const [index, asinGroup] of asinGroups.entries()) {
     try {
-      console.log('getting keepadata for', asinGroup)
-      const keepaDataResponse = await getKeepaData(asinGroup);
-      keepaResponses.push(keepaDataResponse);
-      logger.info(`getKeepaData succeeded for group number ${asinGroups.indexOf(asinGroup) + 1} / ${asinGroups.length}: [ ${asinGroup} ]`);
-    } catch (error) {
-      logger.error(`getKeepaData failed. Group: ${asinGroup}: ${error.message}`);
-      try {
-        await delay(MS_DELAY_KEEPA * 2); // delay
+      logger.info(`Processing group ${index + 1}/${asinGroups.length}`);
+
+      // Esperar hasta que haya suficientes tokens disponibles
+      const requiredTokens = 400; // Cantidad de tokens necesarios por solicitud
+      const tokensNeeded = requiredTokens - tokensLeft;
+
+      if (tokensNeeded > 0) {
+        logger.info(`tokens consumed: ${totalTokensConsumed}`)
+        logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
+        logger.info(`tokens left: ${tokensLeft}`)
+        logger.info(`tokens refillIn: ${refillIn}`)
+        logger.info(`tokens refill rate: ${refillRate}`)
+        const waitTimeForTokens = (tokensNeeded / refillRate) * 60000;
+        logger.info(`Waiting ${waitTimeForTokens} ms to accumulate enough tokens`);
+        await delay(waitTimeForTokens);
+
+        // Recalcular tokensLeft y refillIn después de esperar
+        const keepaDataResponse = await getKeepaData(asinGroup);
+        tokensLeft = keepaDataResponse.tokensLeft;
+        refillIn = keepaDataResponse.refillIn;
+        refillRate = keepaDataResponse.refillRate;
+        tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
+        totalTokensConsumed += keepaDataResponse.totalTokensConsumed;
+        keepaResponses.push(keepaDataResponse);
+
+        logger.info(`tokens consumed: ${totalTokensConsumed}`)
+        logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
+        logger.info(`tokens left: ${tokensLeft}`)
+        logger.info(`tokens refillIn: ${refillIn}`)
+        logger.info(`tokens refill rate: ${refillRate}`)
+
+        logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
+
+      } else {
+        // Realizar la solicitud si hay suficientes tokens disponibles
         const keepaDataResponse = await getKeepaData(asinGroup);
         keepaResponses.push(keepaDataResponse);
-      } catch (error) {
-        logger.error(`getKeepaData failed after 2 (second) try. Group: ${asinGroup}: ${error.message}`);
+        tokensLeft = keepaDataResponse.tokensLeft;
+        refillIn = keepaDataResponse.refillIn;
+        refillRate = keepaDataResponse.refillRate;
+        tokensConsumed += keepaDataResponse.tokensConsumed;
+        logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
       }
-      // Log the error but continue with the next group
-      continue;
+
+    } catch (error) {
+      logger.error(`getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${error.message}`);
     }
-    await delay(MS_DELAY_KEEPA); // Delay between API calls
+
+    const currentTime = Date.now();
+    const timeSinceLastRequest = currentTime - lastRequestTime;
+    lastRequestTime = currentTime;
+
+    // Esperar entre solicitudes para evitar problemas de límite de tasa
+    // const waitTime = Math.max(DEFAULT_DELAY - timeSinceLastRequest, 0);
+    // logger.info(`Waiting ${waitTime} ms before next request`);
+    // await delay(waitTime);
   }
 
   const processedData = keepaResponses.flatMap((response) =>
     response.products.map((product) => {
       const matchingProduct = products.find((p) => p.ASIN === product.asin);
-      let lowestPrice =
-        product.stats.buyBoxPrice > 0
-          ? product.stats.buyBoxPrice
-          : product.stats.current[10] > 0
-            ? product.stats.current[10]
-            : product.stats.current[7];
+      const lowestPrice = product.stats.buyBoxPrice > 0
+        ? product.stats.buyBoxPrice
+        : product.stats.current[10] > 0
+          ? product.stats.current[10]
+          : product.stats.current[7];
 
       return {
         product_id: matchingProduct.id,
@@ -374,14 +377,17 @@ const getProductsTrackedData = async (products) => {
       };
     })
   );
+
   return processedData;
 };
 
 
-//Function to retrieve sales ranks from keepa API. Each request receives a group of 20 ASINs
 const getKeepaData = async (asinGroup, retryCount = 0) => {
+  logger.info(`Executing getKeepaData with ASIN group`);
   const apiKey = process.env.KEEPA_API_KEY;
-  const url = `https://api.keepa.com/product?key=${apiKey}&domain=1&asin=${asinGroup}&stats=1&offers=20`;
+  const url = `https://api.keepa.com/product?key=${apiKey}&domain=1&asin=${asinGroup}&stats=1&offers=20&history=0`;
+
+  logger.info(`Requesting Keepa data: ${url}`);
   try {
     const response = await axios.get(url);
     if (!response.data) {
@@ -390,16 +396,13 @@ const getKeepaData = async (asinGroup, retryCount = 0) => {
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 429) {
-
-      if (retryCount < 3) { // Intenta un máximo de 3 veces
-        if (retryCount == 2) {
-          await delay(60000); // Espera 60 segundos antes de reintentar
-        } else {
-          await delay(5000); // Espera 5 segundos antes de reintentar
-        }
+      if (retryCount < MAX_RETRIES) {
+        const waitTime = retryCount === MAX_RETRIES - 1 ? 60000 : 5000;
+        logger.error(`429 Error: Retry ${retryCount + 1}/${MAX_RETRIES}. Waiting for ${waitTime} ms before retry.`);
+        await delay(waitTime);
         return getKeepaData(asinGroup, retryCount + 1);
       } else {
-        throw new Error(`Failed after 3 retries: ${error.message}`);
+        throw new Error(`Failed after ${MAX_RETRIES} retries: ${error.message}`);
       }
     } else {
       throw error;
