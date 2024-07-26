@@ -200,7 +200,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         });
       })
 
-      console.log(feeEstimates);
+      // console.log(feeEstimates);
 
       logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
 
@@ -299,7 +299,7 @@ const getProductsTrackedData = async (products) => {
   let totalTokensConsumed = 0;
   let tokensConsumedForTheLastRequest = 0;
 
-  console.log(asinGroups.entries());
+  // console.log(asinGroups.entries());
 
   for (const [index, asinGroup] of asinGroups.entries()) {
     try {
@@ -334,10 +334,6 @@ const getProductsTrackedData = async (products) => {
         // Recalcular tokensLeft después de esperar
         const keepaDataResponse = await getKeepaData(asinGroup);
 
-        // show keepa response for debug
-        if (index == 1) {
-          console.log(keepaDataResponse);
-        }
         tokensLeft = keepaDataResponse.tokensLeft;
         tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
         totalTokensConsumed += keepaDataResponse.tokensConsumed;
@@ -596,7 +592,7 @@ async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedP
       // 1. Buscar el asin del producto no trackeado
       const untrackedProduct = await Product.findOne({ where: { id: productId } });
 
-      console.log(untrackedProduct.ASIN);
+      // console.log(untrackedProduct.ASIN);
 
       if (!untrackedProduct) {
         logger.warn(`Product with ID ${productId} not found.`);
