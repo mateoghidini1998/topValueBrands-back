@@ -1,4 +1,4 @@
-const { Product, TrackedProduct, Supplier } = require('../models');
+const { Product, TrackedProduct, Supplier, User } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
@@ -18,56 +18,75 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //@route GET api/v1/pogenerator/trackedproducts
 //@desc  Get all tracked products
 //@access Private
-exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
+exports.getTrackedProducts = asyncHandler(async (req, res) => {
   console.log('Executing getTrackedProducts...');
   logger.info('Executing getTrackedProducts...');
 
-  const { supplier_id, keyword } = req.query;
+  // Obtener el rol del usuario para restringir el acceso
+  // const user = await User.findOne({ where: { id: req.user.id } });
 
-  const findAllOptions = {
+  // if (user.role !== 'admin') {
+  //   return res.status(401).json({ msg: 'Unauthorized' });
+  // }
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+  const keyword = req.query.keyword || '';
+  const supplier_id = req.query.supplier_id || null;
+  const orderBy = req.query.orderBy || 'updatedAt';
+  const orderWay = req.query.orderWay || 'ASC';
+
+  const includeProduct = {
+    model: Product,
+    as: 'product',
+    attributes: [
+      'product_name',
+      'ASIN',
+      'seller_sku',
+      'product_cost',
+      'product_image',
+      'supplier_id',
+    ],
     include: [
       {
-        model: Product,
-        as: 'product',
-        attributes: [
-          'product_name',
-          'ASIN',
-          'seller_sku',
-          'product_cost',
-          'product_image',
-          'supplier_id',
-        ],
-        include: [
-          {
-            model: Supplier,
-            as: 'supplier',
-            attributes: ['supplier_name'],
-          },
-        ],
-        where: {},
+        model: Supplier,
+        as: 'supplier',
+        attributes: ['supplier_name'],
       },
     ],
+    where: {},
   };
 
-  if (supplier_id) {
-    findAllOptions.include[0].where.supplier_id = supplier_id;
-    logger.info('Filtering by supplier_id', { supplier_id });
-  }
+  const whereConditions = {};
 
   if (keyword) {
-    findAllOptions.include[0].where[Op.or] = [
+    includeProduct.where[Op.or] = [
       { product_name: { [Op.like]: `%${keyword}%` } },
       { ASIN: { [Op.like]: `%${keyword}%` } },
       { seller_sku: { [Op.like]: `%${keyword}%` } },
     ];
-    logger.info('Filtering by keyword', { keyword });
+  }
+
+  if (supplier_id) {
+    includeProduct.where.supplier_id = {
+      [Op.eq]: supplier_id,
+      [Op.ne]: null,
+    };
   }
 
   try {
-    const trackedProducts = await TrackedProduct.findAll(findAllOptions);
-    logger.info('Tracked products found successfully', { count: trackedProducts.length });
+    const trackedProducts = await TrackedProduct.findAndCountAll({
+      offset,
+      limit,
+      order: [[orderBy, orderWay]],
+      where: whereConditions,
+      include: [includeProduct],
+    });
 
-    const flattenedTrackedProducts = trackedProducts.map((trackedProduct) => {
+    const totalPages = Math.ceil(trackedProducts.count / limit);
+
+    const flattenedTrackedProducts = trackedProducts.rows.map((trackedProduct) => {
       const { product, ...trackedProductData } = trackedProduct.toJSON();
       const { supplier, ...productData } = product;
       return {
@@ -77,8 +96,13 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
       };
     });
 
+
+
     res.status(200).json({
       success: true,
+      total: trackedProducts.count,
+      pages: totalPages,
+      currentPage: page,
       data: flattenedTrackedProducts,
     });
 
@@ -91,6 +115,8 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+
 
 const LIMIT_PRODUCTS = 10000; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
