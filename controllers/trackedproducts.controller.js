@@ -92,7 +92,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res, next) => {
   }
 });
 
-const LIMIT_PRODUCTS = 1000; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 10000; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 const BATCH_SIZE_FEES = 50; // Tamaño del batch para la segunda etapa
@@ -115,7 +115,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         throw new Error(`saveOrders failed: ${error.message}`);
       }),
       getProductsTrackedData(products).catch((error) => {
-        logger.error('getProductsTrackedData failed line 108', {
+        logger.error('getProductsTrackedData failed line 118', {
           error: error.message,
           stack: error.stack,
         });
@@ -190,18 +190,18 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
       logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
 
-      const feeEstimates = await getEstimateFees(req, res, next, productBatch).catch((error) => {
-        logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+      const feeEstimates = [];
+      await addAccessTokenHeader(req, res, async () => {
+        await getEstimateFees(req, res, next, productBatch).then((data) => {
+          feeEstimates.push(...data);
+        }).catch((error) => {
+          logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+          // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+        });
+      })
 
-        // Si el error es 403, agregar en el header el access token nuevamente
-        if (error.response && error.response.status === 403) {
-          addAccessTokenHeader(req, res, next);
-          // reiterar el proceso con el nuevo access token
-          return getEstimateFees(req, res, next, productBatch);
-        }
+      console.log(feeEstimates);
 
-        // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-      });
       logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
 
       const productCosts = await Product.findAll({
@@ -255,10 +255,11 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       message: 'Data combined and saved successfully.',
       success: true,
       data: combinedData,
+      itemsQuantity: combinedData.length,
     });
-    logger.info('Response sent successfully');
+    logger.info('Response sent successfully with 200 status code. ' + JSON.stringify(combinedData.length) + ' items tracked.');
   } catch (error) {
-    logger.error('line 236 error: ', {
+    logger.error('line 262 error: ', {
       error: error.message,
       stack: error.stack,
     }.toString());
@@ -272,18 +273,19 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
 //Function to group asins into groups of GROUPS_ASINS
 
-const GROUPS_ASINS = 60;
+const TOKENS_PER_REQUEST = 6;
+const ASINS_PER_GROUP = 60;
 const DEFAULT_DELAY = 10000; // 10 seconds default delay
 const MAX_RETRIES = 3;
 
 const getProductsTrackedData = async (products) => {
   logger.info(`Starting getProductsTrackedData with ${products.length} products`);
-  logger.info(`Groups of ${GROUPS_ASINS} ASINs will be processed in batches of ${GROUPS_ASINS} products`);
+  logger.info(`Groups of ${ASINS_PER_GROUP} ASINs will be processed in batches of ${ASINS_PER_GROUP} products`);
 
   const asinGroups = [];
-  for (let i = 0; i < products.length; i += GROUPS_ASINS) {
+  for (let i = 0; i < products.length; i += ASINS_PER_GROUP) {
     const group = products
-      .slice(i, i + GROUPS_ASINS)
+      .slice(i, i + ASINS_PER_GROUP)
       .map((product) => product.ASIN)
       .join(',');
     asinGroups.push(group);
@@ -292,56 +294,61 @@ const getProductsTrackedData = async (products) => {
   logger.info(`Total ASIN groups to process: ${asinGroups.length}`);
 
   const keepaResponses = [];
-  let tokensLeft = 400;
-  let refillIn = 0;
+  const TOKENS_PER_MIN = 60;
+  let tokensLeft = ASINS_PER_GROUP * TOKENS_PER_REQUEST;
   let totalTokensConsumed = 0;
   let tokensConsumedForTheLastRequest = 0;
-  let refillRate = 0;
-  let lastRequestTime = Date.now();
+
+  console.log(asinGroups.entries());
 
   for (const [index, asinGroup] of asinGroups.entries()) {
     try {
       logger.info(`Processing group ${index + 1}/${asinGroups.length}`);
 
       // Esperar hasta que haya suficientes tokens disponibles
-      const requiredTokens = 400; // Cantidad de tokens necesarios por solicitud
-      const tokensNeeded = requiredTokens - tokensLeft;
+      const requiredTokens = ASINS_PER_GROUP * TOKENS_PER_REQUEST; // Cantidad de tokens necesarios por solicitud
+      const missingTokens = requiredTokens - tokensLeft;
 
-      if (tokensNeeded > 0) {
-        logger.info(`tokens consumed: ${totalTokensConsumed}`)
-        logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
-        logger.info(`tokens left: ${tokensLeft}`)
-        logger.info(`tokens refillIn: ${refillIn}`)
-        logger.info(`tokens refill rate: ${refillRate}`)
-        const waitTimeForTokens = (tokensNeeded / refillRate) * 60000;
-        logger.info(`Waiting ${waitTimeForTokens} ms to accumulate enough tokens`);
-        await delay(waitTimeForTokens);
+      //* Si missing tokens es negativo, significa que hay suficientes tokens
+      //! Si missing tokens es positivo, significa que no hay suficientes tokens y falta esa cantidad
 
-        // Recalcular tokensLeft y refillIn después de esperar
-        const keepaDataResponse = await getKeepaData(asinGroup);
-        tokensLeft = keepaDataResponse.tokensLeft;
-        refillIn = keepaDataResponse.refillIn;
-        refillRate = keepaDataResponse.refillRate;
-        tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
-        totalTokensConsumed += keepaDataResponse.totalTokensConsumed;
-        keepaResponses.push(keepaDataResponse);
+      logger.info(`tokens consumed: ${totalTokensConsumed}`)
+      logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
+      logger.info(`tokens left: ${tokensLeft}`)
+      logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`)
 
-        logger.info(`tokens consumed: ${totalTokensConsumed}`)
-        logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
-        logger.info(`tokens left: ${tokensLeft}`)
-        logger.info(`tokens refillIn: ${refillIn}`)
-        logger.info(`tokens refill rate: ${refillRate}`)
-
-        logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
-
-      } else {
+      if (missingTokens <= 0) {
         // Realizar la solicitud si hay suficientes tokens disponibles
         const keepaDataResponse = await getKeepaData(asinGroup);
         keepaResponses.push(keepaDataResponse);
         tokensLeft = keepaDataResponse.tokensLeft;
-        refillIn = keepaDataResponse.refillIn;
-        refillRate = keepaDataResponse.refillRate;
-        tokensConsumed += keepaDataResponse.tokensConsumed;
+        totalTokensConsumed += keepaDataResponse.tokensConsumed;
+        tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
+        logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
+
+      } else {
+        const waitTimeForTokens = Math.ceil((missingTokens / TOKENS_PER_MIN)) * 60000;
+        logger.info(`Waiting ${waitTimeForTokens} ms to accumulate enough tokens`);
+        await delay(waitTimeForTokens);
+
+        // Recalcular tokensLeft después de esperar
+        const keepaDataResponse = await getKeepaData(asinGroup);
+
+        // show keepa response for debug
+        if (index == 1) {
+          console.log(keepaDataResponse);
+        }
+        tokensLeft = keepaDataResponse.tokensLeft;
+        tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
+        totalTokensConsumed += keepaDataResponse.tokensConsumed;
+        keepaResponses.push(keepaDataResponse);
+
+        logger.info(`tokens consumed: ${totalTokensConsumed}`)
+        logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
+        logger.info(`tokens left: ${tokensLeft}`)
+
+        logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`)
+
         logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
       }
 
@@ -349,14 +356,13 @@ const getProductsTrackedData = async (products) => {
       logger.error(`getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${error.message}`);
     }
 
-    const currentTime = Date.now();
-    const timeSinceLastRequest = currentTime - lastRequestTime;
-    lastRequestTime = currentTime;
+    // if index es multiplo de 10 entonces debemos esperar una hora antes de hacer la solicitud para el siguiente grupo
 
-    // Esperar entre solicitudes para evitar problemas de límite de tasa
-    // const waitTime = Math.max(DEFAULT_DELAY - timeSinceLastRequest, 0);
-    // logger.info(`Waiting ${waitTime} ms before next request`);
-    // await delay(waitTime);
+    if ((index + 1) % 10 === 0 && index + 1 !== asinGroups.length) {
+      logger.info(`Waiting ${3600000} ms ->  1 hour to make the next request`);
+      logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
+      await delay(3600000);
+    }
   }
 
   const processedData = keepaResponses.flatMap((response) =>
@@ -380,7 +386,6 @@ const getProductsTrackedData = async (products) => {
 
   return processedData;
 };
-
 
 const getKeepaData = async (asinGroup, retryCount = 0) => {
   logger.info(`Executing getKeepaData with ASIN group`);
@@ -456,86 +461,134 @@ const saveOrders = async (req, res, next, products) => {
 };
 
 const getEstimateFees = async (req, res, next, products) => {
+  let access_token = req.headers['x-amz-access-token'];
+
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const estimateFeesForProduct = async (product, retryCount = 0, productIndex) => {
+
+    if (productIndex % 2 === 1) {
+      await delay(2100)
+    }
+
+    const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
+    const trackedProduct = await TrackedProduct.findOne({
+      where: { product_id: product.id },
+    });
+
+    if (!trackedProduct) {
+      throw new Error(`TrackedProduct not found for product id ${product.id}`);
+    }
+
+    const body = {
+      FeesEstimateRequest: {
+        MarketplaceId: 'ATVPDKIKX0DER',
+        IsAmazonFulfilled: true,
+        Identifier: product.ASIN,
+        PriceToEstimateFees: {
+          ListingPrice: {
+            Amount: trackedProduct.lowest_fba_price.toString(),
+            CurrencyCode: 'USD',
+          },
+        },
+      },
+    };
+
+    try {
+      const response = await axios.post(url, body, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-amz-access-token': access_token,
+        },
+      });
+
+      const feesEstimate =
+        response.data?.payload?.FeesEstimateResult?.FeesEstimate
+          ?.TotalFeesEstimate?.Amount || null;
+
+      logger.info(`Fees estimated for product id ${product.id}`);
+
+      return {
+        product_id: product.id,
+        fees: feesEstimate,
+      };
+    } catch (error) {
+      logger.error(
+        `Error estimating fees for product id ${product.id}. ${error.message}`
+      );
+
+      // Revisión de la expiración del token
+      if (error.response && error.response.status === 403) {
+        try {
+          const response = await fetch('https://api.amazon.com/auth/o2/token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              grant_type: 'refresh_token',
+              refresh_token: process.env.REFRESH_TOKEN,
+              client_id: process.env.CLIENT_ID,
+              client_secret: process.env.CLIENT_SECRET,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to refresh token');
+          }
+
+          const data = await response.json();
+          access_token = data.access_token;
+          logger.info(`New access token: ${access_token}`);
+        } catch (err) {
+          logger.error('Error refreshing token:', err);
+        }
+      }
+
+      // Reintentar la peticion en caso de error 429
+      if (error.response && error.response.status === 429) {
+        logger.info(`Error 429 for product id ${product.id}`);
+        if (retryCount < 3) {
+          await delay(5000);
+          logger.info('Waiting 5 seconds before retrying');
+          logger.info(`Retrying estimate for product id ${product.id}, attempt ${retryCount + 1}`);
+          return estimateFeesForProduct(product, retryCount + 1, productIndex);
+        } else {
+          logger.error(
+            `Retry failed for product id ${product.id} after ${retryCount} attempts`
+          );
+        }
+      }
+    }
+  };
+
   try {
     const feeEstimate = [];
 
     for (let i = 0; i < products.length; i++) {
-      const product = products[i];
-
-      const estimateFeesForProduct = async () => {
-        const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
-        const trackedProduct = await TrackedProduct.findOne({
-          where: { product_id: product.id },
-        });
-
-        if (!trackedProduct) {
-          throw new Error(
-            `TrackedProduct not found for product id ${product.id}`
-          );
-        }
-
-        const body = {
-          FeesEstimateRequest: {
-            MarketplaceId: 'ATVPDKIKX0DER',
-            IsAmazonFulfilled: true,
-            Identifier: product.ASIN,
-            PriceToEstimateFees: {
-              ListingPrice: {
-                Amount: trackedProduct.lowest_fba_price.toString(),
-                CurrencyCode: 'USD',
-              },
-            },
-          },
-        };
-
-        const response = await axios.post(url, body, {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-amz-access-token': req.headers['x-amz-access-token'],
-          },
-        });
-
-        const feesEstimate =
-          response.data?.payload?.FeesEstimateResult?.FeesEstimate
-            ?.TotalFeesEstimate?.Amount || null;
-
-        feeEstimate.push({
-          product_id: product.id,
-          fees: feesEstimate,
-        });
-
-        logger.info(`Fees estimated for product id ${product.id}`);
-      };
-
       try {
-        await estimateFeesForProduct();
+        feeEstimate.push(await estimateFeesForProduct(products[i], 0, i));
       } catch (error) {
-        logger.error(`Error estimating fees for product id ${product.id}, retrying in 5 seconds: ${error.message}`);
-        await delay(5000);
-        try {
-          await estimateFeesForProduct();
-        } catch (retryError) {
-          logger.error(`Retry failed for product id ${product.id}: ${retryError.message}`);
-          feeEstimate.push({
-            product_id: product.id,
-            fees: null,
-            // error: retryError.message
-          });
-        }
+        logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
+        continue;
       }
 
-      // Esperar 2100ms después de cada dos peticiones
       if (i % 2 === 1) {
-        await delay(2100);
+        logger.info(`Waiting 3000 ms after processing 2 products`);
+        await delay(3000);
+        logger.info(`Finished waiting 3000 ms`);
       }
     }
 
+    logger.info('Finished processing all products');
     return feeEstimate;
   } catch (err) {
     logger.error(`Unexpected error in getEstimateFees: ${err.message}`);
     next(err);
   }
 };
+
+
 
 async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
   for (const productId of untrackedProductIds) {
