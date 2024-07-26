@@ -487,11 +487,7 @@ const getEstimateFees = async (req, res, next, products) => {
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const estimateFeesForProduct = async (product, retryCount = 0, productIndex) => {
-
-    if (productIndex % 2 === 1) {
-      await delay(2100)
-    }
+  const estimateFeesForProduct = async (product, retryCount = 0) => {
 
     const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
     const trackedProduct = await TrackedProduct.findOne({
@@ -570,16 +566,16 @@ const getEstimateFees = async (req, res, next, products) => {
       // Reintentar la peticion en caso de error 429
       if (error.response && error.response.status === 429) {
         logger.info(`Error 429 for product id ${product.id}`);
-        if (retryCount < 3) {
-          await delay(5000);
-          logger.info('Waiting 5 seconds before retrying');
-          logger.info(`Retrying estimate for product id ${product.id}, attempt ${retryCount + 1}`);
-          return estimateFeesForProduct(product, retryCount + 1, productIndex);
-        } else {
-          logger.error(
-            `Retry failed for product id ${product.id} after ${retryCount} attempts`
-          );
-        }
+        // if (retryCount < 3) {
+        //   await delay(5000);
+        //   logger.info('Waiting 5 seconds before retrying');
+        //   logger.info(`Retrying estimate for product id ${product.id}, attempt ${retryCount + 1}`);
+        //   return estimateFeesForProduct(product, retryCount + 1);
+        // } else {
+        //   logger.error(
+        //     `Retry failed for product id ${product.id} after ${retryCount} attempts`
+        //   );
+        // }
       }
     }
   };
@@ -589,17 +585,25 @@ const getEstimateFees = async (req, res, next, products) => {
 
     for (let i = 0; i < products.length; i++) {
       try {
-        feeEstimate.push(await estimateFeesForProduct(products[i], 0, i));
+        await delay(3000)
+        feeEstimate.push(await estimateFeesForProduct(products[i], 0));
+
+        // mostrar el primer producto para debug
+        if (i === 0) {
+          console.log(products[i]);
+        }
+
+
       } catch (error) {
         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
         continue;
       }
 
-      if (i % 2 === 1) {
-        logger.info(`Waiting 3000 ms after processing 2 products`);
-        await delay(3000);
-        logger.info(`Finished waiting 3000 ms`);
-      }
+      // if (i % 2 === 1) {
+      //   logger.info(`Waiting 3000 ms after processing 2 products`);
+      //   await delay(3000);
+      //   logger.info(`Finished waiting 3000 ms`);
+      // }
     }
 
     logger.info('Finished processing all products');
