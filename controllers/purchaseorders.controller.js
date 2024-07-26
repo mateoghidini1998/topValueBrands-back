@@ -297,6 +297,24 @@ const getPurchaseOrderProducts = async (purchaseOrderId) => {
   return purchaseOrderProducts;
 };
 
+exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
+
+  // check if the user is admin
+  // if (req.user.role !== 'admin') {
+  //   return res.status(401).json({ message: 'Unauthorized' });
+  // }
+
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: 'Purchase Order not found' });
+  }
+  await purchaseOrder.destroy();
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrder
+  });
+});
+
 // Método para descargar la orden de compra
 // Método para descargar la orden de compra
 exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
@@ -365,85 +383,6 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
   res.send(pdfBuffer);
 });
 
-
-// Método para generar el PDF
-// const generatePDF = (data) => {
-
-//   console.log(data);
-
-//   return new Promise((resolve, reject) => {
-//     const doc = new PDFDocument();
-//     let buffers = [];
-
-//     doc.on('data', buffers.push.bind(buffers));
-//     doc.on('end', () => {
-//       let pdfData = Buffer.concat(buffers);
-//       resolve(pdfData);
-//     });
-
-//     // Cabecera del documento con imagen
-//     const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
-    
-//     // align the image to the center
-//     doc.image(logoPath, 200, 10, { width: 200, align: 'center' });
-
-//     // Move down
-//     doc.moveDown(8);
-//     doc.text(`DATE: ${new Date().toLocaleDateString()}`);
-//     doc.moveDown(1);
-//     doc.fontSize(12).text('ISSUED TO:', { bold: true });
-//     doc.moveDown(1);
-//     doc.text(`${data.purchaseOrder.supplier_name}`);
-//     doc.text('11316 46TH STREET N.');
-//     doc.text('TAMPA FL 33617');
-//     doc.moveDown();
-    
-
-//     // Información de la orden de compra
-//     doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.order_number}`);
-
-//     doc.moveDown(3);
-//     const TABLE_LEFT = 70;
-//     const TABLE_TOP = 350;
-
-//     const itemDistanceY = 20;
-
-//     doc.text('ITEM NO.', TABLE_LEFT  , TABLE_TOP, { bold: true });
-//     doc.text('ASIN', TABLE_LEFT + 70  ,TABLE_TOP, { bold: true });
-//     doc.text('UNIT PRICE', TABLE_LEFT  + 180 ,TABLE_TOP,  { bold: true });
-//     doc.text('QUANTITY', TABLE_LEFT + 300  ,TABLE_TOP,  { bold: true });
-//     doc.text('TOTAL', TABLE_LEFT + 400  ,TABLE_TOP,  { bold: true });
-
-//     let position = TABLE_TOP + itemDistanceY;
-//     data.products.forEach((product, index) => {
-//       doc.text(product.product_id, TABLE_LEFT, position);
-//       doc.text(product.ASIN, TABLE_LEFT + 70, position);
-//       doc.text(product.unit_price, TABLE_LEFT + 180, position);
-//       doc.text(product.quantity, TABLE_LEFT + 300, position);
-//       doc.text(product.total_amount, TABLE_LEFT + 400, position);
-//       position += 20;
-//     });
-
-//     // Subtotal y total
-//     doc.moveDown(3);
-//     doc.text(`SUBTOTAL:   $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
-
-//     // Order notes
-//     doc.moveDown(2);
-//     doc.text('ORDER NOTES:', TABLE_LEFT);
-//     doc.moveDown();
-//     doc.text(data.purchaseOrder.notes)
-
-
-
-//     doc.text('Thank you for your business!', { bold: true, align:"center"}, (doc.page.height - 80));
-//     doc.text('www.topvaluebrands.com', { bold: true, align: "center"});
-
-
-//     doc.end();
-//   });
-// };
-
 const generatePDF = (data) => {
   console.log(data);
 
@@ -458,7 +397,7 @@ const generatePDF = (data) => {
     });
 
     const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
-    
+
     doc.image(logoPath, 200, 10, { width: 200, align: 'center' });
     doc.moveDown(8);
     doc.text(`DATE: ${new Date().toLocaleDateString()}`);
@@ -494,7 +433,7 @@ const generatePDF = (data) => {
       doc.text(product.ASIN, TABLE_LEFT + 70, position);
       doc.text('$' + product.unit_price, TABLE_LEFT + 180, position);
       doc.text(product.quantity, TABLE_LEFT + 300, position);
-      doc.text('$'+ product.total_amount, TABLE_LEFT + 400, position);
+      doc.text('$' + product.total_amount, TABLE_LEFT + 400, position);
       position += itemDistanceY;
     });
 
