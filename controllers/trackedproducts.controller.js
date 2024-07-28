@@ -118,10 +118,10 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 
 
 
-const LIMIT_PRODUCTS = 10000; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 600; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
-const BATCH_SIZE_FEES = 50; // Tamaño del batch para la segunda etapa
+const BATCH_SIZE_FEES = 100; // Tamaño del batch para la segunda etapa
 const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
 
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
@@ -213,17 +213,26 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
       logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
 
-      await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
-      logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
+      // await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
+      // await delay(MS_DELAY_FEES);
+      // logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
 
       const feeEstimates = [];
       await addAccessTokenHeader(req, res, async () => {
+
+        // await delay(3000);
+        setInterval(() => {
+          logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
+        }, 3000);
+        // logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
+
         await getEstimateFees(req, res, next, productBatch).then((data) => {
           feeEstimates.push(...data);
         }).catch((error) => {
           logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
           // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
         });
+
       })
 
       // console.log(feeEstimates);
@@ -565,18 +574,11 @@ const getEstimateFees = async (req, res, next, products) => {
 
       // Reintentar la peticion en caso de error 429
       if (error.response && error.response.status === 429) {
-        logger.info(`Error 429 for product id ${product.id}`);
-        // if (retryCount < 3) {
-        //   await delay(5000);
-        //   logger.info('Waiting 5 seconds before retrying');
-        //   logger.info(`Retrying estimate for product id ${product.id}, attempt ${retryCount + 1}`);
-        //   return estimateFeesForProduct(product, retryCount + 1);
-        // } else {
-        //   logger.error(
-        //     `Retry failed for product id ${product.id} after ${retryCount} attempts`
-        //   );
-        // }
+        logger.info(`Error 429 for product id ${product.id} and waiting 5 seconds...`);
+        await delay(5000);
+        return estimateFeesForProduct(product);
       }
+      await delay(5000);
     }
   };
 
@@ -585,25 +587,13 @@ const getEstimateFees = async (req, res, next, products) => {
 
     for (let i = 0; i < products.length; i++) {
       try {
-        await delay(3000)
-        feeEstimate.push(await estimateFeesForProduct(products[i], 0));
-
-        // mostrar el primer producto para debug
-        if (i === 0) {
-          console.log(products[i]);
-        }
-
-
+        logger.info(`Waiting 5 seconds for product id ${products[i].id}`);
+        await delay(5000); // Espera 5 segundos antes de procesar el siguiente producto
+        feeEstimate.push(await estimateFeesForProduct(products[i]));
       } catch (error) {
         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
         continue;
       }
-
-      // if (i % 2 === 1) {
-      //   logger.info(`Waiting 3000 ms after processing 2 products`);
-      //   await delay(3000);
-      //   logger.info(`Finished waiting 3000 ms`);
-      // }
     }
 
     logger.info('Finished processing all products');
