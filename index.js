@@ -61,12 +61,6 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-<<<<<<< HEAD
-  // cron.schedule('00 */4 * * *', async () => {
-  cron.schedule('30 22 * * *', async () => {
-    logger.info('Cron executed at ' + new Date().toLocaleString());
-=======
->>>>>>> development
 
   // cron.schedule('37 13 * * *', async () => {
   //   logger.info('Cron executed at ' + new Date().toLocaleString());
