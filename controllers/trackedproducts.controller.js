@@ -118,7 +118,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 
 
 
-const LIMIT_PRODUCTS = 600; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 const BATCH_SIZE_FEES = 100; // Tamaño del batch para la segunda etapa
@@ -209,80 +209,88 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
 
     // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
+    // for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
+    //   const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
+    //   logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
+
+    //   // await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
+    //   // await delay(MS_DELAY_FEES);
+    //   // logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
+
+    //   const feeEstimates = [];
+    //   await addAccessTokenHeader(req, res, async () => {
+
+    //     // await delay(3000);
+    //     setInterval(() => {
+    //       logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
+    //     }, 3000);
+    //     // logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
+
+    //     await getEstimateFees(req, res, next, productBatch).then((data) => {
+    //       feeEstimates.push(...data);
+    //     }).catch((error) => {
+    //       logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+    //       // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+    //     });
+
+    //   })
+
+    //   // console.log(feeEstimates);
+
+    //   logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
+
+    //   const productCosts = await Product.findAll({
+    //     where: {
+    //       id: productBatch.map((product) => product.id),
+    //     },
+    //     attributes: ['id', 'product_cost'],
+    //   }).catch((error) => {
+    //     throw new Error(`Product.findAll failed for product costs in batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+    //   });
+    //   logger.info(`Fetched product costs for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
+
+    //   const costMap = productCosts.reduce((acc, product) => {
+    //     acc[product.id] = product.product_cost;
+    //     return acc;
+    //   }, {});
+
+    //   const finalData = feeEstimates.map((feeEstimate) => {
+    //     const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
+    //     const fees = feeEstimate.fees || 0;
+    //     const productCost = costMap[feeEstimate.product_id] || 0;
+    //     const profit = combinedItem.lowest_fba_price - fees - productCost;
+
+    //     return {
+    //       ...combinedItem,
+    //       fees: fees,
+    //       profit: profit,
+    //     };
+    //   });
+
+    //   await TrackedProduct.bulkCreate(finalData, {
+    //     updateOnDuplicate: [
+    //       'current_rank',
+    //       'thirty_days_rank',
+    //       'ninety_days_rank',
+    //       'units_sold',
+    //       'product_velocity',
+    //       'lowest_fba_price',
+    //       'fees',
+    //       'profit',
+    //     ],
+    //   }).catch((error) => {
+    //     throw new Error(`TrackedProduct.bulkCreate failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
+    //   });
+    //   logger.info(`Batch ${i / BATCH_SIZE_FEES + 1} updated with fees and profit successfully`);
+    // }
+
     for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
       const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
       logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
-
-      // await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
-      // await delay(MS_DELAY_FEES);
-      // logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
-
-      const feeEstimates = [];
-      await addAccessTokenHeader(req, res, async () => {
-
-        // await delay(3000);
-        setInterval(() => {
-          logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
-        }, 3000);
-        // logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
-
-        await getEstimateFees(req, res, next, productBatch).then((data) => {
-          feeEstimates.push(...data);
-        }).catch((error) => {
-          logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-          // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-        });
-
-      })
-
-      // console.log(feeEstimates);
-
-      logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
-
-      const productCosts = await Product.findAll({
-        where: {
-          id: productBatch.map((product) => product.id),
-        },
-        attributes: ['id', 'product_cost'],
-      }).catch((error) => {
-        throw new Error(`Product.findAll failed for product costs in batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-      });
-      logger.info(`Fetched product costs for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
-
-      const costMap = productCosts.reduce((acc, product) => {
-        acc[product.id] = product.product_cost;
-        return acc;
-      }, {});
-
-      const finalData = feeEstimates.map((feeEstimate) => {
-        const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
-        const fees = feeEstimate.fees || 0;
-        const productCost = costMap[feeEstimate.product_id] || 0;
-        const profit = combinedItem.lowest_fba_price - fees - productCost;
-
-        return {
-          ...combinedItem,
-          fees: fees,
-          profit: profit,
-        };
-      });
-
-      await TrackedProduct.bulkCreate(finalData, {
-        updateOnDuplicate: [
-          'current_rank',
-          'thirty_days_rank',
-          'ninety_days_rank',
-          'units_sold',
-          'product_velocity',
-          'lowest_fba_price',
-          'fees',
-          'profit',
-        ],
-      }).catch((error) => {
-        throw new Error(`TrackedProduct.bulkCreate failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-      });
-      logger.info(`Batch ${i / BATCH_SIZE_FEES + 1} updated with fees and profit successfully`);
+      await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
+      await processBatch(req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, i / BATCH_SIZE_FEES);
     }
+
 
     logger.info('All batches saved successfully');
 
@@ -491,108 +499,131 @@ const saveOrders = async (req, res, next, products) => {
   return finalJson;
 };
 
+// const getEstimateFees = async (req, res, next, products) => {
+//   let access_token = req.headers['x-amz-access-token'];
+
+//   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+//   const estimateFeesForProduct = async (product) => {
+
+//     const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
+//     const trackedProduct = await TrackedProduct.findOne({
+//       where: { product_id: product.id },
+//     });
+
+//     if (!trackedProduct) {
+//       throw new Error(`TrackedProduct not found for product id ${product.id}`);
+//     }
+
+//     const body = {
+//       FeesEstimateRequest: {
+//         MarketplaceId: 'ATVPDKIKX0DER',
+//         IsAmazonFulfilled: true,
+//         Identifier: product.ASIN,
+//         PriceToEstimateFees: {
+//           ListingPrice: {
+//             Amount: trackedProduct.lowest_fba_price.toString(),
+//             CurrencyCode: 'USD',
+//           },
+//         },
+//       },
+//     };
+
+//     try {
+//       const response = await axios.post(url, body, {
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'x-amz-access-token': access_token,
+//         },
+//       });
+
+//       const feesEstimate =
+//         response.data?.payload?.FeesEstimateResult?.FeesEstimate
+//           ?.TotalFeesEstimate?.Amount || null;
+
+//       logger.info(`Fees estimated for product id ${product.id}`);
+
+//       return {
+//         product_id: product.id,
+//         fees: feesEstimate,
+//       };
+//     } catch (error) {
+//       logger.error(
+//         `Error estimating fees for product id ${product.id}. ${error.message}`
+//       );
+
+//       // Revisión de la expiración del token
+//       if (error.response && error.response.status === 403) {
+//         try {
+//           const response = await fetch('https://api.amazon.com/auth/o2/token', {
+//             method: 'POST',
+//             headers: {
+//               'Content-Type': 'application/x-www-form-urlencoded',
+//             },
+//             body: new URLSearchParams({
+//               grant_type: 'refresh_token',
+//               refresh_token: process.env.REFRESH_TOKEN,
+//               client_id: process.env.CLIENT_ID,
+//               client_secret: process.env.CLIENT_SECRET,
+//             }),
+//           });
+
+//           if (!response.ok) {
+//             throw new Error('Failed to refresh token');
+//           }
+
+//           const data = await response.json();
+//           access_token = data.access_token;
+//           logger.info(`New access token: ${access_token}`);
+//         } catch (err) {
+//           logger.error('Error refreshing token:', err);
+//           throw new Error('Failed to refresh token');
+//         }
+//       }
+
+//       // Reintentar la peticion en caso de error 429
+//       if (error.response && error.response.status === 429) {
+//         logger.info(`Error 429 for product id ${product.id} and waiting 5 seconds...`);
+//         await delay(5000);
+//         // return estimateFeesForProduct(product);
+//       }
+//       await delay(5000);
+//     }
+//   };
+
+//   try {
+//     const feeEstimate = [];
+
+//     for (let i = 0; i < products.length; i++) {
+//       try {
+//         logger.info(`Waiting 5 seconds for product id ${products[i].id}`);
+//         await delay(5000); // Espera 5 segundos antes de procesar el siguiente producto
+//         feeEstimate.push(await estimateFeesForProduct(products[i]));
+//       } catch (error) {
+//         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
+//         continue;
+//       }
+//     }
+
+//     logger.info('Finished processing all products');
+//     return feeEstimate;
+//   } catch (err) {
+//     logger.error(`Unexpected error in getEstimateFees: ${err.message}`);
+//     next(err);
+//   }
+// };
+
 const getEstimateFees = async (req, res, next, products) => {
-  let access_token = req.headers['x-amz-access-token'];
-
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const estimateFeesForProduct = async (product, retryCount = 0) => {
-
-    const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
-    const trackedProduct = await TrackedProduct.findOne({
-      where: { product_id: product.id },
-    });
-
-    if (!trackedProduct) {
-      throw new Error(`TrackedProduct not found for product id ${product.id}`);
-    }
-
-    const body = {
-      FeesEstimateRequest: {
-        MarketplaceId: 'ATVPDKIKX0DER',
-        IsAmazonFulfilled: true,
-        Identifier: product.ASIN,
-        PriceToEstimateFees: {
-          ListingPrice: {
-            Amount: trackedProduct.lowest_fba_price.toString(),
-            CurrencyCode: 'USD',
-          },
-        },
-      },
-    };
-
-    try {
-      const response = await axios.post(url, body, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-amz-access-token': access_token,
-        },
-      });
-
-      const feesEstimate =
-        response.data?.payload?.FeesEstimateResult?.FeesEstimate
-          ?.TotalFeesEstimate?.Amount || null;
-
-      logger.info(`Fees estimated for product id ${product.id}`);
-
-      return {
-        product_id: product.id,
-        fees: feesEstimate,
-      };
-    } catch (error) {
-      logger.error(
-        `Error estimating fees for product id ${product.id}. ${error.message}`
-      );
-
-      // Revisión de la expiración del token
-      if (error.response && error.response.status === 403) {
-        try {
-          const response = await fetch('https://api.amazon.com/auth/o2/token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              grant_type: 'refresh_token',
-              refresh_token: process.env.REFRESH_TOKEN,
-              client_id: process.env.CLIENT_ID,
-              client_secret: process.env.CLIENT_SECRET,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to refresh token');
-          }
-
-          const data = await response.json();
-          access_token = data.access_token;
-          logger.info(`New access token: ${access_token}`);
-        } catch (err) {
-          logger.error('Error refreshing token:', err);
-        }
-      }
-
-      // Reintentar la peticion en caso de error 429
-      if (error.response && error.response.status === 429) {
-        logger.info(`Error 429 for product id ${product.id} and waiting 5 seconds...`);
-        await delay(5000);
-        return estimateFeesForProduct(product);
-      }
-      await delay(5000);
-    }
-  };
+  let accessToken = req.headers['x-amz-access-token'];
+  const feeEstimate = [];
 
   try {
-    const feeEstimate = [];
-
     for (let i = 0; i < products.length; i++) {
       try {
-        logger.info(`Waiting 5 seconds for product id ${products[i].id}`);
-        await delay(5000); // Espera 5 segundos antes de procesar el siguiente producto
-        feeEstimate.push(await estimateFeesForProduct(products[i]));
+        await delay(2100); // Espera 5 segundos antes de procesar el siguiente producto
+        feeEstimate.push(await estimateFeesForProduct(products[i], accessToken));
       } catch (error) {
         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
-        continue;
       }
     }
 
@@ -602,6 +633,161 @@ const getEstimateFees = async (req, res, next, products) => {
     logger.error(`Unexpected error in getEstimateFees: ${err.message}`);
     next(err);
   }
+};
+
+
+const estimateFeesForProduct = async (product, accessToken) => {
+  const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
+  const trackedProduct = await TrackedProduct.findOne({
+    where: { product_id: product.id },
+  });
+
+  if (!trackedProduct) {
+    throw new Error(`TrackedProduct not found for product id ${product.id}`);
+  }
+
+  const body = {
+    FeesEstimateRequest: {
+      MarketplaceId: 'ATVPDKIKX0DER',
+      IsAmazonFulfilled: true,
+      Identifier: product.ASIN,
+      PriceToEstimateFees: {
+        ListingPrice: {
+          Amount: trackedProduct.lowest_fba_price.toString(),
+          CurrencyCode: 'USD',
+        },
+      },
+    },
+  };
+
+  try {
+    const response = await axios.post(url, body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': accessToken,
+      },
+    });
+
+    const feesEstimate =
+      response.data?.payload?.FeesEstimateResult?.FeesEstimate
+        ?.TotalFeesEstimate?.Amount || null;
+
+    logger.info(`Fees estimated for product id ${product.id}`);
+
+    return {
+      product_id: product.id,
+      fees: feesEstimate,
+    };
+  } catch (error) {
+    logger.error(`Error estimating fees for product id ${product.id}. ${error.message}`);
+
+    // Si el token ha expirado, intenta obtener uno nuevo y reintentar la petición
+    if (error.response && error.response.status === 403) {
+      accessToken = await getNewAccessToken();
+      return estimateFeesForProduct(product, accessToken);
+    }
+
+    // Reintentar la petición en caso de error 429 con un backoff exponencial
+    if (error.response && error.response.status === 429) {
+      const retryAfter = parseInt(error.response.headers['retry-after'], 10) || 5;
+      logger.info(`Error 429 for product id ${product.id}. Waiting ${retryAfter} seconds...`);
+      await delay(retryAfter * 1000);
+      return estimateFeesForProduct(product, accessToken);
+    }
+
+    throw error; // Si no es un error manejable, vuelve a lanzar el error
+  }
+};
+
+const getNewAccessToken = async () => {
+  try {
+    const response = await fetch('https://api.amazon.com/auth/o2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: process.env.REFRESH_TOKEN,
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to refresh token');
+    }
+
+    const data = await response.json();
+    logger.info(`New access token obtained: ${data.access_token}`);
+    return data.access_token;
+  } catch (err) {
+    logger.error('Error refreshing token:', err);
+    throw new Error('Failed to refresh token');
+  }
+};
+
+
+const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, batchIndex) => {
+  const feeEstimates = [];
+
+  // await addAccessTokenHeader(req, res, async () => {
+  await delay(3000); // Espera 3 segundos antes de hacer la petición
+  try {
+    const data = await getEstimateFees(req, res, next, productBatch);
+    feeEstimates.push(...data);
+  } catch (error) {
+    logger.error(`getEstimateFees failed for batch ${batchIndex + 1}: ${error.message}`);
+  }
+  // });
+
+  logger.info(`Fetched fee estimates for batch ${batchIndex + 1} successfully`);
+
+  const productCosts = await Product.findAll({
+    where: {
+      id: productBatch.map((product) => product.id),
+    },
+    attributes: ['id', 'product_cost'],
+  }).catch((error) => {
+    throw new Error(`Product.findAll failed for product costs in batch ${batchIndex + 1}: ${error.message}`);
+  });
+
+  logger.info(`Fetched product costs for batch ${batchIndex + 1} successfully`);
+
+  const costMap = productCosts.reduce((acc, product) => {
+    acc[product.id] = product.product_cost;
+    return acc;
+  }, {});
+
+  const finalData = feeEstimates.map((feeEstimate) => {
+    const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
+    const fees = feeEstimate.fees || 0;
+    const productCost = costMap[feeEstimate.product_id] || 0;
+    const profit = combinedItem.lowest_fba_price - fees - productCost;
+
+    return {
+      ...combinedItem,
+      fees: fees,
+      profit: profit,
+    };
+  });
+
+  await TrackedProduct.bulkCreate(finalData, {
+    updateOnDuplicate: [
+      'current_rank',
+      'thirty_days_rank',
+      'ninety_days_rank',
+      'units_sold',
+      'product_velocity',
+      'lowest_fba_price',
+      'fees',
+      'profit',
+    ],
+  }).catch((error) => {
+    throw new Error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
+  });
+
+  logger.info(`Batch ${batchIndex + 1} updated with fees and profit successfully`);
 };
 
 
