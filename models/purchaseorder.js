@@ -19,7 +19,8 @@ module.exports = (sequelize, DataTypes) => {
     supplier_id: DataTypes.INTEGER,
     status: DataTypes.STRING,
     total_price: DataTypes.DECIMAL,
-    notes: DataTypes.STRING
+    notes: DataTypes.STRING,
+    is_active: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'PurchaseOrder',

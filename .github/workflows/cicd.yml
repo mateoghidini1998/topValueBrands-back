@@ -22,8 +22,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # - name: Run Sequelize Migrations
-      #   run: npx sequelize-cli db:migrate
+      - name: Run Sequelize Migrations Undo
+        run: npx sequelize-cli db:migrate:undo:all
+
+      - name: Run Sequelize Migrations Apply
+        run: npx sequelize-cli db:migrate
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
