@@ -1,7 +1,7 @@
 'use strict';
-/** @type {import('sequelize-cli').Migration} */
+
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('PurchaseOrders', {
       id: {
         allowNull: false,
@@ -11,38 +11,46 @@ module.exports = {
       },
       order_number: {
         type: Sequelize.STRING,
-        unique: true,
         allowNull: false
       },
       supplier_id: {
         type: Sequelize.INTEGER,
-        allowNull: true,
         references: {
-          model: 'Suppliers',
+          model: 'Suppliers', // Nombre de la tabla a la que referencia
           key: 'id'
-        }
-      },
-      notes: {
-        type: Sequelize.STRING,
-        allowNull: true
+        },
+        allowNull: false,
+        onDelete: 'CASCADE'
       },
       status: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       total_price: {
-        type: Sequelize.FLOAT
+        type: Sequelize.DECIMAL,
+        allowNull: false
+      },
+      notes: {
+        type: Sequelize.STRING
+      },
+      is_active: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
-  async down(queryInterface, Sequelize) {
+
+  down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('PurchaseOrders');
   }
 };

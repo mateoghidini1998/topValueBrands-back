@@ -302,7 +302,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
     logger.info('Response sent successfully with 200 status code. ' + JSON.stringify(combinedData.length) + ' items tracked.');
   } catch (error) {
-    logger.error('line 262 error: ', {
+    logger.error('line 326 error: ', {
       error: error.message,
       stack: error.stack,
     }.toString());
@@ -337,8 +337,9 @@ const getProductsTrackedData = async (products) => {
   logger.info(`Total ASIN groups to process: ${asinGroups.length}`);
 
   const keepaResponses = [];
-  const TOKENS_PER_MIN = 60;
-  let tokensLeft = ASINS_PER_GROUP * TOKENS_PER_REQUEST;
+  const TOKENS_PER_MIN = 70;
+  const REQUIRED_TOKENS = 500; // Cantidad de tokens necesarios por solicitud
+  let tokensLeft = 4200;
   let totalTokensConsumed = 0;
   let tokensConsumedForTheLastRequest = 0;
 
@@ -349,8 +350,7 @@ const getProductsTrackedData = async (products) => {
       logger.info(`Processing group ${index + 1}/${asinGroups.length}`);
 
       // Esperar hasta que haya suficientes tokens disponibles
-      const requiredTokens = ASINS_PER_GROUP * TOKENS_PER_REQUEST; // Cantidad de tokens necesarios por solicitud
-      const missingTokens = requiredTokens - tokensLeft;
+      const missingTokens = REQUIRED_TOKENS - tokensLeft;
 
       //* Si missing tokens es negativo, significa que hay suficientes tokens
       //! Si missing tokens es positivo, significa que no hay suficientes tokens y falta esa cantidad
@@ -397,11 +397,18 @@ const getProductsTrackedData = async (products) => {
 
     // if index es multiplo de 10 entonces debemos esperar una hora antes de hacer la solicitud para el siguiente grupo
 
-    if ((index + 1) % 10 === 0 && index + 1 !== asinGroups.length) {
-      logger.info(`Waiting ${3600000} ms ->  1 hour to make the next request`);
+    // if ((index + 1) % 10 === 0 && index + 1 !== asinGroups.length) {
+    //   logger.info(`Waiting ${3600000} ms ->  1 hour to make the next request`);
+    //   logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
+    //   await delay(3600000);
+    // }
+
+    if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
+      logger.info(`Waiting ${TOKENS_PER_MIN * 60000} ms ->  ms to refill tokens`);
       logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
-      await delay(3600000);
+      await delay(Math.ceil(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000);
     }
+
   }
 
   const processedData = keepaResponses.flatMap((response) =>
@@ -621,7 +628,14 @@ const getEstimateFees = async (req, res, next, products) => {
     for (let i = 0; i < products.length; i++) {
       try {
         await delay(2100); // Espera 5 segundos antes de procesar el siguiente producto
-        feeEstimate.push(await estimateFeesForProduct(products[i], accessToken));
+        feeEstimate.push(await estimateFeesForProduct(products[i], accessToken).catch((error) => {
+          logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
+          if (error.response && error.response.status === 403) {
+            logger.info(`Error 403 for product id ${products[i].id} and waiting 5 seconds...`);
+            accessToken = getNewAccessToken();
+            return estimateFeesForProduct(products[i], accessToken);
+          }
+        }));
       } catch (error) {
         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
       }
@@ -682,10 +696,10 @@ const estimateFeesForProduct = async (product, accessToken) => {
     logger.error(`Error estimating fees for product id ${product.id}. ${error.message}`);
 
     // Si el token ha expirado, intenta obtener uno nuevo y reintentar la petición
-    if (error.response && error.response.status === 403) {
-      accessToken = await getNewAccessToken();
-      return estimateFeesForProduct(product, accessToken);
-    }
+    // if (error.response && error.response.status === 403) {
+    //   accessToken = await getNewAccessToken();
+    //   return estimateFeesForProduct(product, accessToken);
+    // }
 
     // Reintentar la petición en caso de error 429 con un backoff exponencial
     if (error.response && error.response.status === 429) {
