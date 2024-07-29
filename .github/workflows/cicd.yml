@@ -3,6 +3,8 @@ name: Deploy to Azure App Service
 on:
   push:
     branches: [main]
+  # pull_request:
+  #   branches: [main]
 
 jobs:
   build-and-deploy:
@@ -20,17 +22,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      # - name: Run Sequelize Migrations
+      # run: npx sequelize-cli db:migrate
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: topvaluebrands-webapp
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
-
-      - name: Setup MySQL Client
-        run: sudo apt-get install mysql-client
-
-      - name: Run Migrations
-        env:
-          DATABASE_URL: "mysql://tvb_admin:Topvaluebrands1!@tvb-dbserver-01.mysql.database.azure.com:3306/top_value_brands"
-        run: npx sequelize-cli db:migrate --env production
