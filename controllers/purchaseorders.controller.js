@@ -3,6 +3,7 @@ const { Product, PurchaseOrder, PurchaseOrderProduct, Supplier } = require('../m
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
+const { where } = require('sequelize');
 
 exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { order_number, supplier_id, status, products, notes } = req.body;
@@ -185,6 +186,7 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
 
 exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
   const purchaseOrders = await PurchaseOrder.findAll({
+    where: { is_active: true },
     include: [
       {
         model: PurchaseOrderProduct,
@@ -308,14 +310,15 @@ exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
   if (!purchaseOrder) {
     return res.status(404).json({ message: 'Purchase Order not found' });
   }
-  await purchaseOrder.destroy();
+
+  await purchaseOrder.update({ is_active: false });
   return res.status(200).json({
     success: true,
     data: purchaseOrder
   });
+
 });
 
-// Método para descargar la orden de compra
 // Método para descargar la orden de compra
 exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
