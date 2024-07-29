@@ -32,5 +32,5 @@ jobs:
 
       - name: Run Migrations
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: "mysql://tvb_admin:Topvaluebrands1!@tvb-dbserver-01.mysql.database.azure.com:3306/top_value_brands"
         run: npx sequelize-cli db:migrate --env production
