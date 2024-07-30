@@ -61,42 +61,41 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
+  cron.schedule('50 02 * * *', async () => {
+    logger.info('Cron executed at ' + new Date().toLocaleString());
 
-  // cron.schedule('37 13 * * *', async () => {
-  //   logger.info('Cron executed at ' + new Date().toLocaleString());
+    // Mock request, response, and next for the cron job context
+    const req = { headers: {} };
+    const res = {
+      json: (data) => logger.info('Cron job response:'),
+    };
+    const next = (error) => {
+      if (error) {
+        console.error('Cron job error:', error);
+      }
+    };
 
-  //   // Mock request, response, and next for the cron job context
-  //   const req = { headers: {} };
-  //   const res = {
-  //     json: (data) => logger.info('Cron job response:'),
-  //   };
-  //   const next = (error) => {
-  //     if (error) {
-  //       console.error('Cron job error:', error);
-  //     }
-  //   };
+    try {
+      // sync database with amazon cronjob
+      logger.info('1. Scheduling cron job to sync database with Amazon...');
+      console.log('1. Scheduling cron job to sync database with Amazon...');
+      await addAccessTokenHeader(req, res, async () => {
+        await syncDBWithAmazon(req, res, next);
+        logger.info('Cron job for syncing database with Amazon completed.');
+        console.log('Cron job for syncing database with Amazon completed.');
+      });
 
-  //   try {
-  //     // sync database with amazon cronjob
-  //     logger.info('1. Scheduling cron job to sync database with Amazon...');
-  //     console.log('1. Scheduling cron job to sync database with Amazon...');
-  //     await addAccessTokenHeader(req, res, async () => {
-  //       await syncDBWithAmazon(req, res, next);
-  //       logger.info('Cron job for syncing database with Amazon completed.');
-  //       console.log('Cron job for syncing database with Amazon completed.');
-  //     });
-
-  //     // If the first block succeeded, proceed to the second block
-  //     logger.info('2. Scheduling cron job to generate tracked products...');
-  //     console.log('2. Scheduling cron job to generate tracked products...');
-  //     await addAccessTokenHeader(req, res, async () => {
-  //       await generateTrackedProductsData(req, res, next);
-  //       logger.info('Cron job for generating tracked products completed.');
-  //       console.log('Cron job for generating tracked products completed.');
-  //     });
-  //   } catch (error) {
-  //     console.error('Error during scheduled cron job:', error);
-  //   }
-  // });
+      // If the first block succeeded, proceed to the second block
+      logger.info('2. Scheduling cron job to generate tracked products...');
+      console.log('2. Scheduling cron job to generate tracked products...');
+      await addAccessTokenHeader(req, res, async () => {
+        await generateTrackedProductsData(req, res, next);
+        logger.info('Cron job for generating tracked products completed.');
+        console.log('Cron job for generating tracked products completed.');
+      });
+    } catch (error) {
+      console.error('Error during scheduled cron job:', error);
+    }
+  });
 
 });

@@ -288,7 +288,9 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
       logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
       await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
-      await processBatch(req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, i / BATCH_SIZE_FEES);
+      await addAccessTokenHeader(req, res, async () => {
+        await processBatch(req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, i / BATCH_SIZE_FEES);
+      })
     }
 
 
@@ -404,7 +406,7 @@ const getProductsTrackedData = async (products) => {
     // }
 
     if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
-      logger.info(`Waiting ${TOKENS_PER_MIN * 60000} ms ->  ms to refill tokens`);
+      logger.info(`Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000} ms ->  ms to refill tokens`);
       logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
       await delay(Math.ceil(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000);
     }
@@ -628,14 +630,7 @@ const getEstimateFees = async (req, res, next, products) => {
     for (let i = 0; i < products.length; i++) {
       try {
         await delay(2100); // Espera 5 segundos antes de procesar el siguiente producto
-        feeEstimate.push(await estimateFeesForProduct(products[i], accessToken).catch((error) => {
-          logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
-          if (error.response && error.response.status === 403) {
-            logger.info(`Error 403 for product id ${products[i].id} and waiting 5 seconds...`);
-            accessToken = getNewAccessToken();
-            return estimateFeesForProduct(products[i], accessToken);
-          }
-        }));
+        feeEstimate.push(await estimateFeesForProduct(products[i], accessToken));
       } catch (error) {
         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
       }
@@ -696,10 +691,10 @@ const estimateFeesForProduct = async (product, accessToken) => {
     logger.error(`Error estimating fees for product id ${product.id}. ${error.message}`);
 
     // Si el token ha expirado, intenta obtener uno nuevo y reintentar la petición
-    // if (error.response && error.response.status === 403) {
-    //   accessToken = await getNewAccessToken();
-    //   return estimateFeesForProduct(product, accessToken);
-    // }
+    if (error.response && error.response.status === 403) {
+      accessToken = await getNewAccessToken();
+      return estimateFeesForProduct(product, accessToken);
+    }
 
     // Reintentar la petición en caso de error 429 con un backoff exponencial
     if (error.response && error.response.status === 429) {
@@ -746,7 +741,7 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
   const feeEstimates = [];
 
   // await addAccessTokenHeader(req, res, async () => {
-  await delay(3000); // Espera 3 segundos antes de hacer la petición
+  await delay(3000);
   try {
     const data = await getEstimateFees(req, res, next, productBatch);
     feeEstimates.push(...data);
