@@ -118,10 +118,10 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 
 
 
-const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 200; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
-const BATCH_SIZE_FEES = 100; // Tamaño del batch para la segunda etapa
+let batch_size_fees = 2000; // Tamaño del batch para la segunda etapa -> deben ser 2 batches para la estimación de tarifas no retorne un 429.
 const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
 
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
@@ -209,87 +209,17 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
 
     // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
-    // for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
-    //   const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
-    //   logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
 
-    //   // await new Promise((resolve) => setTimeout(resolve, MS_DELAY_FEES));
-    //   // await delay(MS_DELAY_FEES);
-    //   // logger.info(`Finished waiting ${MS_DELAY_FEES} ms`);
+    batch_size_fees = Math.ceil(relatedProducts.length / 2);
 
-    //   const feeEstimates = [];
-    //   await addAccessTokenHeader(req, res, async () => {
+    logger.info(`Batch size fees: ${batch_size_fees}`);
 
-    //     // await delay(3000);
-    //     setInterval(() => {
-    //       logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
-    //     }, 3000);
-    //     // logger.info('wating 3 sec after addAccessTokenHeader and before getEstimateFees');
-
-    //     await getEstimateFees(req, res, next, productBatch).then((data) => {
-    //       feeEstimates.push(...data);
-    //     }).catch((error) => {
-    //       logger.error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-    //       // throw new Error(`getEstimateFees failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-    //     });
-
-    //   })
-
-    //   // console.log(feeEstimates);
-
-    //   logger.info(`Fetched fee estimates for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
-
-    //   const productCosts = await Product.findAll({
-    //     where: {
-    //       id: productBatch.map((product) => product.id),
-    //     },
-    //     attributes: ['id', 'product_cost'],
-    //   }).catch((error) => {
-    //     throw new Error(`Product.findAll failed for product costs in batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-    //   });
-    //   logger.info(`Fetched product costs for batch ${i / BATCH_SIZE_FEES + 1} successfully`);
-
-    //   const costMap = productCosts.reduce((acc, product) => {
-    //     acc[product.id] = product.product_cost;
-    //     return acc;
-    //   }, {});
-
-    //   const finalData = feeEstimates.map((feeEstimate) => {
-    //     const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
-    //     const fees = feeEstimate.fees || 0;
-    //     const productCost = costMap[feeEstimate.product_id] || 0;
-    //     const profit = combinedItem.lowest_fba_price - fees - productCost;
-
-    //     return {
-    //       ...combinedItem,
-    //       fees: fees,
-    //       profit: profit,
-    //     };
-    //   });
-
-    //   await TrackedProduct.bulkCreate(finalData, {
-    //     updateOnDuplicate: [
-    //       'current_rank',
-    //       'thirty_days_rank',
-    //       'ninety_days_rank',
-    //       'units_sold',
-    //       'product_velocity',
-    //       'lowest_fba_price',
-    //       'fees',
-    //       'profit',
-    //     ],
-    //   }).catch((error) => {
-    //     throw new Error(`TrackedProduct.bulkCreate failed for batch ${i / BATCH_SIZE_FEES + 1}: ${error.message}`);
-    //   });
-    //   logger.info(`Batch ${i / BATCH_SIZE_FEES + 1} updated with fees and profit successfully`);
-    // }
-
-    for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
-      const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
-      logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
+    for (let i = 0; i < relatedProducts.length; i += batch_size_fees) {
+      const productBatch = relatedProducts.slice(i, i + batch_size_fees);
+      logger.info(`Fetching estimate fees for batch ${i / batch_size_fees + 1} / ${(relatedProducts.length / batch_size_fees).toFixed(0)} with ${productBatch.length} products`);
       await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
       await addAccessTokenHeader(req, res, async () => {
-        await processBatch(req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, i / BATCH_SIZE_FEES);
+        await processBatch(req, res, next, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
       })
     }
 
@@ -397,14 +327,6 @@ const getProductsTrackedData = async (products) => {
       logger.error(`getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${error.message}`);
     }
 
-    // if index es multiplo de 10 entonces debemos esperar una hora antes de hacer la solicitud para el siguiente grupo
-
-    // if ((index + 1) % 10 === 0 && index + 1 !== asinGroups.length) {
-    //   logger.info(`Waiting ${3600000} ms ->  1 hour to make the next request`);
-    //   logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
-    //   await delay(3600000);
-    // }
-
     if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
       logger.info(`Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000} ms ->  ms to refill tokens`);
       logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
@@ -508,120 +430,6 @@ const saveOrders = async (req, res, next, products) => {
   return finalJson;
 };
 
-// const getEstimateFees = async (req, res, next, products) => {
-//   let access_token = req.headers['x-amz-access-token'];
-
-//   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-//   const estimateFeesForProduct = async (product) => {
-
-//     const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
-//     const trackedProduct = await TrackedProduct.findOne({
-//       where: { product_id: product.id },
-//     });
-
-//     if (!trackedProduct) {
-//       throw new Error(`TrackedProduct not found for product id ${product.id}`);
-//     }
-
-//     const body = {
-//       FeesEstimateRequest: {
-//         MarketplaceId: 'ATVPDKIKX0DER',
-//         IsAmazonFulfilled: true,
-//         Identifier: product.ASIN,
-//         PriceToEstimateFees: {
-//           ListingPrice: {
-//             Amount: trackedProduct.lowest_fba_price.toString(),
-//             CurrencyCode: 'USD',
-//           },
-//         },
-//       },
-//     };
-
-//     try {
-//       const response = await axios.post(url, body, {
-//         headers: {
-//           'Content-Type': 'application/json',
-//           'x-amz-access-token': access_token,
-//         },
-//       });
-
-//       const feesEstimate =
-//         response.data?.payload?.FeesEstimateResult?.FeesEstimate
-//           ?.TotalFeesEstimate?.Amount || null;
-
-//       logger.info(`Fees estimated for product id ${product.id}`);
-
-//       return {
-//         product_id: product.id,
-//         fees: feesEstimate,
-//       };
-//     } catch (error) {
-//       logger.error(
-//         `Error estimating fees for product id ${product.id}. ${error.message}`
-//       );
-
-//       // Revisión de la expiración del token
-//       if (error.response && error.response.status === 403) {
-//         try {
-//           const response = await fetch('https://api.amazon.com/auth/o2/token', {
-//             method: 'POST',
-//             headers: {
-//               'Content-Type': 'application/x-www-form-urlencoded',
-//             },
-//             body: new URLSearchParams({
-//               grant_type: 'refresh_token',
-//               refresh_token: process.env.REFRESH_TOKEN,
-//               client_id: process.env.CLIENT_ID,
-//               client_secret: process.env.CLIENT_SECRET,
-//             }),
-//           });
-
-//           if (!response.ok) {
-//             throw new Error('Failed to refresh token');
-//           }
-
-//           const data = await response.json();
-//           access_token = data.access_token;
-//           logger.info(`New access token: ${access_token}`);
-//         } catch (err) {
-//           logger.error('Error refreshing token:', err);
-//           throw new Error('Failed to refresh token');
-//         }
-//       }
-
-//       // Reintentar la peticion en caso de error 429
-//       if (error.response && error.response.status === 429) {
-//         logger.info(`Error 429 for product id ${product.id} and waiting 5 seconds...`);
-//         await delay(5000);
-//         // return estimateFeesForProduct(product);
-//       }
-//       await delay(5000);
-//     }
-//   };
-
-//   try {
-//     const feeEstimate = [];
-
-//     for (let i = 0; i < products.length; i++) {
-//       try {
-//         logger.info(`Waiting 5 seconds for product id ${products[i].id}`);
-//         await delay(5000); // Espera 5 segundos antes de procesar el siguiente producto
-//         feeEstimate.push(await estimateFeesForProduct(products[i]));
-//       } catch (error) {
-//         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
-//         continue;
-//       }
-//     }
-
-//     logger.info('Finished processing all products');
-//     return feeEstimate;
-//   } catch (err) {
-//     logger.error(`Unexpected error in getEstimateFees: ${err.message}`);
-//     next(err);
-//   }
-// };
-
 const getEstimateFees = async (req, res, next, products) => {
   let accessToken = req.headers['x-amz-access-token'];
   const feeEstimate = [];
@@ -690,23 +498,99 @@ const estimateFeesForProduct = async (product, accessToken) => {
   } catch (error) {
     logger.error(`Error estimating fees for product id ${product.id}. ${error.message}`);
 
-    // Si el token ha expirado, intenta obtener uno nuevo y reintentar la petición
+    // Log if the error is 403 -> access token expired
     if (error.response && error.response.status === 403) {
+      logger.info(`Error 403 for product id ${product.id} and refreshing access token...`);
       accessToken = await getNewAccessToken();
       return estimateFeesForProduct(product, accessToken);
     }
 
-    // Reintentar la petición en caso de error 429 con un backoff exponencial
+    // Log if the error is 429 -> rate limit
     if (error.response && error.response.status === 429) {
-      const retryAfter = parseInt(error.response.headers['retry-after'], 10) || 5;
-      logger.info(`Error 429 for product id ${product.id}. Waiting ${retryAfter} seconds...`);
-      await delay(retryAfter * 1000);
-      return estimateFeesForProduct(product, accessToken);
+      logger.info(`Error 429 for product id ${product.id}`);
+    } else if (error.response && error.response.status === 400) {
+      logger.info(`Error 400 for product id ${product.id}`);
+    } else if (error.response && error.response.status === 500) {
+      logger.info(`Error 500 for product id ${product.id}`);
+    } else if (error.response && error.response.status === 503) {
+      logger.info(`Error 503 for product id ${product.id}`);
+    } else if (error.response) {
+      logger.info(`Error ${error.response.status} for product id ${product.id}`);
     }
 
-    throw error; // Si no es un error manejable, vuelve a lanzar el error
   }
 };
+
+//* This function recives an array of products (keepa + orders), calculates the fees and saves on the database the complete tracked products
+const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, batchIndex) => {
+  const feeEstimates = [];
+  logger.info(`start delay for proccess batch of 3 sec`);
+  await delay(3000);
+  logger.info(`finish delay for proccess batch of 3 sec`);
+
+  try {
+    logger.info(`starting getEstimateFees for batch ${batchIndex + 1}...`);
+    const data = await getEstimateFees(req, res, next, productBatch);
+    logger.info(`finished getEstimateFees for batch ${batchIndex + 1}`);
+    feeEstimates.push(...data);
+  } catch (error) {
+    logger.error(`getEstimateFees failed for batch ${batchIndex + 1}: ${error.message}`);
+  }
+
+  logger.info(`Start proccess of combining data keepa + orders + fees to generete the complete tracked product`);
+
+  const productCosts = await Product.findAll({
+    where: {
+      id: productBatch.map((product) => product.id),
+    },
+    attributes: ['id', 'product_cost'],
+  }).catch((error) => {
+    throw new Error(`Product.findAll failed for product costs in batch ${batchIndex + 1}: ${error.message}`);
+  });
+
+  const costMap = productCosts.reduce((acc, product) => {
+    acc[product.id] = product.product_cost;
+    return acc;
+  }, {});
+
+  const finalData = feeEstimates.map((feeEstimate) => {
+    const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
+    const fees = feeEstimate.fees || 0;
+    const productCost = costMap[feeEstimate.product_id] || 0;
+    const profit = combinedItem.lowest_fba_price - fees - productCost;
+
+    return {
+      ...combinedItem,
+      fees: fees,
+      profit: profit,
+    };
+  });
+
+
+
+  logger.info(`finish proccess of combining data keepa + orders + fees to generete the complete tracked product`);
+
+
+  logger.info(`Saving the tracked products for batch ${batchIndex + 1}...`);
+
+  await TrackedProduct.bulkCreate(finalData, {
+    updateOnDuplicate: [
+      'current_rank',
+      'thirty_days_rank',
+      'ninety_days_rank',
+      'units_sold',
+      'product_velocity',
+      'lowest_fba_price',
+      'fees',
+      'profit',
+    ],
+  }).catch((error) => {
+    throw new Error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
+  });
+
+  logger.info(`Batch ${batchIndex + 1} updated with fees and profit successfully`);
+};
+
 
 const getNewAccessToken = async () => {
   try {
@@ -735,70 +619,6 @@ const getNewAccessToken = async () => {
     throw new Error('Failed to refresh token');
   }
 };
-
-
-const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, batchIndex) => {
-  const feeEstimates = [];
-
-  // await addAccessTokenHeader(req, res, async () => {
-  await delay(3000);
-  try {
-    const data = await getEstimateFees(req, res, next, productBatch);
-    feeEstimates.push(...data);
-  } catch (error) {
-    logger.error(`getEstimateFees failed for batch ${batchIndex + 1}: ${error.message}`);
-  }
-  // });
-
-  logger.info(`Fetched fee estimates for batch ${batchIndex + 1} successfully`);
-
-  const productCosts = await Product.findAll({
-    where: {
-      id: productBatch.map((product) => product.id),
-    },
-    attributes: ['id', 'product_cost'],
-  }).catch((error) => {
-    throw new Error(`Product.findAll failed for product costs in batch ${batchIndex + 1}: ${error.message}`);
-  });
-
-  logger.info(`Fetched product costs for batch ${batchIndex + 1} successfully`);
-
-  const costMap = productCosts.reduce((acc, product) => {
-    acc[product.id] = product.product_cost;
-    return acc;
-  }, {});
-
-  const finalData = feeEstimates.map((feeEstimate) => {
-    const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
-    const fees = feeEstimate.fees || 0;
-    const productCost = costMap[feeEstimate.product_id] || 0;
-    const profit = combinedItem.lowest_fba_price - fees - productCost;
-
-    return {
-      ...combinedItem,
-      fees: fees,
-      profit: profit,
-    };
-  });
-
-  await TrackedProduct.bulkCreate(finalData, {
-    updateOnDuplicate: [
-      'current_rank',
-      'thirty_days_rank',
-      'ninety_days_rank',
-      'units_sold',
-      'product_velocity',
-      'lowest_fba_price',
-      'fees',
-      'profit',
-    ],
-  }).catch((error) => {
-    throw new Error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
-  });
-
-  logger.info(`Batch ${batchIndex + 1} updated with fees and profit successfully`);
-};
-
 
 
 async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
