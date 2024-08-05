@@ -584,11 +584,14 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
       'fees',
       'profit',
     ],
-  }).catch((error) => {
-    throw new Error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
-  });
-
-  logger.info(`Batch ${batchIndex + 1} updated with fees and profit successfully`);
+  })
+    .then((instances) => {
+      logger.info(`TrackedProduct.bulkCreate succeeded for batch ${batchIndex + 1}. ${instances.length} records saved.`);
+    })
+    .catch((error) => {
+      logger.error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
+      throw new Error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
+    });
 };
 
 

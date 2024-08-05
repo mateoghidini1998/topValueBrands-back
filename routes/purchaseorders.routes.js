@@ -23,6 +23,6 @@ router.patch('/approve/:id', approvePurchaseOrder);
 router.get('/download/:id', downloadPurchaseOrder);
 
 // delete purchase order
-router.patch('/delete/:id', deletePurchaseOrder);
+router.delete('/delete/:id', deletePurchaseOrder);
 
 module.exports = router;
