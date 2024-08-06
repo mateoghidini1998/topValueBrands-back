@@ -573,6 +573,8 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
 
   logger.info(`Saving the tracked products for batch ${batchIndex + 1}...`);
 
+  // console.log(finalData);
+
   await TrackedProduct.bulkCreate(finalData, {
     updateOnDuplicate: [
       'current_rank',
