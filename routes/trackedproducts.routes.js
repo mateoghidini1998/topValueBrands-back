@@ -5,7 +5,7 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const {
   generateTrackedProductsData,
   getTrackedProducts,
-  getEstimateFees,
+  getTrackedProductsFromAnOrder: getTrackedProdcutsFromAnOrder
 } = require('../controllers/trackedproducts.controller');
 const { getProductsTrackedData, addProductVelocityAndUnitsSold } = require('../controllers/prueba');
 
@@ -17,5 +17,7 @@ router.get('/', getTrackedProducts);
 // router.get('/fees', addAccessTokenHeader, getEstimateFees)
 
 router.get('/ranks-test', getProductsTrackedData);
+
+router.get('/order/:id', getTrackedProdcutsFromAnOrder);
 
 module.exports = router;

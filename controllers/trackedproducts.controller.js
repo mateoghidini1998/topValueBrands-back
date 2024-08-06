@@ -1,4 +1,4 @@
-const { Product, TrackedProduct, Supplier, User } = require('../models');
+const { Product, TrackedProduct, Supplier, User, PurchaseOrderProduct } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
@@ -114,6 +114,31 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       message: 'There was an error while obtaining tracked products',
     });
   }
+});
+
+
+// Method to get a trackedprodcut by product_id
+
+exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
+
+  // 1. get the purchaseorderproducts by purchase_order_id
+  const products = await PurchaseOrderProduct.findAll({ where: { purchase_order_id: req.params.id } });
+  if (!products) {
+    return res.status(404).json({ message: 'Products not found' });
+  }
+
+  // 2. get the trackedproducts by product_id
+  const trackedProducts = await TrackedProduct.findAll({ where: { product_id: products.map(product => product.product_id) } });
+  if (!trackedProducts) {
+    return res.status(404).json({ message: 'Tracked products not found' });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: trackedProducts
+  });
+
+
 });
 
 
