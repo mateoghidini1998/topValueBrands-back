@@ -133,9 +133,55 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Tracked products not found' });
   }
 
+  // 3. transform the trackedproducts to include product_name, ASIN, seller_sku, supplier_name, product_image
+
+  const productsOfTheOrder = await Promise.all(trackedProducts.map(async (trackedProduct) => {
+
+    const product = await Product.findOne({ where: { id: trackedProduct.product_id } });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const supplier = await Supplier.findOne({ where: { id: product.supplier_id } });
+    if (!supplier) {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
+
+    return {
+      ...trackedProduct.toJSON(),
+      product_name: product.product_name,
+      ASIN: product.ASIN,
+      seller_sku: product.seller_sku,
+      supplier_name: supplier.supplier_name,
+      product_image: product.product_image,
+      product_cost: product.product_cost
+    };
+
+  }));
+
+  // console.log(productsOfTheOrder);
+
+
+  // 4. return the transformed trackedproducts
+  const transformedTrackedProductsForTable = productsOfTheOrder.map((product) => {
+    console.log(product);
+
+    const { product_name, ASIN, seller_sku, supplier_name, product_image, product_cost, ...trackedProducts } = product;
+    return {
+      ...trackedProducts,
+      product_name,
+      ASIN,
+      seller_sku,
+      supplier_name,
+      product_image,
+      product_cost
+    };
+  })
+
+
   return res.status(200).json({
     success: true,
-    data: trackedProducts
+    data: transformedTrackedProductsForTable
   });
 
 
