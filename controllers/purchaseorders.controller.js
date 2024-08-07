@@ -1,5 +1,5 @@
 const asyncHandler = require('../middlewares/async');
-const { Product, PurchaseOrder, PurchaseOrderProduct, Supplier } = require('../models');
+const { Product, PurchaseOrder, PurchaseOrderProduct, Supplier, TrackedProduct } = require('../models');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
@@ -212,6 +212,55 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
         purchaseProduct.product_name
       );
     }
+  }
+
+  // get the average roi for each purchase order
+  for (const purchaseOrder of purchaseOrders) {
+    const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
+
+    const roiArr = [];
+
+    // get the product_id of each purchase order product
+    const productIds = purchaseOrderProducts.map(
+      (purchaseOrderProduct) => purchaseOrderProduct.product_id
+    );
+
+    // get the trackedproducts where the product_id is in the productIds
+    const trackedProductsOfTheOrder = await TrackedProduct.findAll({
+      where: { product_id: productIds },
+    });
+
+    // get the products where the product_id is in the productIds
+    const productsOfTheOrder = await Product.findAll({
+      where: { id: productIds },
+    });
+
+    // console.log(trackedProductsOfTheOrder)
+    // console.log(productsOfTheOrder)
+
+    // get the profit / product_cost for each trackedproduct
+    for (const trackedProduct of trackedProductsOfTheOrder) {
+      const product = productsOfTheOrder.find(
+        (product) => product.id === trackedProduct.product_id
+      );
+
+      console.log('----Getting the roi for the product id: ' + product.id + '----------')
+      console.log(product.product_cost)
+      console.log(trackedProduct.profit)
+
+      const profit = (trackedProduct.profit / product.product_cost) * 100;
+      console.log({ profit })
+
+      if (product.product_cost !== 0) {
+        roiArr.push(profit);
+      }
+
+    }
+
+
+    // get the sum of the roiArr
+    const totalRoi = roiArr.reduce((a, b) => a + b, 0);
+    purchaseOrder.setDataValue('average_roi', totalRoi / roiArr.length);
   }
 
   return res.status(200).json({
