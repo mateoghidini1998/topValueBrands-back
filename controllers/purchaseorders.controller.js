@@ -457,8 +457,8 @@ const generatePDF = (data) => {
     doc.fontSize(12).text('ISSUED TO:', { bold: true });
     doc.moveDown(1);
     doc.text(`${data.purchaseOrder.supplier_name}`);
-    doc.text('11316 46TH STREET N.');
-    doc.text('TAMPA FL 33617');
+    doc.text('Top Value Brands 1141 Holland Dr 8 Boca Raton');
+    doc.text('FL 33487 USA');
     doc.moveDown();
     doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.order_number}`);
     doc.moveDown(3);
@@ -469,7 +469,7 @@ const generatePDF = (data) => {
 
     // Table Headers
     doc.fillColor('blue').fontSize(12).text('ITEM NO.', TABLE_LEFT, TABLE_TOP, { extraBold: true });
-    doc.text('ASIN', TABLE_LEFT + 70, TABLE_TOP, { bold: true });
+    // doc.text('ASIN', TABLE_LEFT + 70, TABLE_TOP, { bold: true });
     doc.text('UNIT PRICE', TABLE_LEFT + 180, TABLE_TOP, { bold: true });
     doc.text('QUANTITY', TABLE_LEFT + 300, TABLE_TOP, { bold: true });
     doc.text('TOTAL', TABLE_LEFT + 400, TABLE_TOP, { bold: true });
@@ -482,7 +482,7 @@ const generatePDF = (data) => {
       }
       doc.fillColor('black');
       doc.text(product.product_id, TABLE_LEFT, position);
-      doc.text(product.ASIN, TABLE_LEFT + 70, position);
+      // doc.text(product.ASIN, TABLE_LEFT + 70, position);
       doc.text('$' + product.unit_price, TABLE_LEFT + 180, position);
       doc.text(product.quantity, TABLE_LEFT + 300, position);
       doc.text('$' + product.total_amount, TABLE_LEFT + 400, position);
