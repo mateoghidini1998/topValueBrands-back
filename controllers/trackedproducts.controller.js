@@ -5,7 +5,7 @@ const { generateOrderReport } = require('../utils/utils');
 const dotenv = require('dotenv');
 const logger = require('../logger/logger');
 const { Op } = require('sequelize');
-const { addAccessTokenHeader } = require('../middlewares/lwa_token');
+const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
 
@@ -189,7 +189,7 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
 
 
-const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 100; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 let batch_size_fees = 2000; // Tamaño del batch para la segunda etapa -> deben ser 2 batches para la estimación de tarifas no retorne un 429.
@@ -290,10 +290,13 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       const productBatch = relatedProducts.slice(i, i + batch_size_fees);
       logger.info(`Fetching estimate fees for batch ${i / batch_size_fees + 1} / ${(relatedProducts.length / batch_size_fees).toFixed(0)} with ${productBatch.length} products`);
       await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
-      // await addAccessTokenHeader(req, res, async () => {
 
-      await processBatch(req, res, next, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
+      // await addAccessTokenHeader(req, res, async () => {
+      //  await processBatch(req, res, next, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
       // })
+
+      await addAccessTokenAndProcessBatch(req, res, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
+
     }
 
 
@@ -667,6 +670,32 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
       logger.error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
       throw new Error(`TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message}`);
     });
+};
+
+
+const addAccessTokenAndProcessBatch = async (req, res, productBatch, combinedData, batch_size_fees, batchIndex) => {
+
+  let accessToken = req.headers['x-amz-access-token'];
+  let tokenExpiration = new Date(req?.headers['x-amz-token-expiration']) || null;
+
+  try {
+    const now = new Date();
+    if (!tokenExpiration || !accessToken || now >= tokenExpiration) {
+      console.log('Fetching new token...');
+      accessToken = await fetchNewTokenForFees();
+    } else {
+      console.log('Token is still valid...');
+    }
+
+    req.headers['x-amz-access-token'] = accessToken;
+    console.log(accessToken);
+
+    // Ejecuta el método processBatch y espera a que termine
+    await processBatch(req, res, null, productBatch, combinedData, batch_size_fees, batchIndex);
+  } catch (error) {
+    console.error('Error fetching access token or processing batch:', error);
+    throw error;
+  }
 };
 
 
