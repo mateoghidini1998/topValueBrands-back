@@ -281,7 +281,8 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
     // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
 
-    batch_size_fees = Math.ceil(relatedProducts.length / 2);
+    // batch_size_fees = Math.ceil(relatedProducts.length / 2);
+    batch_size_fees = 50;
 
     logger.info(`Batch size fees: ${batch_size_fees}`);
 
@@ -289,9 +290,10 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       const productBatch = relatedProducts.slice(i, i + batch_size_fees);
       logger.info(`Fetching estimate fees for batch ${i / batch_size_fees + 1} / ${(relatedProducts.length / batch_size_fees).toFixed(0)} with ${productBatch.length} products`);
       await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
-      await addAccessTokenHeader(req, res, async () => {
-        await processBatch(req, res, next, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
-      })
+      // await addAccessTokenHeader(req, res, async () => {
+
+      await processBatch(req, res, next, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
+      // })
     }
 
 
@@ -305,10 +307,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
     logger.info('Response sent successfully with 200 status code. ' + JSON.stringify(combinedData.length) + ' items tracked.');
   } catch (error) {
-    logger.error('line 326 error: ', {
-      error: error.message,
-      stack: error.stack,
-    }.toString());
+    logger.error(error.message);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -506,10 +505,11 @@ const getEstimateFees = async (req, res, next, products) => {
   const feeEstimate = [];
 
   try {
-    for (let i = 0; i < products.length; i++) {
+    for (let i = 0; i < products.length; i += 2) {
       try {
-        await delay(2100); // Espera 5 segundos antes de procesar el siguiente producto
+        await delay(2100); // Espera 2.1 segundos antes de procesar el siguiente producto
         feeEstimate.push(await estimateFeesForProduct(products[i], accessToken));
+        feeEstimate.push(await estimateFeesForProduct(products[i + 1], accessToken));
       } catch (error) {
         logger.error(`Error in estimateFeesForProduct for product id ${products[i].id}: ${error.message}`);
       }
@@ -634,6 +634,7 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
       ...combinedItem,
       fees: fees,
       profit: profit,
+      updatedAt: new Date(),
     };
   });
 
@@ -656,6 +657,7 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
       'lowest_fba_price',
       'fees',
       'profit',
+      'updatedAt',
     ],
   })
     .then((instances) => {
