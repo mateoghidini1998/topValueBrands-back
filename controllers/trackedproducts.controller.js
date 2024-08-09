@@ -189,7 +189,7 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
 
 
-const LIMIT_PRODUCTS = 100; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 let batch_size_fees = 2000; // Tamaño del batch para la segunda etapa -> deben ser 2 batches para la estimación de tarifas no retorne un 429.
