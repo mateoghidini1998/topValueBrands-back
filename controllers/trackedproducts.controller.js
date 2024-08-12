@@ -649,8 +649,6 @@ const addAccessTokenAndProcessBatch = async (req, res, productBatch, combinedDat
   console.log(accessToken);
   console.log('--------------------------------------')
 
-  console.log(req);
-
   try {
     if (!accessToken) {
       console.log('Fetching new token...');
