@@ -9,11 +9,19 @@ const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
 
+const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
+const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
+
+const BATCH_SIZE_FEES = 50;
+const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
+const ASINS_PER_GROUP = 70;
+const MAX_RETRIES = 3;
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const fetchProducts = async ({ limit = LIMIT_PRODUCTS, offset = OFFSET_PRODUCTS }) => {
   return await Product.findAll({ limit, offset });
 };
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 //@route GET api/v1/pogenerator/trackedproducts
 //@desc  Get all tracked products
@@ -116,9 +124,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   }
 });
 
-
-// Method to get a trackedprodcut by product_id
-
 exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
   // 1. get the purchaseorderproducts by purchase_order_id
@@ -159,13 +164,8 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
   }));
 
-  // console.log(productsOfTheOrder);
-
-
   // 4. return the transformed trackedproducts
   const transformedTrackedProductsForTable = productsOfTheOrder.map((product) => {
-    console.log(product);
-
     const { product_name, ASIN, seller_sku, supplier_name, product_image, product_cost, ...trackedProducts } = product;
     return {
       ...trackedProducts,
@@ -186,14 +186,6 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
 
 });
-
-
-
-const LIMIT_PRODUCTS = 100; // Límite de productos para fetch
-const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
-
-let batch_size_fees = 2000; // Tamaño del batch para la segunda etapa -> deben ser 2 batches para la estimación de tarifas no retorne un 429.
-const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
 
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info('Start generateTrackedProductsData');
@@ -279,23 +271,16 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     }
 
 
-    // Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
+    //* Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
 
-    // batch_size_fees = Math.ceil(relatedProducts.length / 2);
-    batch_size_fees = 50;
+    logger.info(`Batch size fees: ${BATCH_SIZE_FEES}`);
 
-    logger.info(`Batch size fees: ${batch_size_fees}`);
-
-    for (let i = 0; i < relatedProducts.length; i += batch_size_fees) {
-      const productBatch = relatedProducts.slice(i, i + batch_size_fees);
-      logger.info(`Fetching estimate fees for batch ${i / batch_size_fees + 1} / ${(relatedProducts.length / batch_size_fees).toFixed(0)} with ${productBatch.length} products`);
+    for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
+      const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
+      logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
       await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
 
-      // await addAccessTokenHeader(req, res, async () => {
-      //  await processBatch(req, res, next, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
-      // })
-
-      await addAccessTokenAndProcessBatch(req, res, productBatch, combinedData, batch_size_fees, i / batch_size_fees);
+      await addAccessTokenAndProcessBatch(req, res, productBatch, combinedData, BATCH_SIZE_FEES, i / BATCH_SIZE_FEES);
 
     }
 
@@ -319,13 +304,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   }
 });
 
-//Function to group asins into groups of GROUPS_ASINS
-
-const TOKENS_PER_REQUEST = 6;
-const ASINS_PER_GROUP = 70;
-const DEFAULT_DELAY = 10000; // 10 seconds default delay
-const MAX_RETRIES = 3;
-
 const getProductsTrackedData = async (products) => {
   logger.info(`Starting getProductsTrackedData with ${products.length} products`);
   logger.info(`Groups of ${ASINS_PER_GROUP} ASINs will be processed in batches of ${ASINS_PER_GROUP} products`);
@@ -347,8 +325,6 @@ const getProductsTrackedData = async (products) => {
   let tokensLeft = 4200;
   let totalTokensConsumed = 0;
   let tokensConsumedForTheLastRequest = 0;
-
-  // console.log(asinGroups.entries());
 
   for (const [index, asinGroup] of asinGroups.entries()) {
     try {
@@ -526,7 +502,6 @@ const getEstimateFees = async (req, res, next, products) => {
   }
 };
 
-
 const estimateFeesForProduct = async (product, accessToken) => {
   const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
   const trackedProduct = await TrackedProduct.findOne({
@@ -641,14 +616,8 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
     };
   });
 
-
-
   logger.info(`finish proccess of combining data keepa + orders + fees to generete the complete tracked product`);
-
-
   logger.info(`Saving the tracked products for batch ${batchIndex + 1}...`);
-
-  // console.log(finalData);
 
   await TrackedProduct.bulkCreate(finalData, {
     updateOnDuplicate: [
@@ -672,32 +641,36 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
     });
 };
 
-
 const addAccessTokenAndProcessBatch = async (req, res, productBatch, combinedData, batch_size_fees, batchIndex) => {
 
-  let accessToken = req.headers['x-amz-access-token'];
-  let tokenExpiration = new Date(req?.headers['x-amz-token-expiration']) || null;
+  console.log('--------------------------------------')
+  console.log('fetching new token for fees...');
+  let accessToken = await fetchNewTokenForFees();
+  console.log(accessToken);
+  console.log('--------------------------------------')
+
+  console.log(req);
 
   try {
-    const now = new Date();
-    if (!tokenExpiration || !accessToken || now >= tokenExpiration) {
+    if (!accessToken) {
       console.log('Fetching new token...');
+      logger.info('Fetching new token...');
       accessToken = await fetchNewTokenForFees();
     } else {
       console.log('Token is still valid...');
+      logger.info('Token is still valid...');
     }
 
     req.headers['x-amz-access-token'] = accessToken;
-    console.log(accessToken);
 
     // Ejecuta el método processBatch y espera a que termine
     await processBatch(req, res, null, productBatch, combinedData, batch_size_fees, batchIndex);
   } catch (error) {
     console.error('Error fetching access token or processing batch:', error);
+    logger.error('Error fetching access token or processing batch:', error);
     throw error;
   }
 };
-
 
 const getNewAccessToken = async () => {
   try {
@@ -727,14 +700,12 @@ const getNewAccessToken = async () => {
   }
 };
 
-
 async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
   for (const productId of untrackedProductIds) {
     try {
       // 1. Buscar el asin del producto no trackeado
       const untrackedProduct = await Product.findOne({ where: { id: productId } });
 
-      // console.log(untrackedProduct.ASIN);
 
       if (!untrackedProduct) {
         logger.warn(`Product with ID ${productId} not found.`);
