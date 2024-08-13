@@ -55,6 +55,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'product_cost',
       'product_image',
       'supplier_id',
+      'in_seller_account'
     ],
     include: [
       {
