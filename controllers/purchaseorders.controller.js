@@ -385,7 +385,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
   const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
   const totalPrice = purchaseOrder.total_price;
   const totalQuantity = purchaseOrderProducts.reduce((total, product) => total + product.quantity, 0);
-  const totalAmount = purchaseOrderProducts.reduce((total, product) => total + product.total_amount, 0);
+  const totalAmount = purchaseOrderProducts.reduce((total, product) => Number(total) + Number(product.total_amount), 0);
 
   // Obtener los nombres de los productos de forma asíncrona
   const products = await Promise.all(purchaseOrderProducts.map(async (product) => {
@@ -483,15 +483,15 @@ const generatePDF = (data) => {
       doc.fillColor('black');
       doc.text(product.product_id, TABLE_LEFT, position);
       // doc.text(product.ASIN, TABLE_LEFT + 70, position);
-      doc.text('$' + product.unit_price, TABLE_LEFT + 180, position);
+      doc.text('$' + Number(product.unit_price).toFixed(2), TABLE_LEFT + 180, position);
       doc.text(product.quantity, TABLE_LEFT + 300, position);
-      doc.text('$' + product.total_amount, TABLE_LEFT + 400, position);
+      doc.text('$' + Number(product.total_amount).toFixed(2), TABLE_LEFT + 400, position);
       position += itemDistanceY;
     });
 
     // Subtotal and Total
     doc.moveDown(3);
-    doc.fillColor('black').text(`SUBTOTAL:   $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
+    doc.fillColor('black').text(`SUBTOTAL:   $ ${Number(data.purchaseOrder.total_amount).toFixed(2)}`, TABLE_LEFT);
 
     // Order Notes
     doc.moveDown(2);
