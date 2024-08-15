@@ -335,6 +335,20 @@ exports.approvePurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.restartPurchaseOrder = asyncHandler(async (req, res, next) => {
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: 'Purchase Order not found' });
+  }
+
+  await purchaseOrder.update({ status: 'Pending' });
+
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrder
+  });
+});
+
 const getPurchaseOrderProducts = async (purchaseOrderId) => {
   const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
     where: { purchase_order_id: purchaseOrderId },

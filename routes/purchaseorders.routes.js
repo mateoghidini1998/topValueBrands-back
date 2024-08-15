@@ -9,7 +9,8 @@ const {
   rejectPurchaseOrder,
   approvePurchaseOrder,
   downloadPurchaseOrder,
-  deletePurchaseOrder
+  deletePurchaseOrder,
+  restartPurchaseOrder
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -17,9 +18,13 @@ router.get('/', getPurchaseOrders);
 router.post('/', createPurchaseOrder);
 router.put('/:id', updatedPurchaseOrder);
 router.get('/:id', getPurchaseOrderById);
+
 // change purchase order status
 router.patch('/reject/:id', rejectPurchaseOrder);
 router.patch('/approve/:id', approvePurchaseOrder);
+router.patch('/restart/:id', restartPurchaseOrder);
+
+// download purchase order
 router.get('/download/:id', downloadPurchaseOrder);
 
 // delete purchase order
