@@ -269,6 +269,19 @@ exports.getProducts = asyncHandler(async (req, res) => {
   }
 });
 
+// Get a product by seller_sku
+// @route GET api/products/:sellerSku
+// @access Public
+exports.getProductBySellerSku = asyncHandler(async (req, res) => {
+  const product = await Product.findOne({
+    where: { seller_sku: req.params.seller_sku },
+  });
+  if (!product) {
+    return res.status(404).json({ msg: 'Product not found' });
+  }
+  res.status(200).json(product);
+});
+
 // Function to add images to all products
 exports.addImageToAllProducts = asyncHandler(async (req, res) => {
   const products = await Product.findAll();

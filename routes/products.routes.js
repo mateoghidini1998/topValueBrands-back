@@ -6,6 +6,7 @@ const {
   addExtraInfoToProduct,
   toggleShowProduct,
   getProducts,
+  getProductBySellerSku,
   addImageToAllProducts,
   addImageToNewProducts,
   createProduct,
@@ -102,6 +103,9 @@ router.post('/add', protect, addAccessTokenHeader, authorize("admin"), createPro
  *                   example: Not authorized to access this route
  */
 router.get('/', protect, authorize('admin'), getProducts);
+
+// get product by seller_sku
+router.get('/:seller_sku', getProductBySellerSku);
 
 router.post('/', createProduct);
 
