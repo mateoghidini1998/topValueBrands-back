@@ -4,6 +4,7 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 const {
     syncDBWithAmazon,
+    downloadReport,
 } = require('../controllers/reports.controller');
 const { importJSON } = require('../utils/utils');
 
@@ -47,6 +48,7 @@ const { importJSON } = require('../utils/utils');
  */
 router.get('/sync', addAccessTokenHeader, syncDBWithAmazon);
 router.get('/import', importJSON)
+router.get('/download/:filename', downloadReport);
 
 
 module.exports = router;

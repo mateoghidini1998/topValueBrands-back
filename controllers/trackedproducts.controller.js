@@ -462,19 +462,31 @@ const saveOrders = async (req, res, next, products) => {
     return acc;
   }, {});
 
+  // const asinToProductId = products.reduce((acc, product) => {
+  //   acc[product.ASIN] = product.id;
+  //   return acc;
+  // }, {});
+
   const asinToProductId = products.reduce((acc, product) => {
-    acc[product.ASIN] = product.id;
+    if (!acc[product.ASIN]) {
+      acc[product.ASIN] = [];
+    }
+    acc[product.ASIN].push(product.id);
     return acc;
   }, {});
 
-  const finalJson = Object.entries(skuQuantities).map(
-    ([sku, { quantity, asin }]) => ({
-      sku,
-      product_id: asinToProductId[asin],
-      quantity,
-      velocity: quantity / 30,
-    })
+
+  const finalJson = Object.entries(skuQuantities).flatMap(
+    ([sku, { quantity, asin }]) => {
+      return (asinToProductId[asin] || []).map(productId => ({
+        sku,
+        product_id: productId,
+        quantity,
+        velocity: quantity / 30,
+      }));
+    }
   );
+
 
   logger.info("The final json is: ", finalJson)
   return finalJson;
