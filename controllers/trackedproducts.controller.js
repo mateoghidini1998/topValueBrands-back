@@ -9,7 +9,7 @@ const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
 
-const LIMIT_PRODUCTS = 50; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 const BATCH_SIZE_FEES = 50;
