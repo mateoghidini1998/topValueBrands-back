@@ -9,7 +9,7 @@ const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
 
-const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
+const LIMIT_PRODUCTS = 50; // Límite de productos para fetch
 const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
 
 const BATCH_SIZE_FEES = 50;
@@ -309,12 +309,19 @@ const getProductsTrackedData = async (products) => {
   logger.info(`Starting getProductsTrackedData with ${products.length} products`);
   logger.info(`Groups of ${ASINS_PER_GROUP} ASINs will be processed in batches of ${ASINS_PER_GROUP} products`);
 
+  // Agrupar productos por ASIN para evitar duplicados
+  const uniqueProductsMap = products.reduce((acc, product) => {
+    if (!acc[product.ASIN]) {
+      acc[product.ASIN] = [];
+    }
+    acc[product.ASIN].push(product);
+    return acc;
+  }, {});
+
+  const uniqueASINs = Object.keys(uniqueProductsMap);
   const asinGroups = [];
-  for (let i = 0; i < products.length; i += ASINS_PER_GROUP) {
-    const group = products
-      .slice(i, i + ASINS_PER_GROUP)
-      .map((product) => product.ASIN)
-      .join(',');
+  for (let i = 0; i < uniqueASINs.length; i += ASINS_PER_GROUP) {
+    const group = uniqueASINs.slice(i, i + ASINS_PER_GROUP).join(',');
     asinGroups.push(group);
   }
 
@@ -322,53 +329,34 @@ const getProductsTrackedData = async (products) => {
 
   const keepaResponses = [];
   const TOKENS_PER_MIN = 70;
-  const REQUIRED_TOKENS = 500; // Cantidad de tokens necesarios por solicitud
+  const REQUIRED_TOKENS = 500;
   let tokensLeft = 4200;
   let totalTokensConsumed = 0;
-  let tokensConsumedForTheLastRequest = 0;
 
   for (const [index, asinGroup] of asinGroups.entries()) {
     try {
       logger.info(`Processing group ${index + 1}/${asinGroups.length}`);
 
-      // Esperar hasta que haya suficientes tokens disponibles
       const missingTokens = REQUIRED_TOKENS - tokensLeft;
-
-      //* Si missing tokens es negativo, significa que hay suficientes tokens
-      //! Si missing tokens es positivo, significa que no hay suficientes tokens y falta esa cantidad
-
-      logger.info(`tokens consumed: ${totalTokensConsumed}`)
-      logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
-      logger.info(`tokens left: ${tokensLeft}`)
-      logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`)
+      logger.info(`tokens consumed: ${totalTokensConsumed}`);
+      logger.info(`tokens left: ${tokensLeft}`);
+      logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`);
 
       if (missingTokens <= 0) {
-        // Realizar la solicitud si hay suficientes tokens disponibles
         const keepaDataResponse = await getKeepaData(asinGroup);
         keepaResponses.push(keepaDataResponse);
         tokensLeft = keepaDataResponse.tokensLeft;
         totalTokensConsumed += keepaDataResponse.tokensConsumed;
-        tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
         logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
-
       } else {
         const waitTimeForTokens = Math.ceil((missingTokens / TOKENS_PER_MIN)) * 60000;
         logger.info(`Waiting ${waitTimeForTokens} ms to accumulate enough tokens`);
         await delay(waitTimeForTokens);
 
-        // Recalcular tokensLeft después de esperar
         const keepaDataResponse = await getKeepaData(asinGroup);
-
         tokensLeft = keepaDataResponse.tokensLeft;
-        tokensConsumedForTheLastRequest = keepaDataResponse.tokensConsumed;
         totalTokensConsumed += keepaDataResponse.tokensConsumed;
         keepaResponses.push(keepaDataResponse);
-
-        logger.info(`tokens consumed: ${totalTokensConsumed}`)
-        logger.info(`tokens consumend for the last request: ${tokensConsumedForTheLastRequest}`)
-        logger.info(`tokens left: ${tokensLeft}`)
-
-        logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`)
 
         logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
       }
@@ -378,34 +366,33 @@ const getProductsTrackedData = async (products) => {
     }
 
     if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
-      logger.info(`Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000} ms ->  ms to refill tokens`);
-      logger.info(`Ya se hizo la solicitud para ${(index + 1) * ASINS_PER_GROUP} / ${asinGroups.length * ASINS_PER_GROUP} productos`);
+      logger.info(`Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000} ms to refill tokens`);
       await delay(Math.ceil(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000);
     }
-
   }
 
   const processedData = keepaResponses.flatMap((response) =>
-    response.products.map((product) => {
-      const matchingProduct = products.find((p) => p.ASIN === product.asin);
+    response.products.flatMap((product) => {
+      const matchingProducts = uniqueProductsMap[product.asin];
       const lowestPrice = product.stats.buyBoxPrice > 0
         ? product.stats.buyBoxPrice
         : product.stats.current[10] > 0
           ? product.stats.current[10]
           : product.stats.current[7];
 
-      return {
+      return matchingProducts.map((matchingProduct) => ({
         product_id: matchingProduct.id,
         currentSalesRank: product.stats.current[3],
         avg30: product.stats.avg30[3],
         avg90: product.stats.avg90[3],
         lowestFbaPrice: lowestPrice,
-      };
+      }));
     })
   );
 
   return processedData;
 };
+
 
 const getKeepaData = async (asinGroup, retryCount = 0) => {
   logger.info(`Executing getKeepaData with ASIN group`);
