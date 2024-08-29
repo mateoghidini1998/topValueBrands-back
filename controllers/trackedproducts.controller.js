@@ -603,9 +603,10 @@ const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SI
   }, {});
 
   const finalData = feeEstimates.map((feeEstimate) => {
-    const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id).catch((error) => {
-      logger.error(`Error finding combined item for product id ${feeEstimate.product_id}: ${error.message}`);
-    })
+    // const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id).catch((error) => {
+    //   logger.error(`Error finding combined item for product id ${feeEstimate.product_id}: ${error.message}`);
+    // })
+    const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id);
     const fees = feeEstimate.fees || 0;
     const productCost = costMap[feeEstimate.product_id] || 0;
     const profit = combinedItem.lowest_fba_price - fees - productCost;
