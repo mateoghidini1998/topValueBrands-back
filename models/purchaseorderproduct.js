@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      // Asociaciones ya existentes
       PurchaseOrderProduct.belongsTo(models.PurchaseOrder, {
         foreignKey: 'purchase_order_id',
       });
@@ -17,7 +18,15 @@ module.exports = (sequelize, DataTypes) => {
       PurchaseOrderProduct.belongsTo(models.PurchaseOrderProductReason, {
         foreignKey: 'reason_id',
       });
+
+      // Nueva asociación
+      PurchaseOrderProduct.belongsToMany(models.OutgoingShipment, {
+        through: models.OutgoingShipmentProduct,
+        foreignKey: 'purchase_order_product_id',
+        otherKey: 'outgoing_shipment_id',
+      });
     }
+
   }
   PurchaseOrderProduct.init(
     {
