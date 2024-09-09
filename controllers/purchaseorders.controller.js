@@ -6,7 +6,7 @@ const fs = require('fs');
 const { where } = require('sequelize');
 
 exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
-  const { order_number, supplier_id, status, products, notes } = req.body;
+  const { order_number, supplier_id, purchase_order_status_id, products, notes } = req.body;
 
   // Check if the order number already exists
   let purchaseOrder = await PurchaseOrder.findOne({ where: { order_number } });
@@ -41,7 +41,7 @@ exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   purchaseOrder = await PurchaseOrder.create({
     order_number,
     supplier_id,
-    status: 'Pending',
+    purchase_order_status_id: 2,
     total_price: 0,
     notes,
   });
@@ -113,7 +113,7 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
     const { product_id, unit_price, quantity } = product;
     const totalAmount = unit_price * quantity;
     await PurchaseOrderProduct.update(
-      { unit_price, quantity, total_amount: totalAmount },
+      { unit_price, quantity_purchased: quantity, total_amount: totalAmount },
       {
         where: {
           purchase_order_id: purchaseOrder.id,
@@ -162,8 +162,8 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
   // }
 
   // if the previous purchase order status was rejected, change it to pending
-  if (purchaseOrder.status === 'Rejected') {
-    await purchaseOrder.update({ status: 'Pending' });
+  if (purchaseOrder.purchase_order_status_id === 1) {
+    await purchaseOrder.update({ purchase_order_status_id: 2 });
   }
 
   // Update the total price of the purchase order
@@ -296,7 +296,7 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
       purchase_order_id: purchaseOrderId,
       product_id,
       unit_price,
-      quantity,
+      quantity_purchased: quantity,
       total_amount: unit_price * quantity,
     });
 
@@ -313,7 +313,7 @@ exports.rejectPurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: 'Purchase Order not found' });
   }
 
-  await purchaseOrder.update({ status: 'Rejected' });
+  await purchaseOrder.update({ purchase_order_status_id: 1 });
 
   return res.status(200).json({
     success: true,
@@ -327,7 +327,7 @@ exports.approvePurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: 'Purchase Order not found' });
   }
 
-  await purchaseOrder.update({ status: 'Approved' });
+  await purchaseOrder.update({ purchase_order_status_id: 3 });
 
   return res.status(200).json({
     success: true,
@@ -341,7 +341,7 @@ exports.restartPurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: 'Purchase Order not found' });
   }
 
-  await purchaseOrder.update({ status: 'Pending' });
+  await purchaseOrder.update({ purchase_order_status_id: 2 });
 
   return res.status(200).json({
     success: true,
@@ -412,7 +412,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
       ASIN: productData.ASIN,
       product_id: product.product_id,
       unit_price: product.unit_price,
-      quantity: product.quantity,
+      quantity_purchased: product.quantity,
       total_amount: product.total_amount,
     };
   }));
@@ -431,7 +431,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
       id: purchaseOrder.id,
       order_number: purchaseOrder.order_number,
       supplier_name: supplierNameValue,
-      status: purchaseOrder.status,
+      status: purchaseOrder.purchase_order_status_id,
       total_price: totalPrice,
       total_quantity: totalQuantity,
       total_amount: totalAmount,
