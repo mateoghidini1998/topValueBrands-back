@@ -11,13 +11,14 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       PurchaseOrder.belongsTo(models.Supplier, { foreignKey: 'supplier_id', as: 'suppliers' });
+      PurchaseOrder.belongsTo(models.PurchaseOrderStatus, { foreignKey: 'purchase_order_status_id', as: 'purchaseOrderStatus' });
       PurchaseOrder.hasMany(models.PurchaseOrderProduct, { foreignKey: 'purchase_order_id', as: 'purchaseOrderProducts' });
     }
   }
   PurchaseOrder.init({
     order_number: DataTypes.STRING,
     supplier_id: DataTypes.INTEGER,
-    status: DataTypes.STRING,
+    purchase_order_status_id: DataTypes.INTEGER,
     total_price: DataTypes.DECIMAL,
     notes: DataTypes.STRING,
     is_active: DataTypes.BOOLEAN
