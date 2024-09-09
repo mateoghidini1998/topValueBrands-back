@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       PurchaseOrderProduct.belongsTo(models.Product, {
         foreignKey: 'product_id',
       });
+      PurchaseOrderProduct.belongsTo(models.PurchaseOrderProductReason, {
+        foreignKey: 'reason_id',
+      });
     }
   }
   PurchaseOrderProduct.init(
@@ -22,7 +25,10 @@ module.exports = (sequelize, DataTypes) => {
       product_id: DataTypes.INTEGER,
       unit_price: DataTypes.DECIMAL,
       total_amount: DataTypes.DECIMAL,
-      quantity: DataTypes.INTEGER,
+      quantity_purchased: DataTypes.INTEGER,
+      quantity_received: DataTypes.INTEGER,
+      quantity_missing: DataTypes.INTEGER,
+      reason_id: DataTypes.INTEGER,
     },
     {
       sequelize,
