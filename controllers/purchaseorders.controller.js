@@ -1,5 +1,5 @@
 const asyncHandler = require('../middlewares/async');
-const { Product, PurchaseOrder, PurchaseOrderProduct, Supplier, TrackedProduct } = require('../models');
+const { Product, PurchaseOrder, PurchaseOrderProduct, Supplier, TrackedProduct, PurchaseOrderStatus } = require('../models');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
@@ -192,82 +192,79 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: 'purchaseOrderProducts',
       },
+      {
+        model: PurchaseOrderStatus,
+        as: 'purchaseOrderStatus', // Incluido el modelo con alias
+        attributes: ['description'], // Solo trae el campo 'description'
+      },
     ],
   });
 
-  // get the supplier_name for each purchase order
-  for (const purchaseOrder of purchaseOrders) {
-    const purchaseSupplier = await Supplier.findByPk(purchaseOrder.supplier_id);
-    purchaseOrder.setDataValue('supplier_name', purchaseSupplier.supplier_name);
-  }
+  // Obtener supplier_name para cada purchase order
+  await Promise.all(
+    purchaseOrders.map(async (purchaseOrder) => {
+      const purchaseSupplier = await Supplier.findByPk(purchaseOrder.supplier_id);
+      purchaseOrder.setDataValue('supplier_name', purchaseSupplier.supplier_name);
 
-  // get the product_name for each purchase order product
-  for (const purchaseOrder of purchaseOrders) {
-    for (const purchaseOrderProduct of purchaseOrder.purchaseOrderProducts) {
-      const purchaseProduct = await Product.findByPk(
-        purchaseOrderProduct.product_id
+      // Utiliza la asociación ya existente para obtener la descripción
+      const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
+      purchaseOrder.setDataValue('status', statusDescription || 'Unknown'); // Maneja caso de status desconocido o nulo
+    })
+  );
+
+  // Obtener product_name para cada purchase order product
+  await Promise.all(
+    purchaseOrders.map(async (purchaseOrder) => {
+      await Promise.all(
+        purchaseOrder.purchaseOrderProducts.map(async (purchaseOrderProduct) => {
+          const purchaseProduct = await Product.findByPk(purchaseOrderProduct.product_id);
+          purchaseOrderProduct.setDataValue('product_name', purchaseProduct.product_name);
+        })
       );
-      purchaseOrderProduct.setDataValue(
-        'product_name',
-        purchaseProduct.product_name
-      );
-    }
-  }
+    })
+  );
 
-  // get the average roi for each purchase order
-  for (const purchaseOrder of purchaseOrders) {
-    const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
+  // Calcular el ROI promedio para cada purchase order
+  await Promise.all(
+    purchaseOrders.map(async (purchaseOrder) => {
+      const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
+      const roiArr = [];
 
-    const roiArr = [];
-
-    // get the product_id of each purchase order product
-    const productIds = purchaseOrderProducts.map(
-      (purchaseOrderProduct) => purchaseOrderProduct.product_id
-    );
-
-    // get the trackedproducts where the product_id is in the productIds
-    const trackedProductsOfTheOrder = await TrackedProduct.findAll({
-      where: { product_id: productIds },
-    });
-
-    // get the products where the product_id is in the productIds
-    const productsOfTheOrder = await Product.findAll({
-      where: { id: productIds },
-    });
-
-    // console.log(trackedProductsOfTheOrder)
-    // console.log(productsOfTheOrder)
-
-    // get the profit / product_cost for each trackedproduct
-    for (const trackedProduct of trackedProductsOfTheOrder) {
-      const product = productsOfTheOrder.find(
-        (product) => product.id === trackedProduct.product_id
+      // Obtener todos los IDs de productos de la orden de compra
+      const productIds = purchaseOrderProducts.map(
+        (purchaseOrderProduct) => purchaseOrderProduct.product_id
       );
 
-      console.log('----Getting the roi for the product id: ' + product.id + '----------')
-      console.log(product.product_cost)
-      console.log(trackedProduct.profit)
+      // Obtener productos rastreados y productos de la orden
+      const [trackedProductsOfTheOrder, productsOfTheOrder] = await Promise.all([
+        TrackedProduct.findAll({ where: { product_id: productIds } }),
+        Product.findAll({ where: { id: productIds } }),
+      ]);
 
-      const profit = (trackedProduct.profit / product.product_cost) * 100;
-      console.log({ profit })
+      // Calcular el ROI de cada producto rastreado
+      trackedProductsOfTheOrder.forEach((trackedProduct) => {
+        const product = productsOfTheOrder.find(
+          (product) => product.id === trackedProduct.product_id
+        );
 
-      if (product.product_cost !== 0) {
-        roiArr.push(profit);
-      }
+        if (product && product.product_cost !== 0) {
+          const profit = (trackedProduct.profit / product.product_cost) * 100;
+          roiArr.push(profit);
+        }
+      });
 
-    }
-
-
-    // get the sum of the roiArr
-    const totalRoi = roiArr.reduce((a, b) => a + b, 0);
-    purchaseOrder.setDataValue('average_roi', totalRoi / roiArr.length);
-  }
+      // Calcular el promedio de ROI y establecer el valor
+      const totalRoi = roiArr.reduce((a, b) => a + b, 0);
+      purchaseOrder.setDataValue('average_roi', totalRoi / roiArr.length);
+    })
+  );
 
   return res.status(200).json({
     success: true,
     data: purchaseOrders,
   });
 });
+
 
 exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
