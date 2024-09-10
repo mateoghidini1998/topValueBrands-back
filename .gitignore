@@ -1,5 +1,6 @@
 node_modules/
 .env
+.env.development
 # Ignorar la carpeta config en la raíz del proyecto
 /logger/combined.log
 /logger/error.log

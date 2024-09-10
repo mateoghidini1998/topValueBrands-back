@@ -9,13 +9,13 @@ const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
 
-const LIMIT_PRODUCTS = 20000; // Límite de productos para fetch
-const OFFSET_PRODUCTS = 0; // Límite de productos para fetch
+const LIMIT_PRODUCTS = process.env.LIMIT_PRODUCTS; // Límite de productos para fetch
+const OFFSET_PRODUCTS = process.env.OFFSET_PRODUCTS; // Límite de productos para fetch
 
-const BATCH_SIZE_FEES = 50;
-const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
-const ASINS_PER_GROUP = 70;
-const MAX_RETRIES = 3;
+const BATCH_SIZE_FEES = process.env.BATCH_SIZE_FEES;
+const MS_DELAY_FEES = process.env.MS_DELAY_FEES; // Tiempo de delay en milisegundos
+const ASINS_PER_GROUP = process.env.ASINS_PER_GROUP;
+const MAX_RETRIES = process.env.MAX_RETRIES;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

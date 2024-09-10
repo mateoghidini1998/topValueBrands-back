@@ -2,7 +2,9 @@ name: Deploy to Azure App Service
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - warehouse/TVB_01
   # pull_request:
   #   branches: [main]
 
@@ -28,6 +30,6 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: topvaluebrands-webapp
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          app-name: ${{ github.event.ref == 'refs/heads/main' && 'topvaluebrands-webapp' || 'topvaluebrands-webapp-dev' }}
+          publish-profile: ${{ github.event.ref == 'refs/heads/main' && secrets.AZURE_WEBAPP_PUBLISH_PROFILE || secrets.AZURE_WEBAPP_PUBLISH_PROFILE_DEV }}
           package: .
