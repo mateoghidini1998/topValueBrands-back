@@ -10,7 +10,7 @@
     }
   },
   "development": {
-    "use_env_variable": "DATABASE_URL",
+    "use_env_variable": "DATABASE_URL_DEV",
     "dialect": "mysql",
     "dialectOptions": {
       "ssl": {
@@ -20,7 +20,7 @@
     }
   },
   "local": {
-    "use_env_variable": "DATABASE_URL_DEV",
+    "use_env_variable": "DATABASE_URL_LOCAL",
     "dialect": "mysql",
     "dialectOptions": {}
   }
