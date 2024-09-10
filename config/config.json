@@ -10,6 +10,16 @@
     }
   },
   "development": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  },
+  "local": {
     "dialect": "mysql",
     "use_env_variable": "DATABASE_URL_DEV",
     "url": "mysql://root:$Htazzxs101@127.0.0.1:3306/top_value_brands"
