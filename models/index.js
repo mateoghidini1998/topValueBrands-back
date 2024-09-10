@@ -1,14 +1,14 @@
 'use strict';
 
 const dotenv = require('dotenv');
-dotenv.config({ path: './.env' });
+dotenv.config({ path: './.env' }); // Carga las variables de entorno desde el archivo .env
 
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV || 'local'; // Usamos 'local' como predeterminado si no se establece NODE_ENV
 const config = require(__dirname + '/../config/config.json')[env];
 const db = {};
 
@@ -16,17 +16,18 @@ console.log(`Running in ${env} mode`);
 console.log(config);
 
 let sequelize;
-console.log(`Using environment variable: ${config.use_env_variable}`);
 
 if (config.use_env_variable) {
-  console.log(`Using environment variable: ${config.use_env_variable}`);
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+  const connectionString = process.env[config.use_env_variable];
+  console.log(`Using connection string from environment variable: ${config.use_env_variable}`);
+  sequelize = new Sequelize(connectionString, config);
 } else {
+  console.log(`Using individual database parameters from configuration.`);
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
-fs
-  .readdirSync(__dirname)
+// Resto de la configuración del modelo permanece igual...
+fs.readdirSync(__dirname)
   .filter(file => {
     return (
       file.indexOf('.') !== 0 &&
