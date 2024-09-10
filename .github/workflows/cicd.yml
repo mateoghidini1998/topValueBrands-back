@@ -25,12 +25,10 @@ jobs:
       - name: Set Environment Variables
         env:
           # DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
           DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
-          # Agrega más variables de entorno según lo necesites
         run: |
           echo "DATABASE_URL_DEV=${{ secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
-          # Agrega más comandos de echo para establecer otras variables de entorno
-
       - name: Run Sequelize Migrations
         run: npx sequelize-cli db:migrate
 
