@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
 
     steps:
       - name: Checkout Source
@@ -23,18 +24,16 @@ jobs:
         run: npm install
 
       - name: Set Environment Variables
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          #DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
-          #echo "DATABASE_URL_DEV=${{ secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+          echo "NODE_ENV=${{ github.ref == 'refs/heads/main' && secrets.NODE_ENV || 'development' }}" >> $GITHUB_ENV
+          echo "DATABASE_URL=${{ github.ref == 'refs/heads/main' && secrets.DATABASE_URL || secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
+
       - name: Run Sequelize Migrations
         run: npx sequelize-cli db:migrate
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ github.event.ref == 'refs/heads/main' && 'topvaluebrands-webapp' || 'topvaluebrands-webapp-dev' }}
-          publish-profile: ${{ github.event.ref == 'refs/heads/main' && secrets.AZURE_WEBAPP_PUBLISH_PROFILE || secrets.AZURE_WEBAPP_PUBLISH_PROFILE_DEV }}
+          app-name: ${{ github.ref == 'refs/heads/main' && 'topvaluebrands-webapp' || 'topvaluebrands-webapp-dev' }}
+          publish-profile: ${{ github.ref == 'refs/heads/main' && secrets.AZURE_WEBAPP_PUBLISH_PROFILE || secrets.AZURE_WEBAPP_PUBLISH_PROFILE_DEV }}
           package: .
