@@ -22,16 +22,6 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Set Environment Variables
-        env:
-          # DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          # echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
-          DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
-        run: |
-          echo "DATABASE_URL_DEV=${{ secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
-      - name: Run Sequelize Migrations
-        run: npx sequelize-cli db:migrate
-
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
