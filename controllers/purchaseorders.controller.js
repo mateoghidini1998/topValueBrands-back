@@ -208,7 +208,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
 
       // Utiliza la asociación ya existente para obtener la descripción
       const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
-      purchaseOrder.setDataValue('status', statusDescription || 'Unknown'); // Maneja caso de status desconocido o nulo
+      purchaseOrder.setDataValue('status', (statusDescription || 'Unknown').toUpperCase());
     })
   );
 
