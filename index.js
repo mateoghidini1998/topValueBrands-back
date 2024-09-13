@@ -97,8 +97,8 @@ app.listen(PORT, () => {
       console.error('Error during scheduled cron job:', error);
     }
   }, {
-    // TIME ZONE NEW YORK
-    timezone: "America/New_York",
+    // TIMEZONE
+    timezone: "America/Sao_Paulo",
     scheduled: true,
   });
 
