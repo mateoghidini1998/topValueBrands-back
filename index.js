@@ -61,7 +61,7 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('58 3,16 * * *', async () => {
+  cron.schedule('50 3,18 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
 
     // Mock request, response, and next for the cron job context
@@ -85,14 +85,14 @@ app.listen(PORT, () => {
         console.log('Cron job for syncing database with Amazon completed.');
       });
 
-      // // If the first block succeeded, proceed to the second block
-      // logger.info('2. Scheduling cron job to generate tracked products...');
-      // console.log('2. Scheduling cron job to generate tracked products...');
-      // await addAccessTokenHeader(req, res, async () => {
-      //   await generateTrackedProductsData(req, res, next);
-      //   logger.info('Cron job for generating tracked products completed.');
-      //   console.log('Cron job for generating tracked products completed.');
-      // });
+      // If the first block succeeded, proceed to the second block
+      logger.info('2. Scheduling cron job to generate tracked products...');
+      console.log('2. Scheduling cron job to generate tracked products...');
+      await addAccessTokenHeader(req, res, async () => {
+        await generateTrackedProductsData(req, res, next);
+        logger.info('Cron job for generating tracked products completed.');
+        console.log('Cron job for generating tracked products completed.');
+      });
     } catch (error) {
       console.error('Error during scheduled cron job:', error);
     }
