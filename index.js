@@ -61,7 +61,7 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  cron.schedule('50 3,18 * * *', async () => {
+  cron.schedule('07 3,13 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
 
     // Mock request, response, and next for the cron job context
@@ -97,8 +97,8 @@ app.listen(PORT, () => {
       console.error('Error during scheduled cron job:', error);
     }
   }, {
-    // TIMEZONE
-    timezone: "America/Sao_Paulo",
+    // TIME ZONE NEW YORK
+    timezone: "America/New_York",
     scheduled: true,
   });
 
