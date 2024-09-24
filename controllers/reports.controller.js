@@ -36,52 +36,12 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
   }
 });
 
-// const processReport = async (productsArray) => {
-//   try {
-//     const newProducts = [];
-//     const updatedProducts = [];
-
-//     //Check if there is any difference between our products and the productsArray passed by props.
-//     const allOurProducts = await Product.findAll();
-
-
-//     for (const product of productsArray) {
-//       const [result, created] = await Product.upsert({
-//         ASIN: product.asin,
-//         product_name: product['product-name'],
-//         seller_sku: product.sku,
-//         in_seller_account: true,
-//         FBA_available_inventory: parseFloat(
-//           product['afn-fulfillable-quantity']
-//         ),
-//         reserved_quantity: parseFloat(product['afn-reserved-quantity']),
-//         Inbound_to_FBA: parseFloat(product['afn-inbound-shipped-quantity']),
-//       });
-
-//       if (created) {
-//         newProducts.push(product);
-//       } else {
-//         updatedProducts.push(product);
-//       }
-//     }
-
-//     return {
-//       newSyncProductsQuantity: newProducts.length,
-//       newSyncQuantity: updatedProducts.length,
-//       newSyncProducts: newProducts,
-//       newSyncData: updatedProducts,
-//     };
-//   } catch (error) {
-//     console.error('Error al actualizar o crear productos:', error);
-//     throw error;
-//   }
-// };
-
 const processReport = async (productsArray) => {
   const t = await sequelize.transaction();
   try {
     const newProducts = [];
     const updatedProducts = [];
+    const touchedProducts = new Set();  // Para llevar el control de productos "tocados"
 
     // Obtener todos nuestros productos de la base de datos
     const allOurProducts = await Product.findAll({ transaction: t });
@@ -95,6 +55,7 @@ const processReport = async (productsArray) => {
       const existingProduct = ourProductsMap.get(product.asin);
 
       if (existingProduct) {
+        touchedProducts.add(existingProduct.ASIN);  // Marcamos como tocado
         let needsUpdate = false;
 
         // Comparar los valores
@@ -116,6 +77,7 @@ const processReport = async (productsArray) => {
           updatedProducts.push(existingProduct);
         }
       } else {
+        // Crear nuevo producto
         const newProduct = await Product.create({
           ASIN: product.asin,
           product_name: product['product-name'],
@@ -127,7 +89,16 @@ const processReport = async (productsArray) => {
         }, { transaction: t });
 
         newProducts.push(newProduct);
+      }
+    }
 
+    // Identificar productos en la base de datos que no han sido tocados
+    for (const [asin, product] of ourProductsMap) {
+      if (!touchedProducts.has(asin)) {
+        // Actualizamos el producto a `in_seller_account: false`
+        product.in_seller_account = false;
+        await product.save({ transaction: t });
+        updatedProducts.push(product);  // Añadimos a la lista de actualizados
       }
     }
 
@@ -145,6 +116,7 @@ const processReport = async (productsArray) => {
     throw error;
   }
 };
+
 
 // @route    GET api/reports/download/:filename
 // @desc     Download a CSV file
