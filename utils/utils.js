@@ -105,6 +105,7 @@ const getReportById = asyncHandler(async (req, reportType) => {
     console.log('Obtuvimos el reporte');
     return reportResponse;
   } catch (error) {
+    logger.error('Error fetching report:', error);
     console.error('Error fetching report:', error);
   }
 });
@@ -224,8 +225,11 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
     fs.writeFileSync(csvFilePath, responseData);
 
     console.log('Se descargo el documento como CSV');
+    logger.info('Se descargo el documento como CSV');
+    logger.info('CSV file path:', csvFilePath);
     return csvFilePath;
   } catch (error) {
+    logger.error('Error downloading CSV report: ' + error.message);
     // console.error(error);
     return res.status(500).send('Internal Server Error');
   }
@@ -250,6 +254,7 @@ const parseReportToJSON = (dataString) => {
 
   }
   console.log('parseReportToJSON results: ' + results.length)
+  logger.info('parseReportToJSON results: ' + results.length)
   return results;
 };
 

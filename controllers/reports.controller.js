@@ -19,7 +19,8 @@ const logger = require('../logger/logger');
 exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
   console.log('--------------------------------------')
-  console.log('fetching new token for fees...');
+  console.log('fetching new token for sync db with amazon...');
+  logger.info('fetching new token for sync db with amazon...');
   let accessToken = await fetchNewTokenForFees();
   console.log(accessToken);
   console.log('--------------------------------------')
@@ -27,8 +28,8 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
   try {
 
     if (!accessToken) {
-      console.log('Fetching new token...');
-      logger.info('Fetching new token...');
+      console.log('fetching new token for sync db with amazon...');
+      logger.info('fetching new token for sync db with amazon...');
       accessToken = await fetchNewTokenForFees();
     } else {
       console.log('Token is still valid...');
@@ -39,6 +40,7 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
     // Call createReport and get the reportId
     const report = await sendCSVasJSON(req, res, next);
+    logger.info('Finish creating report');
 
     // Continue with the rest of the code after sendCSVasJSON has completed
     const newSync = await processReport(report);
@@ -47,7 +49,9 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
     // const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
     // const accessToken = req.headers['x-amz-access-token'];
     // const imageSyncResult = await addImageToProducts(newProducts, accessToken);
+
     const imageSyncResult = await addImageToNewProducts(accessToken);
+
 
     res.json({ newSync, imageSyncResult });
     return { newSync, imageSyncResult };
@@ -58,6 +62,7 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 });
 
 const processReport = async (productsArray) => {
+  logger.info('Start processReport function');
   const t = await sequelize.transaction();
   try {
     const newProducts = [];
@@ -125,6 +130,7 @@ const processReport = async (productsArray) => {
 
     await t.commit();
 
+    logger.info('Finish processReport function');
     return {
       newSyncProductsQuantity: newProducts.length,
       newSyncQuantity: updatedProducts.length,
@@ -134,6 +140,7 @@ const processReport = async (productsArray) => {
   } catch (error) {
     await t.rollback();
     console.error('Error al actualizar o crear productos:', error);
+    logger.error('Error al actualizar o crear productos:', error);
     throw error;
   }
 };
