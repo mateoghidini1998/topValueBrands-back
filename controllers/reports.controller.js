@@ -10,12 +10,33 @@ const {
   addImageToProducts,
   addImageToNewProducts,
 } = require('../controllers/products.controller');
+const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
+const logger = require('../logger/logger');
 
 //@route   POST api/reports
 //@desc    Generate new report
 //@access  private
 exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
+
+  console.log('--------------------------------------')
+  console.log('fetching new token for fees...');
+  let accessToken = await fetchNewTokenForFees();
+  console.log(accessToken);
+  console.log('--------------------------------------')
+
   try {
+
+    if (!accessToken) {
+      console.log('Fetching new token...');
+      logger.info('Fetching new token...');
+      accessToken = await fetchNewTokenForFees();
+    } else {
+      console.log('Token is still valid...');
+      logger.info('Token is still valid...');
+    }
+
+    req.headers['x-amz-access-token'] = accessToken;
+
     // Call createReport and get the reportId
     const report = await sendCSVasJSON(req, res, next);
 
@@ -24,7 +45,7 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
     // Call addImageToProducts to add images to new products
     // const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
-    const accessToken = req.headers['x-amz-access-token'];
+    // const accessToken = req.headers['x-amz-access-token'];
     // const imageSyncResult = await addImageToProducts(newProducts, accessToken);
     const imageSyncResult = await addImageToNewProducts(accessToken);
 
