@@ -285,7 +285,7 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
     }
     // res.json({ count: results.length, items: results });
     console.log(`Se envio el documento como JSON correctamente con ${results.length} registros`);
-    logger.info('Se envio el documento como JSON correctamente con %d registros', results.length);
+    logger.info(`Se envio el documento como JSON correctamente con ${results.length} registros`);
     return results;
   } catch (error) {
     // console.error(error.message);
