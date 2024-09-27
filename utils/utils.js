@@ -71,7 +71,7 @@ const pollReportStatus = async (reportId, accessToken) => {
   let reportDocument = '';
 
   while (reportStatus !== 'DONE') {
-    if (reportStatus === 'FATAL' || reportStatus === 'CANCEL') {
+    if (reportStatus === 'FATAL' || reportStatus === 'CANCELLED') {
       console.log(reportStatus);
       logger.error('Error fetching report with status' + reportStatus);
       console.log('Error fetching report with status' + reportStatus);
