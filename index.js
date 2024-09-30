@@ -5,21 +5,21 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-//Body parser
 app.use(express.json());
 
-/* const  corsOptions = {
-
-  origin: "*",
-  
+const corsOptions = {
+  origin: [
+    "https://top-value-brands-front.vercel.app",
+    "https://www.thepopro.com",
+    "https://thepopro.com"
+  ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-  
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept"],
-  
-}; */
+  credentials: true,  // Si necesitas permitir cookies entre dominios
+};
 
-//Enable CORS
-app.use(cors());
+//Enable CORS with options
+app.use(cors(corsOptions));
 
 //Cookie Parser
 app.use(cookieParser());
@@ -60,6 +60,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
+
 
   cron.schedule('07 3,13 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
@@ -106,5 +107,6 @@ app.listen(PORT, () => {
     timezone: "America/New_York",
     scheduled: true,
   });
+
 
 });
