@@ -14,12 +14,13 @@ const corsOptions = {
     "https://thepopro.com"
   ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept"],
+  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
   credentials: true,  // Si necesitas permitir cookies entre dominios
 };
 
 //Enable CORS with options
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));  // Responder a preflight requests para todas las rutas
 
 //Cookie Parser
 app.use(cookieParser());
@@ -60,7 +61,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
-
 
   cron.schedule('07 3,13 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
@@ -107,6 +107,5 @@ app.listen(PORT, () => {
     timezone: "America/New_York",
     scheduled: true,
   });
-
 
 });
