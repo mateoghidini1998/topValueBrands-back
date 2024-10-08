@@ -6,12 +6,14 @@ const {
     createShipment,
     getShipments,
     getShipment,
-    deleteShipment
+    deleteShipment,
+    updateShipment
 } = require('../controllers/outgoingshipments.controller')
 
 router.post('/', protect, createShipment)
 router.get('/', protect, getShipments)
 router.get('/:id', protect, getShipment)
 router.delete('/:id', protect, deleteShipment)
+router.put('/:id', protect, updateShipment)
 
 module.exports = router;
