@@ -7,6 +7,15 @@ const app = express();
 
 app.use(express.json());
 
+
+//Load env vars
+dotenv.config({
+  path: './.env',
+});
+
+
+
+
 const corsOptions = {
   origin: [
     "https://top-value-brands-front.vercel.app",
@@ -33,6 +42,7 @@ const users = require('./routes/users.routes');
 const trackedproducts = require('./routes/trackedproducts.routes');
 const suppliers = require('./routes/suppliers.routes');
 const purchaseorders = require('./routes/purchaseorders.routes');
+const outgoingshipment = require('./routes/shipments.routes')
 
 const { swaggerDoc } = require('./routes/swagger.routes');
 const cron = require('node-cron');
@@ -40,7 +50,6 @@ const { addAccessTokenHeader } = require('./middlewares/lwa_token');
 const { syncDBWithAmazon } = require('./controllers/reports.controller');
 const logger = require('./logger/logger');
 const { generateTrackedProductsData } = require('./controllers/trackedproducts.controller');
-const { importJSON } = require('./utils/utils');
 
 //Mount routers
 app.use('/api/v1/auth', auth);
@@ -50,16 +59,13 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/trackedproducts', trackedproducts);
 app.use('/api/v1/suppliers', suppliers);
 app.use('/api/v1/purchaseorders', purchaseorders);
-
-//Load env vars
-dotenv.config({
-  path: './.env',
-});
+app.use('/api/v1/shipments', outgoingshipment)
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log('DATABASE_URL_LOCAL:', process.env.DATABASE_URL_LOCAL);
   swaggerDoc(app, PORT);
 
   cron.schedule('07 3,13 * * *', async () => {
