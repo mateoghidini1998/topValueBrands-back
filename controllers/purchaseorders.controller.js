@@ -303,14 +303,37 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   return totalPrice;
 };
 
-exports.rejectPurchaseOrder = asyncHandler(async (req, res, next) => {
+// Enumeración de estados de la orden de compra
+const PURCHASE_ORDER_STATUSES = {
+  REJECTED: 1,
+  PENDING: 2,
+  APPROVED: 3,
+  CANCELLED: 4,
+  IN_TRANSIT: 5,
+  ARRIVED: 6,
+  CLOSED: 7,
+  WAITING_FOR_SUPPLIER_APPROVAL: 8,
+};
 
-  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
+// Controlador genérico para cambiar el estado de la orden de compra
+exports.updatePurchaseOrderStatus = asyncHandler(async (req, res, next) => {
+  const { status } = req.body; // Obtener el estado del cuerpo de la solicitud
+  const purchaseOrderId = req.params.id;
+
+  // Verificar si el estado proporcionado es válido
+  if (!Object.values(PURCHASE_ORDER_STATUSES).includes(status)) {
+    return res.status(400).json({ message: 'Invalid status provided' });
+  }
+
+  // Buscar la orden de compra por ID
+  const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId);
   if (!purchaseOrder) {
+    console.log('Purchase Order not found');
     return res.status(404).json({ message: 'Purchase Order not found' });
   }
 
-  await purchaseOrder.update({ purchase_order_status_id: 1 });
+  // Actualizar el estado de la orden
+  await purchaseOrder.update({ purchase_order_status_id: status });
 
   return res.status(200).json({
     success: true,
@@ -318,33 +341,6 @@ exports.rejectPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.approvePurchaseOrder = asyncHandler(async (req, res, next) => {
-  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
-  if (!purchaseOrder) {
-    return res.status(404).json({ message: 'Purchase Order not found' });
-  }
-
-  await purchaseOrder.update({ purchase_order_status_id: 3 });
-
-  return res.status(200).json({
-    success: true,
-    data: purchaseOrder
-  });
-});
-
-exports.restartPurchaseOrder = asyncHandler(async (req, res, next) => {
-  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
-  if (!purchaseOrder) {
-    return res.status(404).json({ message: 'Purchase Order not found' });
-  }
-
-  await purchaseOrder.update({ purchase_order_status_id: 2 });
-
-  return res.status(200).json({
-    success: true,
-    data: purchaseOrder
-  });
-});
 
 const getPurchaseOrderProducts = async (purchaseOrderId) => {
   const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
