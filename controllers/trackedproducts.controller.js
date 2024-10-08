@@ -436,6 +436,7 @@ const saveOrders = async (req, res, next, products) => {
   const jsonData = await generateOrderReport(req, res, next);
 
   if (!jsonData) {
+    logger.error('Generating order report failed');
     throw new Error('Failed to retrieve orders');
   }
 
@@ -455,11 +456,6 @@ const saveOrders = async (req, res, next, products) => {
     }
     return acc;
   }, {});
-
-  // const asinToProductId = products.reduce((acc, product) => {
-  //   acc[product.ASIN] = product.id;
-  //   return acc;
-  // }, {});
 
   const asinToProductId = products.reduce((acc, product) => {
     if (!acc[product.ASIN]) {
