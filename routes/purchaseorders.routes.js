@@ -8,7 +8,8 @@ const {
   getPurchaseOrders,
   downloadPurchaseOrder,
   deletePurchaseOrder,
-  updatePurchaseOrderStatus
+  updatePurchaseOrderStatus,
+  getPurchaseOrderSummaryByID: getPurchaseOrderSummary,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -25,5 +26,7 @@ router.get('/download/:id', downloadPurchaseOrder);
 
 // delete purchase order
 router.delete('/delete/:id', deletePurchaseOrder);
+
+router.get('/summary/:id', protect, getPurchaseOrderSummary);
 
 module.exports = router;

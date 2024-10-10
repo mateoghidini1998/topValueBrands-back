@@ -4,6 +4,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { where } = require('sequelize');
+const { getTrackedProductsFromAnOrder } = require('./trackedproducts.controller');
 
 exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { order_number, supplier_id, purchase_order_status_id, products, notes } = req.body;
@@ -184,6 +185,25 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
+
+  const purchaseOrderId = req.params.id;
+
+  const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId, {
+    include: [
+      {
+        model: PurchaseOrderProduct,
+        as: 'purchaseOrderProducts',
+      },
+    ],
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrder,
+  });
+});
+
 exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
   const purchaseOrders = await PurchaseOrder.findAll({
     where: { is_active: true },
@@ -259,29 +279,160 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
     })
   );
 
+  await Promise.all(
+    purchaseOrders.map(async (purchaseOrder) => {
+      // 1. get the purchaseorderproducts by purchase_order_id
+      const products = await PurchaseOrderProduct.findAll({ where: { purchase_order_id: purchaseOrder.id } });
+      if (!products) {
+        return res.status(404).json({ message: 'Products not found' });
+      }
+
+      // 2. get the trackedproducts by product_id
+      const trackedProducts = await TrackedProduct.findAll({ where: { product_id: products.map(product => product.product_id) } });
+      if (!trackedProducts) {
+        return res.status(404).json({ message: 'Tracked products not found' });
+      }
+
+      // 3. transform the trackedproducts to include product_name, ASIN, seller_sku, supplier_name, product_image
+
+      const trackedProductInTheOrder = await Promise.all(trackedProducts.map(async (trackedProduct) => {
+
+        const product = await Product.findOne({ where: { id: trackedProduct.product_id } });
+        if (!product) {
+          return res.status(404).json({ message: 'Product not found' });
+        }
+
+        const supplier = await Supplier.findOne({ where: { id: product.supplier_id } });
+        if (!supplier) {
+          return res.status(404).json({ message: 'Supplier not found' });
+        }
+
+        return {
+          ...trackedProduct.toJSON(),
+          product_name: product.product_name,
+          ASIN: product.ASIN,
+          seller_sku: product.seller_sku,
+          supplier_name: supplier.supplier_name,
+          product_image: product.product_image,
+          product_cost: product.product_cost
+        };
+
+      }));
+
+      purchaseOrder.setDataValue('trackedProducts', trackedProductInTheOrder);
+    })
+
+
+  )
+
   return res.status(200).json({
     success: true,
     data: purchaseOrders,
   });
 });
 
-
-exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
+exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
 
   const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId, {
+    where: { is_active: true },
     include: [
       {
         model: PurchaseOrderProduct,
         as: 'purchaseOrderProducts',
       },
+      {
+        model: PurchaseOrderStatus,
+        as: 'purchaseOrderStatus', // Incluido el modelo con alias
+        attributes: ['description'], // Solo trae el campo 'description'
+      },
     ],
   });
+
+  // 1. get the purchaseorderproducts by purchase_order_id
+  const products = await PurchaseOrderProduct.findAll({ where: { purchase_order_id: req.params.id } });
+  if (!products) {
+    return res.status(404).json({ message: 'Products not found' });
+  }
+
+  // 2. get the trackedproducts by product_id
+  const trackedProducts = await TrackedProduct.findAll({ where: { product_id: products.map(product => product.product_id) } });
+  if (!trackedProducts) {
+    return res.status(404).json({ message: 'Tracked products not found' });
+  }
+
+  // 3. transform the trackedproducts to include product_name, ASIN, seller_sku, supplier_name, product_image
+
+  const productsOfTheOrder = await Promise.all(trackedProducts.map(async (trackedProduct) => {
+
+    const product = await Product.findOne({ where: { id: trackedProduct.product_id } });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const supplier = await Supplier.findOne({ where: { id: product.supplier_id } });
+    if (!supplier) {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
+
+    return {
+      ...trackedProduct.toJSON(),
+      product_name: product.product_name,
+      ASIN: product.ASIN,
+      seller_sku: product.seller_sku,
+      supplier_name: supplier.supplier_name,
+      product_image: product.product_image,
+      product_cost: product.product_cost
+    };
+
+  }));
+
+  // 4. return the transformed trackedproducts
+  const trackedProductsOfTheOrder = productsOfTheOrder.map((product) => {
+    const { product_name, ASIN, seller_sku, supplier_name, product_image, product_cost, ...trackedProducts } = product;
+    return {
+      ...trackedProducts,
+      product_name,
+      ASIN,
+      seller_sku,
+      supplier_name,
+      product_image,
+      product_cost
+    };
+  })
+
+
+  const roiArr = [];
+
+  // Calcular el ROI de cada producto rastreado
+  trackedProductsOfTheOrder.forEach((trackedProduct) => {
+    const product = productsOfTheOrder.find(
+      (product) => product.id === trackedProduct.product_id
+    );
+
+    if (product && product.product_cost !== 0) {
+      const profit = (trackedProduct.profit / product.product_cost) * 100;
+      roiArr.push(profit);
+    }
+  });
+
+  // Calcular el promedio de ROI y establecer el valor
+  const totalRoi = roiArr.reduce((a, b) => a + b, 0);
+  purchaseOrder.setDataValue('average_roi', totalRoi / roiArr.length);
+
+
   return res.status(200).json({
     success: true,
-    data: purchaseOrder,
+    data: {
+      purchaseOrder,
+      trackedProductsOfTheOrder
+    }
   });
-});
+
+})
+
+
+
 
 const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   let totalPrice = 0;
@@ -307,7 +458,7 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
 const PURCHASE_ORDER_STATUSES = {
   REJECTED: 1,
   PENDING: 2,
-  APPROVED: 3,
+  GOOD_TO_GO: 3,
   CANCELLED: 4,
   IN_TRANSIT: 5,
   ARRIVED: 6,
