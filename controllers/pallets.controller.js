@@ -1,41 +1,72 @@
-const { Pallet, PurchaseOrder, WarehouseLocation } = require("../models");
+const { Pallet, PurchaseOrder, WarehouseLocation, sequelize } = require("../models");
+const { createPalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
 
 //@route    POST api/v1/pallets
 //@desc     Create a pallet
 //@access   Private
+
 exports.createPallet = asyncHandler(async (req, res) => {
-  const { pallet_number, warehouse_location_id, purchase_order_id } = req.body;
+  const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
-  const location = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
-  const purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
-  
-  let pallet = await Pallet.findOne({ where: { pallet_number } });
+  const transaction = await sequelize.transaction();
 
-  if (location.current_capacity <= 0) {
-    return res.status(400).json({
-      msg: `The location with id ${warehouse_location_id} has no space available`,
-    });
+  try {
+    const location = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
+    const purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
+
+    let pallet = await Pallet.findOne({ where: { pallet_number } });
+
+    if (!location) {
+      return res.status(404).json({ msg: "Warehouse location not found" });
+    }
+
+    if (location.current_capacity <= 0) {
+      return res.status(400).json({
+        msg: `The location with id ${warehouse_location_id} has no space available`,
+      });
+    }
+
+    if (!purchase_order) {
+      return res.status(404).json({ msg: "Purchase order not found" });
+    }
+
+    if (pallet) {
+      return res.status(400).json({ msg: "Pallet Number already exists" });
+    }
+
+    pallet = await Pallet.create(
+      { pallet_number, warehouse_location_id, purchase_order_id },
+      { transaction }
+    );
+
+    location.current_capacity -= 1;
+    await location.save({ transaction });
+
+    if (products && products.length > 0) {
+      for (const product of products) {
+        const { purchaseorderproduct_id, quantity } = product;
+
+        await createPalletProduct({
+          purchaseorderproduct_id,
+          pallet_id: pallet.id,
+          quantity,
+          transaction, 
+        });
+      }
+    } else {
+      return res.status(400).json({ msg: "No products provided to associate with the pallet." });
+    }
+
+    await transaction.commit();
+
+    return res.status(201).json({ pallet });
+
+  } catch (error) {
+    
+    await transaction.rollback();
+    return res.status(500).json({ msg: "Error creating pallet and products", error: error.message });
   }
-
-  if (!location) {
-    return res.status(404).json({ msg: "Warehouse location not found" });
-  }
-
-  if (!purchase_order) {
-    return res.status(404).json({ msg: "Purchase order not found" });
-  }
-
-  if (pallet) {
-    return res.status(400).json({ msg: "Pallet Number already exists" });
-  }
-
-  pallet = await Pallet.create({ pallet_number, warehouse_location_id, purchase_order_id });
-
-  location.current_capacity -= 1;
-  await location.save();
-
-  return res.status(201).json({ pallet });
 });
 
 
