@@ -12,7 +12,7 @@ module.exports = {
       purchase_order_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'PurchaseOrders', // Nombre de la tabla a la que referencia
+          model: 'PurchaseOrders',
           key: 'id'
         },
         allowNull: false,
@@ -21,7 +21,7 @@ module.exports = {
       product_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'Products', // Nombre de la tabla a la que referencia
+          model: 'Products', 
           key: 'id'
         },
         allowNull: false,

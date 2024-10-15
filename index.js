@@ -20,7 +20,8 @@ const corsOptions = {
   origin: [
     "https://top-value-brands-front.vercel.app",
     "https://www.thepopro.com",
-    "https://thepopro.com"
+    "https://thepopro.com",
+    "http://localhost:3000"
   ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
@@ -43,6 +44,7 @@ const trackedproducts = require('./routes/trackedproducts.routes');
 const suppliers = require('./routes/suppliers.routes');
 const purchaseorders = require('./routes/purchaseorders.routes');
 const outgoingshipment = require('./routes/shipments.routes')
+const pallets = require('./routes/pallets.routes')
 
 const { swaggerDoc } = require('./routes/swagger.routes');
 const cron = require('node-cron');
@@ -60,6 +62,7 @@ app.use('/api/v1/trackedproducts', trackedproducts);
 app.use('/api/v1/suppliers', suppliers);
 app.use('/api/v1/purchaseorders', purchaseorders);
 app.use('/api/v1/shipments', outgoingshipment)
+app.use('/api/v1/pallets', pallets)
 
 const PORT = process.env.PORT || 5000;
 

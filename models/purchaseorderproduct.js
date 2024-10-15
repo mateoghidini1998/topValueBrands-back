@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // Asociaciones ya existentes
       PurchaseOrderProduct.belongsTo(models.PurchaseOrder, {
         foreignKey: 'purchase_order_id',
       });
@@ -19,12 +18,19 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'reason_id',
       });
 
-      // Nueva asociación
       PurchaseOrderProduct.belongsToMany(models.OutgoingShipment, {
         through: models.OutgoingShipmentProduct,
         foreignKey: 'purchase_order_product_id',
         otherKey: 'outgoing_shipment_id',
       });
+      
+      PurchaseOrderProduct.belongsToMany(models.Pallet, {
+        through: models.PalletProduct,
+        foreignKey: 'purchaseorderproduct_id',
+        otherKey: 'pallet_id',
+      });
+      
+      
     }
 
   }
@@ -37,8 +43,8 @@ module.exports = (sequelize, DataTypes) => {
       quantity_purchased: DataTypes.INTEGER,
       quantity_received: DataTypes.INTEGER,
       quantity_missing: DataTypes.INTEGER,
-      reason_id: DataTypes.INTEGER,
       quantity_available: DataTypes.INTEGER,
+      reason_id: DataTypes.INTEGER,
     },
     {
       sequelize,

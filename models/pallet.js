@@ -19,6 +19,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'purchase_order_id',
         as: 'purchaseOrder'
       })
+      Pallet.belongsToMany(models.PurchaseOrderProduct, {
+        through: models.PalletProduct,
+        foreignKey: 'pallet_id',
+        otherKey: 'purchaseorderproduct_id',
+      });
+      
+      
     }
   }
   Pallet.init({
