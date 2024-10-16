@@ -239,6 +239,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
         purchaseOrder.purchaseOrderProducts.map(async (purchaseOrderProduct) => {
           const purchaseProduct = await Product.findByPk(purchaseOrderProduct.product_id);
           purchaseOrderProduct.setDataValue('product_name', purchaseProduct.product_name);
+          purchaseOrderProduct.setDataValue('quantity_missing', purchaseOrderProduct.quantity_purchased - (purchaseOrderProduct.quantity_received || 0));
         })
       );
     })
@@ -431,6 +432,36 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
 
 })
 
+exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
+  const purchaseOrderProductId = req.params.purchaseOrderProductId;
+
+  const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(purchaseOrderProductId);
+  if (!purchaseOrderProduct) {
+    return res.status(404).json({ message: 'Purchase order product not found' });
+  }
+
+  const { quantityReceived } = req.body;
+
+  if (quantityReceived < 0) {
+    return res.status(400).json({ message: 'Invalid quantity received' });
+  }
+
+  const response = await purchaseOrderProduct.update({ quantity_received: quantityReceived });
+
+  if (!response) {
+    return res.status(500).json({ message: 'Failed to update quantity received' });
+  }
+  else {
+    const quantityMissing = Number(purchaseOrderProduct.quantity_purchased) - Number(purchaseOrderProduct.quantity_received);
+    purchaseOrderProduct.update({ quantity_missing: quantityMissing })
+    return res.status(200).json({
+      success: true,
+      data: purchaseOrderProduct
+    })
+
+  }
+
+})
 
 
 
