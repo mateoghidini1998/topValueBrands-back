@@ -185,6 +185,51 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
+
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: 'Purchase Order not found' });
+  }
+
+  const { purchaseOrderProductsUpdates } = req.body;
+
+  const purchaseorderproducts = await getPurchaseOrderProducts(purchaseOrder.id);
+
+  // Iterar sobre los productos actualizados
+  for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
+    const purchaseOrderProduct = purchaseorderproducts.find(
+      (p) => p.id === purchaseOrderProductUpdate.purchaseOrderProductId
+    );
+
+    if (purchaseOrderProduct) {
+      // Actualizar los valores
+      purchaseOrderProduct.unit_price = parseFloat(purchaseOrderProductUpdate.unit_price);
+      purchaseOrderProduct.quantity_purchased = parseInt(purchaseOrderProductUpdate.quantityPurchased);
+      purchaseOrderProduct.total_amount = purchaseOrderProduct.unit_price * purchaseOrderProduct.quantity_purchased;
+
+      // Guardar los cambios en la base de datos
+      const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
+
+      if (updatedPurchaseOrderProduct) {
+        //update total_price of purchase order
+        const purchaseOrderProducts = await getPurchaseOrderProducts(purchaseOrder.id);
+        const totalPrice = purchaseOrderProducts.reduce((acc, product) => {
+          return acc + product.unit_price * product.quantity_purchased;
+        }, 0);
+        await purchaseOrder.update({ total_price: totalPrice });
+      }
+
+    } else {
+      return res.status(404).json({ message: `Purchase Order Product not found: ${purchaseOrderProductUpdate.purchaseOrderProductId}` });
+    }
+  }
+
+  // Enviar respuesta exitosa
+  res.status(200).json({ message: 'Purchase Order Products updated successfully' });
+});
+
+
 exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
 
   const purchaseOrderId = req.params.id;

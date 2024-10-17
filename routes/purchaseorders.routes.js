@@ -11,6 +11,7 @@ const {
   updatePurchaseOrderStatus,
   getPurchaseOrderSummaryByID: getPurchaseOrderSummary,
   addQuantityReceived,
+  updatePurchaseOrderProducts,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -31,5 +32,7 @@ router.delete('/delete/:id', deletePurchaseOrder);
 router.get('/summary/:id', protect, getPurchaseOrderSummary);
 
 router.patch('/received/:purchaseOrderProductId', addQuantityReceived);
+
+router.patch('/:id/products', updatePurchaseOrderProducts);
 
 module.exports = router;
