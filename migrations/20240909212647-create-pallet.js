@@ -19,7 +19,8 @@ module.exports = {
         references: {
           model: 'warehouselocations',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
       },
       purchase_order_id: {
         type: Sequelize.INTEGER,
@@ -27,7 +28,8 @@ module.exports = {
         references: {
           model: 'purchaseorders',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         through: models.PalletProduct,
         foreignKey: 'pallet_id',
         otherKey: 'purchaseorderproduct_id',
+        as: 'purchaseorderproducts'
       });
       
       

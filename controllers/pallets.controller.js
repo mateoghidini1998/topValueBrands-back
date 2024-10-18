@@ -1,5 +1,5 @@
-const { Pallet, PurchaseOrder, WarehouseLocation, sequelize } = require("../models");
-const { createPalletProduct } = require('./palletproducts.controller')
+const { Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
+const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
 
 //@route    POST api/v1/pallets
@@ -69,33 +69,61 @@ exports.createPallet = asyncHandler(async (req, res) => {
   }
 });
 
-
 //@route    GET api/v1/pallets
 //@desc     Get pallets
 //@access   Private
 exports.getPallets = asyncHandler(async (req, res) => {
-    const pallets = await Pallet.findAll()
+  const pallets = await Pallet.findAll({
+    include: [
+      {
+        model: PurchaseOrderProduct,
+        as: 'purchaseorderproducts',
+        through: {
+          model: PalletProduct,
+          attributes: ['quantity', 'available_quantity'],
+        },
+        attributes: ['id'],
+      },
+    ],
+  });
 
-    return res.status(200).json({ 
-        count: pallets.length,
-        pallets 
-    })
-})
+  return res.status(200).json({
+    count: pallets.length,
+    pallets,
+  });
+});
+
+
+
 
 //@route    GET api/v1/pallets/:id
 //@desc     Get pallet by id
 //@access   Private
 exports.getPallet = asyncHandler(async (req, res) => {
-    const pallet = await Pallet.findOne({ where: {id: req.params.id} })
+  const pallet = await Pallet.findOne({
+      where: { id: req.params.id },
+      include: [
+          {
+              model: PalletProduct,
+              include: [
+                  {
+                      model: PurchaseOrderProduct,
+                      attributes: ['id', 'product_name']
+                  }
+              ],
+              attributes: ['id', 'quantity', 'available_quantity']
+          }
+      ]
+  });
 
-    if(!pallet) {
-        return res.status(404).json({msg: "Pallet not found"})
-    }
+  if (!pallet) {
+      return res.status(404).json({ msg: "Pallet not found" });
+  }
 
-    return res.status(200).json({ 
-        pallet 
-    })
-})
+  return res.status(200).json({ 
+      pallet 
+  });
+});
 
 //@route    DELETE api/v1/pallets/:id
 //@desc     Delete pallet by id
@@ -126,7 +154,7 @@ exports.deletePallet = asyncHandler(async (req, res) => {
 //@desc     update pallet by id
 //@access   Private
 exports.updatePallet = asyncHandler(async (req, res) => {
-  const { pallet_number, warehouse_location_id, purchase_order_id } = req.body;
+  const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
   let pallet = await Pallet.findOne({ where: { id: req.params.id } });
   let newLocation = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
@@ -158,14 +186,27 @@ exports.updatePallet = asyncHandler(async (req, res) => {
     purchase_order_id: purchase_order_id || pallet.purchase_order_id,
   });
 
-  newLocation.current_capacity -= 1;
-  await newLocation.save()
-  oldLocation.current_capacity += 1;
-  await oldLocation.save()
+  if (pallet.warehouse_location_id !== warehouse_location_id) {
+    newLocation.current_capacity -= 1;
+    await newLocation.save();
 
-  console.log("OLD LOCATION: ", oldLocation, " CAPACITY: ", oldLocation.current_capacity)
-  console.log("NEW LOCATION: ", newLocation, " CAPACITY: ", newLocation.current_capacity)
+    oldLocation.current_capacity += 1;
+    await oldLocation.save();
+  }
+
+  if (products && products.length > 0) {
+    for (const product of products) {
+      const { purchaseorderproduct_id, quantity } = product;
+
+      await updatePalletProduct({
+        pallet_id: pallet.id,
+        purchaseorderproduct_id,
+        quantity,
+      });
+    }
+  }
 
   return res.status(200).json({ msg: "Pallet updated successfully", pallet });
 });
+
 
