@@ -1,35 +1,40 @@
 'use strict';
+
+const purchaseorderproduct = require('../models/purchaseorderproduct');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Pallets', {
+    await queryInterface.createTable('PalletProducts', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      pallet_number: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      warehouse_location_id: {
+      purchaseorderproduct_id: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         references: {
-          model: 'warehouselocations',
+          model: 'PurchaseOrderProducts',
           key: 'id'
         },
+        allowNull: false,
         onDelete: 'CASCADE'
       },
-      purchase_order_id: {
+      pallet_id: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         references: {
-          model: 'purchaseorders',
+          model: 'Pallets',
           key: 'id'
         },
+        allowNull: false,
         onDelete: 'CASCADE'
+      },
+      quantity: {
+        type: Sequelize.INTEGER
+      },
+      available_quantity: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,
@@ -40,14 +45,8 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-
-    await queryInterface.addIndex('pallets', ['warehouse_location_id']);
-    await queryInterface.addIndex('pallets', ['purchase_order_id']);
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeIndex('pallets', ['warehouse_location_id']);
-    await queryInterface.removeIndex('pallets', ['purchase_order_id']);
-
-    await queryInterface.dropTable('Pallets');
+    await queryInterface.dropTable('PalletProducts');
   }
 };
