@@ -38,6 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       quantity_received: DataTypes.INTEGER,
       quantity_missing: DataTypes.INTEGER,
       reason_id: DataTypes.INTEGER,
+      notes: DataTypes.STRING,
     },
     {
       sequelize,

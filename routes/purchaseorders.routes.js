@@ -12,6 +12,7 @@ const {
   getPurchaseOrderSummaryByID: getPurchaseOrderSummary,
   addQuantityReceived,
   updatePurchaseOrderProducts,
+  addNotesToPurchaseOrderProduct,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -34,5 +35,8 @@ router.get('/summary/:id', protect, getPurchaseOrderSummary);
 router.patch('/received/:purchaseOrderProductId', addQuantityReceived);
 
 router.patch('/:id/products', updatePurchaseOrderProducts);
+
+// add notes to purchase order product
+router.patch('/notes/:purchaseOrderProductId', addNotesToPurchaseOrderProduct);
 
 module.exports = router;
