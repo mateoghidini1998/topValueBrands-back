@@ -388,8 +388,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       },
       {
         model: PurchaseOrderStatus,
-        as: 'purchaseOrderStatus', // Incluido el modelo con alias
-        attributes: ['description'], // Solo trae el campo 'description'
+        as: 'purchaseOrderStatus',
+        attributes: ['description'],
       },
     ],
   });
@@ -546,7 +546,6 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   return totalPrice;
 };
 
-// Enumeración de estados de la orden de compra
 const PURCHASE_ORDER_STATUSES = {
   REJECTED: 1,
   PENDING: 2,
@@ -558,17 +557,14 @@ const PURCHASE_ORDER_STATUSES = {
   WAITING_FOR_SUPPLIER_APPROVAL: 8,
 };
 
-// Controlador genérico para cambiar el estado de la orden de compra
 exports.updatePurchaseOrderStatus = asyncHandler(async (req, res, next) => {
-  const { status } = req.body; // Obtener el estado del cuerpo de la solicitud
+  const { status } = req.body;
   const purchaseOrderId = req.params.id;
 
-  // Verificar si el estado proporcionado es válido
   if (!Object.values(PURCHASE_ORDER_STATUSES).includes(status)) {
     return res.status(400).json({ message: 'Invalid status provided' });
   }
 
-  // Buscar la orden de compra por ID
   const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId);
   if (!purchaseOrder) {
     console.log('Purchase Order not found');
