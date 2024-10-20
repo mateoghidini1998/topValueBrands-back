@@ -2,7 +2,7 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     /**
      * Add altering commands here.
      *
@@ -18,11 +18,11 @@ module.exports = {
     await queryInterface.sequelize.query(`
       UPDATE PurchaseOrders 
       SET updatedStatusAt = NOW() 
-      WHERE updatedStatusAt IS NULL OR updatedStatusAt = '0000-00-00 00:00:00';
+      WHERE updatedStatusAt IS NULL;
     `);
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     /**
      * Add reverting commands here.
      *
@@ -30,6 +30,6 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
 
-    await queryInterface.removeColumn('PurchaseOrderProducts', 'updatedStatusAt');
+    await queryInterface.removeColumn('PurchaseOrders', 'updatedStatusAt');
   }
 };
