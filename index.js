@@ -71,7 +71,7 @@ app.listen(PORT, () => {
   console.log('DATABASE_URL_LOCAL:', process.env.DATABASE_URL_LOCAL);
   swaggerDoc(app, PORT);
 
-  /*
+
   cron.schedule('30 3,15 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
 
@@ -117,6 +117,5 @@ app.listen(PORT, () => {
     timezone: "America/New_York",
     scheduled: true,
   });
-  */
 
 });
