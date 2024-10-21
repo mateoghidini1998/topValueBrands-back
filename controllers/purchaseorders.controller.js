@@ -90,112 +90,19 @@ exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
 exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
 
-  const { supplier_id, products, order_number, notes } = req.body;
+  const { notes } = req.body;
 
   if (!purchaseOrder) {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
-  const purchaseorderproducts = await getPurchaseOrderProducts(
-    purchaseOrder.id
-  );
-
-  //If there are no products in the purchase order, supplier id can be updated
-  // if (purchaseorderproducts.length === 0) {
-  //   await purchaseOrder.update({ supplier_id });
-  //   return res.status(200).json({
-  //     success: true,
-  //     data: purchaseOrder,
-  //   });
-  // }
-
-  // const existingProductIds = purchaseorderproducts.map(
-  //   (purchaseorderproduct) => purchaseorderproduct.product_id
-  // );
-
-  // const newProductIds = products.map((product) => product.product_id);
-
-  // const productsToAdd = products.filter(
-  //   (p) => !existingProductIds.includes(p.product_id)
-  // );
-
-  // const productsToRemove = purchaseorderproducts.filter(
-  //   (p) => !newProductIds.includes(p.product_id)
-  // );
-
-  //  Update the purchaseorderproducts quantity and unit_price
-  for (const product of products) {
-    const { product_id, unit_price, quantity } = product;
-    const totalAmount = unit_price * quantity;
-    await PurchaseOrderProduct.update(
-      { unit_price, quantity_purchased: quantity, total_amount: totalAmount },
-      {
-        where: {
-          purchase_order_id: purchaseOrder.id,
-          product_id,
-        },
-      }
-    );
-  }
-
-  const totalPrice = products.reduce((acc, product) => {
-    return acc + product.unit_price * product.quantity;
-  }, 0);
-
-  // let totalPrice = purchaseOrder.total_price;
-  // for (const product of productsToAdd) {
-  //   const { product_id, unit_price, quantity } = product;
-  //   const existingProduct = await Product.findByPk(product_id);
-
-  //   if (!existingProduct) {
-  //     return res
-  //       .status(400)
-  //       .json({ message: `Product ${product_id} not found` });
-  //   }
-
-  //   // Validate that the product belongs to the same supplier
-  //   if (existingProduct.supplier_id !== purchaseOrder.supplier_id) {
-  //     return res.status(400).json({
-  //       message: `Product ${product_id} does not belong to supplier ${purchaseOrder.supplier_id}`,
-  //     });
-  //   }
-  //   const newPurchaseOrderProduct = await PurchaseOrderProduct.create({
-  //     purchase_order_id: purchaseOrder.id,
-  //     product_id,
-  //     unit_price,
-  //     quantity,
-  //     total_amount: unit_price * quantity,
-  //   });
-
-  //   totalPrice += newPurchaseOrderProduct.total_amount;
-  // }
-
-  // Remove old products
-  // for (const product of productsToRemove) {
-  //   totalPrice -= product.total_amount;
-  //   await product.destroy();
-  // }
-
-  // if the previous purchase order status was rejected, change it to pending
-  if (purchaseOrder.purchase_order_status_id === 1) {
-    await purchaseOrder.update({ purchase_order_status_id: 2 });
-  }
-
-  // Update the total price of the purchase order
-  await purchaseOrder.update({ total_price: totalPrice, notes: notes });
-
-  const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: "purchaseOrderProducts",
-      },
-    ],
-  });
-
+  const updatedPurchaseOrder = await purchaseOrder.update({ notes: notes });
   return res.status(200).json({
     success: true,
-    data: updatedPurchaseOrder,
+    data: {
+      notes: updatedPurchaseOrder.notes,
+      message: 'Notes updated successfully'
+    },
   });
 });
 
