@@ -328,7 +328,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
             purchaseOrderProduct.setDataValue(
               "quantity_missing",
               purchaseOrderProduct.quantity_purchased -
-                (purchaseOrderProduct.quantity_received || 0)
+              (purchaseOrderProduct.quantity_received || 0)
             );
           }
         )
@@ -611,11 +611,10 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
 
   for (const product of products) {
     const { product_id, unit_price, quantity } = product;
-
     const purchaseOrderProduct = await PurchaseOrderProduct.create({
       purchase_order_id: purchaseOrderId,
       product_id,
-      unit_price,
+      unit_price: unit_price,
       quantity_purchased: quantity,
       total_amount: unit_price * quantity,
     });
@@ -734,7 +733,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
       return {
         ASIN: productData.ASIN,
         product_id: product.product_id,
-        unit_price: product.unit_price,
+        unit_price: parseFloat(product.unit_price),
         quantity_purchased: product.quantity,
         total_amount: product.total_amount,
       };
