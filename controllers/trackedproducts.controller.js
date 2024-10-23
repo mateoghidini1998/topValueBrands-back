@@ -62,7 +62,12 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'product_cost',
       'product_image',
       'supplier_id',
-      'in_seller_account'
+      'in_seller_account',
+      'FBA_available_inventory',
+      'reserved_quantity',
+      'Inbound_to_FBA',
+      'supplier_item_number',
+
     ],
     include: [
       {
@@ -167,7 +172,8 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
       seller_sku: product.seller_sku,
       supplier_name: supplier.supplier_name,
       product_image: product.product_image,
-      product_cost: product.product_cost
+      product_cost: product.product_cost,
+      in_seller_account: product.in_seller_account
     };
 
   }));
