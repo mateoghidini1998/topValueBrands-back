@@ -398,6 +398,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         supplier_name: supplier.supplier_name,
         product_image: product.product_image,
         product_cost: product.product_cost,
+        in_seller_account: product.in_seller_account,
       };
     })
   );
@@ -454,40 +455,90 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
 exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
 
+  // Encontrar el producto de la orden de compra por ID
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
     purchaseOrderProductId
   );
+
+  // Verificar si el producto existe
   if (!purchaseOrderProduct) {
     return res
       .status(404)
       .json({ message: "Purchase order product not found" });
   }
 
+  // Encontrar la orden de compra asociada
+  const purchaseOrder = await PurchaseOrder.findByPk(
+    purchaseOrderProduct.purchase_order_id
+  );
+
+  // Verificar si la orden de compra existe
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: "Purchase order not found" });
+  }
+
   const { quantityReceived } = req.body;
 
-  if (quantityReceived < 0) {
+  // Validar que `quantityReceived` sea un número válido
+  if (quantityReceived == null || quantityReceived < 0) {
     return res.status(400).json({ message: "Invalid quantity received" });
   }
 
-  const response = await purchaseOrderProduct.update({
+  // Actualizar la cantidad recibida del producto
+  const updatedProduct = await purchaseOrderProduct.update({
     quantity_received: quantityReceived,
   });
 
-  if (!response) {
+  // Verificar si la actualización fue exitosa
+  if (!updatedProduct) {
     return res
       .status(500)
       .json({ message: "Failed to update quantity received" });
-  } else {
-    const quantityMissing =
-      Number(purchaseOrderProduct.quantity_purchased) -
-      Number(purchaseOrderProduct.quantity_received);
-    purchaseOrderProduct.update({ quantity_missing: quantityMissing });
-    return res.status(200).json({
-      success: true,
-      data: purchaseOrderProduct,
-    });
   }
+
+  // Calcular la cantidad faltante y actualizar
+  const quantityMissing =
+    Number(purchaseOrderProduct.quantity_purchased) -
+    Number(purchaseOrderProduct.quantity_received);
+
+  await purchaseOrderProduct.update({ quantity_missing: quantityMissing });
+
+  // Obtener todos los productos de la orden de compra
+  const purchaseOrderProductList = await PurchaseOrderProduct.findAll({
+    where: { purchase_order_id: purchaseOrderProduct.purchase_order_id },
+  });
+
+  // Verificar si la lista de productos existe
+  if (!purchaseOrderProductList) {
+    return res
+      .status(404)
+      .json({ message: "Purchase order product list not found" });
+  }
+
+  // Verificar si todos los productos han sido recibidos (cantidad faltante es 0)
+  const allProductsReceived = purchaseOrderProductList.every(
+    (product) => product.quantity_missing === 0
+  );
+
+  // Si todos los productos han sido recibidos, actualizar el estado de la orden de compra a "Closed"
+  if (allProductsReceived) {
+    await PurchaseOrder.update(
+      { purchase_order_status_id: PURCHASE_ORDER_STATUSES.CLOSED },
+      { where: { id: purchaseOrderProduct.purchase_order_id } }
+    );
+  }
+
+  // Responder con el estado actualizado del producto, la lista y el estado de la orden
+  return res.status(200).json({
+    success: true,
+    data: {
+      quantityMissing: updatedProduct.quantity_missing,
+      allProductsReceived,
+      purchaseOrderStatus: purchaseOrder.purchase_order_status_id,
+    },
+  });
 });
+
 
 exports.addNotesToPurchaseOrderProduct = asyncHandler(
   async (req, res, next) => {
