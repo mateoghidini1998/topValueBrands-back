@@ -12,7 +12,6 @@ const corsOptions = {
     "https://top-value-brands-front.vercel.app",
     "https://www.thepopro.com",
     "https://thepopro.com",
-    "http://localhost:3000",
   ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
@@ -63,7 +62,6 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   swaggerDoc(app, PORT);
 
-  /*
   cron.schedule('07 3,13 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
 
@@ -109,6 +107,5 @@ app.listen(PORT, () => {
     timezone: "America/New_York",
     scheduled: true,
   });
-  */
 
 });
