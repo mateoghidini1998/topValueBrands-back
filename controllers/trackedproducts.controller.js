@@ -173,7 +173,11 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
       supplier_name: supplier.supplier_name,
       product_image: product.product_image,
       product_cost: product.product_cost,
-      in_seller_account: product.in_seller_account
+      in_seller_account: product.in_seller_account,
+      FBA_available_inventory: product.FBA_available_inventory,
+      reserved_quantity: product.reserved_quantity,
+      Inbound_to_FBA: product.Inbound_to_FBA,
+      supplier_item_number: product.supplier_item_number
     };
 
   }));
