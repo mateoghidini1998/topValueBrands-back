@@ -564,6 +564,29 @@ exports.addNotesToPurchaseOrderProduct = asyncHandler(
   }
 );
 
+exports.addReasonToPOProduct = asyncHandler(async (req, res, next) => {
+  const purchaseOrderProductId = req.params.purchaseOrderProductId;
+  const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
+    purchaseOrderProductId
+  );
+  if (!purchaseOrderProduct) {
+    return res
+      .status(404)
+      .json({ message: "Purchase order product not found" });
+  }
+  const { reason_id } = req.body;
+
+  const response = await purchaseOrderProduct.update({ reason_id });
+  if (!response) {
+    return res.status(500).json({ message: "Failed to update reason" });
+  } else {
+    return res.status(200).json({
+      success: true,
+      data: purchaseOrderProduct,
+    });
+  }
+})
+
 const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   let totalPrice = 0;
 

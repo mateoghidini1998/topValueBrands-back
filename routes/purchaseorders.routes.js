@@ -13,6 +13,7 @@ const {
   addQuantityReceived,
   updatePurchaseOrderProducts,
   addNotesToPurchaseOrderProduct,
+  addReasonToPOProduct,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -38,5 +39,8 @@ router.patch('/:id/products', updatePurchaseOrderProducts);
 
 // add notes to purchase order product
 router.patch('/notes/:purchaseOrderProductId', addNotesToPurchaseOrderProduct);
+
+// add reason to purchase order product
+router.patch('/reason/:purchaseOrderProductId', addReasonToPOProduct);
 
 module.exports = router;
