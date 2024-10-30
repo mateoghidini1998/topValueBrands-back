@@ -23,7 +23,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
 
     if (location.current_capacity <= 0) {
       return res.status(400).json({
-        msg: `The location with id ${warehouse_location_id} has no space available`,
+        msg: `The location ${location} has no space available`,
       });
     }
 
