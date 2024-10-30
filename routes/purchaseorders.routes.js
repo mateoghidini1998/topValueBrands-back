@@ -14,6 +14,7 @@ const {
   updatePurchaseOrderProducts,
   addNotesToPurchaseOrderProduct,
   addReasonToPOProduct,
+  addExpireDateToPOProduct,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -42,5 +43,8 @@ router.patch('/notes/:purchaseOrderProductId', addNotesToPurchaseOrderProduct);
 
 // add reason to purchase order product
 router.patch('/reason/:purchaseOrderProductId', addReasonToPOProduct);
+
+// add expire date to purchase order product
+router.patch('/expireDate/:purchaseOrderProductId', addExpireDateToPOProduct);
 
 module.exports = router;

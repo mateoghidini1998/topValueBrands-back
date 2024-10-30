@@ -11,7 +11,7 @@ const {
 } = require('../controllers/pallets.controller')
 
 
-router.post('/', protect, createPallet)
+router.post('/', createPallet)
 router.get('/', protect, getPallets)
 router.get('/:id', protect, getPallet)
 router.delete('/:id', protect, deletePallet)

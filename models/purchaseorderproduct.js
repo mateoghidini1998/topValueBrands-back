@@ -23,15 +23,15 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'purchase_order_product_id',
         otherKey: 'outgoing_shipment_id',
       });
-      
+
       PurchaseOrderProduct.belongsToMany(models.Pallet, {
         through: models.PalletProduct,
         foreignKey: 'purchaseorderproduct_id',
         otherKey: 'pallet_id',
         as: 'pallets'
       });
-      
-      
+
+
     }
 
   }
@@ -47,6 +47,7 @@ module.exports = (sequelize, DataTypes) => {
       quantity_available: DataTypes.INTEGER,
       reason_id: DataTypes.INTEGER,
       notes: DataTypes.STRING,
+      expire_date: DataTypes.DATE
     },
     {
       sequelize,
