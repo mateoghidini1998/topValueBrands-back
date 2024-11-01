@@ -25,20 +25,11 @@ jobs:
 
       - name: Set Environment Variables
         run: |
-          echo "NODE_ENV=${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}" >> $GITHUB_ENV
+          echo "NODE_ENV=${{ github.ref == 'refs/heads/main' && secrets.NODE_ENV || 'development' }}" >> $GITHUB_ENV
           echo "DATABASE_URL=${{ github.ref == 'refs/heads/main' && secrets.DATABASE_URL || secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
 
-      # Comprobar que la variable se ha asignado correctamente
-      - name: Print Environment Variables
-        run: |
-          echo "NODE_ENV: $NODE_ENV"
-          echo "DATABASE_URL: $DATABASE_URL"
-
-      # Establecer y ejecutar las migraciones como hiciste localmente
-      - name: Run Sequelize Migrations
-        env:
-          DATABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.DATABASE_URL || secrets.DATABASE_URL_DEV }}
-        run: npx sequelize-cli db:migrate --env development
+      # - name: Run Sequelize Migrations
+      #   run: npx sequelize-cli db:migrate
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
