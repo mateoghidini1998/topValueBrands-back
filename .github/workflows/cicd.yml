@@ -34,7 +34,7 @@ jobs:
           echo "DATABASE_URL: ${{ env.DATABASE_URL }}"
 
       - name: Run Sequelize Migrations
-        run: npx sequelize-cli db:migrate --env ${{ env.NODE_ENV }}
+        run: npx sequelize-cli db:migrate --env development
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
