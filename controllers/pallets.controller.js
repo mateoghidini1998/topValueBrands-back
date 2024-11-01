@@ -51,7 +51,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
           purchaseorderproduct_id,
           pallet_id: pallet.id,
           quantity,
-          transaction, 
+          transaction,
         });
       }
     } else {
@@ -63,7 +63,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
     return res.status(201).json({ pallet });
 
   } catch (error) {
-    
+
     await transaction.rollback();
     return res.status(500).json({ msg: "Error creating pallet and products", error: error.message });
   }
@@ -73,25 +73,53 @@ exports.createPallet = asyncHandler(async (req, res) => {
 //@desc     Get pallets
 //@access   Private
 exports.getPallets = asyncHandler(async (req, res) => {
-  const pallets = await Pallet.findAll({
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: 'purchaseorderproducts',
-        through: {
-          model: PalletProduct,
-          attributes: ['quantity', 'available_quantity'],
+  try {
+    const pallets = await Pallet.findAll({
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: 'purchaseorderproducts', // alias correcto según el modelo
+          through: {
+            model: PalletProduct,
+            attributes: ['quantity', 'available_quantity'],
+          },
+          attributes: ['id'],
         },
-        attributes: ['id'],
-      },
-    ],
-  });
+        {
+          model: WarehouseLocation,
+          as: 'warehouseLocation', // alias correcto según el modelo
+          attributes: ['id', 'location'],
+        },
+        {
+          model: PurchaseOrder,
+          as: 'purchaseOrder', // alias correcto según el modelo
+          attributes: ['id', 'order_number'],
+        },
+      ],
+    });
 
-  return res.status(200).json({
-    count: pallets.length,
-    pallets,
-  });
+    return res.status(200).json({
+      count: pallets.length,
+      pallets: pallets.map((pallet) => {
+        return {
+          id: pallet.id,
+          pallet_number: pallet.pallet_number,
+          warehouse_location_id: pallet.warehouse_location_id,
+          warehouse_location: pallet.warehouseLocation.location,
+          purchase_order_number: pallet.purchaseOrder.order_number,
+          purchase_order_id: pallet.purchase_order_id,
+          createdAt: pallet.createdAt,
+          updatedAt: pallet.updatedAt,
+          products: pallet.purchaseorderproducts,
+        };
+      }),
+    });
+  } catch (error) {
+    console.error('Error fetching pallets:', error);
+    return res.status(500).json({ message: 'Error fetching pallets' });
+  }
 });
+
 
 
 
@@ -101,27 +129,27 @@ exports.getPallets = asyncHandler(async (req, res) => {
 //@access   Private
 exports.getPallet = asyncHandler(async (req, res) => {
   const pallet = await Pallet.findOne({
-      where: { id: req.params.id },
-      include: [
+    where: { id: req.params.id },
+    include: [
+      {
+        model: PalletProduct,
+        include: [
           {
-              model: PalletProduct,
-              include: [
-                  {
-                      model: PurchaseOrderProduct,
-                      attributes: ['id', 'product_name']
-                  }
-              ],
-              attributes: ['id', 'quantity', 'available_quantity']
+            model: PurchaseOrderProduct,
+            attributes: ['id', 'product_name']
           }
-      ]
+        ],
+        attributes: ['id', 'quantity', 'available_quantity']
+      }
+    ]
   });
 
   if (!pallet) {
-      return res.status(404).json({ msg: "Pallet not found" });
+    return res.status(404).json({ msg: "Pallet not found" });
   }
 
-  return res.status(200).json({ 
-      pallet 
+  return res.status(200).json({
+    pallet
   });
 });
 
