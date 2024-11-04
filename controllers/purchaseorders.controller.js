@@ -399,6 +399,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         product_image: product.product_image,
         product_cost: product.product_cost,
         in_seller_account: product.in_seller_account,
+        supplier_item_number: product.supplier_item_number,
       };
     })
   );
@@ -451,6 +452,33 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+// update purchase order number
+
+exports.updatePONumber = asyncHandler(async (req, res, next) => {
+  const purchaseOrderId = req.params.id;
+  const { order_number } = req.body;
+  const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId);
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: "Purchase order not found" });
+  }
+
+  // Validar que no exista en la base de datos
+  const existingPurchaseOrder = await PurchaseOrder.findOne({
+    where: { order_number },
+  });
+  if (existingPurchaseOrder) {
+    return res
+      .status(400)
+      .json({ message: "Order number already exists in the database" });
+  }
+
+  await purchaseOrder.update({ order_number });
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrder,
+  });
+})
 
 // delete purchase order product of and order by ID
 exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(async (req, res, next) => {

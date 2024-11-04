@@ -16,6 +16,7 @@ const {
   addReasonToPOProduct,
   addExpireDateToPOProduct,
   deletePurchaseOrderProductFromAnOrder,
+  updatePONumber,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -40,6 +41,10 @@ router.delete(
   '/purchaseorderproduct/:purchaseOrderProductId',
   deletePurchaseOrderProductFromAnOrder
 );
+
+//update purchase order number
+
+router.patch('/orderNumber/:id', updatePONumber);
 
 router.patch('/received/:purchaseOrderProductId', addQuantityReceived);
 
