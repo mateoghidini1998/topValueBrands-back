@@ -15,6 +15,7 @@ const {
   addNotesToPurchaseOrderProduct,
   addReasonToPOProduct,
   addExpireDateToPOProduct,
+  deletePurchaseOrderProductFromAnOrder,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -33,6 +34,12 @@ router.get('/download/:id', downloadPurchaseOrder);
 router.delete('/delete/:id', deletePurchaseOrder);
 
 router.get('/summary/:id', protect, getPurchaseOrderSummary);
+
+// delete purchase order product of and order by ID
+router.delete(
+  '/purchaseorderproduct/:purchaseOrderProductId',
+  deletePurchaseOrderProductFromAnOrder
+);
 
 router.patch('/received/:purchaseOrderProductId', addQuantityReceived);
 

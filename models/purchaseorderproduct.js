@@ -47,7 +47,8 @@ module.exports = (sequelize, DataTypes) => {
       quantity_available: DataTypes.INTEGER,
       reason_id: DataTypes.INTEGER,
       notes: DataTypes.STRING,
-      expire_date: DataTypes.DATE
+      expire_date: DataTypes.DATE,
+      is_active: DataTypes.BOOLEAN
     },
     {
       sequelize,

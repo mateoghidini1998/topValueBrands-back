@@ -358,7 +358,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
 
   // 1. get the purchaseorderproducts by purchase_order_id
   const products = await PurchaseOrderProduct.findAll({
-    where: { purchase_order_id: req.params.id },
+    where: { purchase_order_id: req.params.id, is_active: true },
   });
   if (!products) {
     return res.status(404).json({ message: "Products not found" });
@@ -449,6 +449,24 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       purchaseOrder,
       trackedProductsOfTheOrder,
     },
+  });
+});
+
+// delete purchase order product of and order by ID
+exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(async (req, res, next) => {
+  const purchaseOrderProductId = req.params.purchaseOrderProductId;
+  const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
+    purchaseOrderProductId
+  );
+  if (!purchaseOrderProduct) {
+    return res
+      .status(404)
+      .json({ message: "Purchase order product not found" });
+  }
+  await purchaseOrderProduct.update({ is_active: false });
+  return res.status(200).json({
+    success: true,
+    data: purchaseOrderProduct,
   });
 });
 
