@@ -77,7 +77,9 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     where: {},
   };
 
-  const whereConditions = {};
+  const whereConditions = {
+    is_active: true,
+  };
 
   if (keyword) {
     includeProduct.where[Op.or] = [

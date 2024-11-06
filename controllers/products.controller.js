@@ -171,9 +171,16 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: 'Product not found' });
   }
 
+  const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
+
   try {
     product.is_active = !product.is_active;
     await product.save();
+
+    if (trackedProduct) {
+      trackedProduct.is_active = !trackedProduct.is_active;
+      await trackedProduct.save();
+    }
 
 
     // await invalidateProductCache();
@@ -432,7 +439,7 @@ const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
     return productName;
   } catch (error) {
     console.error({ msg: error.message });
-    const productName = 'No se encontro el nombre del producto';
+    const productName = 'Product name not found';
     return productName;
   }
 

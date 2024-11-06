@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       lowest_fba_price: DataTypes.FLOAT,
       fees: DataTypes.FLOAT,
       profit: DataTypes.FLOAT,
+      is_active: DataTypes.BOOLEAN,
     },
     {
       sequelize,
