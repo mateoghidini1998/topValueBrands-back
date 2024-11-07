@@ -214,7 +214,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
       const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
       purchaseOrder.setDataValue(
         "status",
-        (statusDescription || "Unknown").toUpperCase()
+        (statusDescription || "Unknown")
       );
     })
   );
