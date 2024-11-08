@@ -194,6 +194,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
       {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
+        where: { is_active: true },
       },
       {
         model: PurchaseOrderStatus,
