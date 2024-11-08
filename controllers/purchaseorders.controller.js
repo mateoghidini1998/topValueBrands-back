@@ -137,6 +137,10 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
         purchaseOrderProduct.unit_price *
         purchaseOrderProduct.quantity_purchased;
 
+      purchaseOrderProduct.profit = parseFloat(
+        purchaseOrderProductUpdate.profit
+      );
+
       // Guardar los cambios en la base de datos
       const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
 
@@ -190,6 +194,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
       {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
+        where: { is_active: true },
       },
       {
         model: PurchaseOrderStatus,
