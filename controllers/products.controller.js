@@ -6,21 +6,10 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
-/* const { connect } = require('../redis/redis'); */
 
 dotenv.config({
   path: './.env',
 });
-
-// Función para invalidar el caché de productos
-/*!
-const invalidateProductCache = async () => {
-  const keys = await redisClient.keys('products_*');
-  if (keys.length > 0) {
-    await redisClient.del(keys);
-  }
-};
-*/
 
 
 //@route    POST api/products/add
@@ -182,9 +171,16 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: 'Product not found' });
   }
 
+  const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
+
   try {
     product.is_active = !product.is_active;
     await product.save();
+
+    if (trackedProduct) {
+      trackedProduct.is_active = !trackedProduct.is_active;
+      await trackedProduct.save();
+    }
 
 
     // await invalidateProductCache();
@@ -325,7 +321,6 @@ exports.addImageToAllProducts = asyncHandler(async (req, res) => {
 
     if (index < products.length) {
       // Log the number of requests made
-      // console.log(`Se han realizado ${index} peticiones`);
       setTimeout(fetchProductImage, delay);
     } else {
       res.json(products);
@@ -402,7 +397,6 @@ const addImageToProducts = async (products, accessToken) => {
   };
 
   await fetchProductImage();
-  // await invalidateProductCache();
 
   return {
     addedSuccessfully: products.length - errorCount,
@@ -415,18 +409,11 @@ const addImageToProducts = async (products, accessToken) => {
 
 
 exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
-  // const user = await User.findOne({ where: { id: req.user.id } });
-  // if (user.role !== 'admin') {
-  //     return res.status(401).json({ msg: 'Unauthorized' });
-  // }
-
   const newProducts = await Product.findAll({
     where: { product_image: null } || { product_image: '' },
   });
-  // const accessToken = req.headers['x-amz-access-token'];
 
   const result = await addImageToProducts(newProducts, accessToken);
-  // await invalidateProductCache();
   return result;
 });
 
@@ -452,7 +439,7 @@ const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
     return productName;
   } catch (error) {
     console.error({ msg: error.message });
-    const productName = 'No se encontro el nombre del producto';
+    const productName = 'Product name not found';
     return productName;
   }
 

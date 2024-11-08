@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       shipment_number: {
         type: DataTypes.STRING,
-        allowNull: false, // Requerido; ajusta según tus necesidades
+        allowNull: false,
       },
     },
     {

@@ -66,8 +66,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'FBA_available_inventory',
       'reserved_quantity',
       'Inbound_to_FBA',
-      'supplier_item_number',
-
     ],
     include: [
       {
@@ -79,7 +77,9 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     where: {},
   };
 
-  const whereConditions = {};
+  const whereConditions = {
+    is_active: true,
+  };
 
   if (keyword) {
     includeProduct.where[Op.or] = [
@@ -114,6 +114,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         ...trackedProductData,
         ...productData,
         supplier_name: supplier ? supplier.supplier_name : null,
+        roi: productData.product_cost ? (trackedProductData.profit / productData.product_cost) * 100 : 0
       };
     });
 
@@ -173,11 +174,7 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
       supplier_name: supplier.supplier_name,
       product_image: product.product_image,
       product_cost: product.product_cost,
-      in_seller_account: product.in_seller_account,
-      FBA_available_inventory: product.FBA_available_inventory,
-      reserved_quantity: product.reserved_quantity,
-      Inbound_to_FBA: product.Inbound_to_FBA,
-      supplier_item_number: product.supplier_item_number
+      in_seller_account: product.in_seller_account
     };
 
   }));
@@ -446,6 +443,7 @@ const saveOrders = async (req, res, next, products) => {
   const jsonData = await generateOrderReport(req, res, next);
 
   if (!jsonData) {
+    logger.error('Generating order report failed');
     throw new Error('Failed to retrieve orders');
   }
 
@@ -465,11 +463,6 @@ const saveOrders = async (req, res, next, products) => {
     }
     return acc;
   }, {});
-
-  // const asinToProductId = products.reduce((acc, product) => {
-  //   acc[product.ASIN] = product.id;
-  //   return acc;
-  // }, {});
 
   const asinToProductId = products.reduce((acc, product) => {
     if (!acc[product.ASIN]) {
