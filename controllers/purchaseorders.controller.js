@@ -665,13 +665,15 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   let totalPrice = 0;
 
   for (const product of products) {
-    const { product_id, unit_price, quantity } = product;
+    console.log(product);
+    const { product_id, unit_price, quantity, fees, lowest_fba_price } = product;
     const purchaseOrderProduct = await PurchaseOrderProduct.create({
       purchase_order_id: purchaseOrderId,
       product_id,
       unit_price: unit_price,
       quantity_purchased: quantity,
       total_amount: unit_price * quantity,
+      profit: lowest_fba_price - fees - unit_price,
     });
 
     totalPrice += purchaseOrderProduct.total_amount;
