@@ -40,6 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       purchase_order_id: DataTypes.INTEGER,
       product_id: DataTypes.INTEGER,
       unit_price: DataTypes.DECIMAL,
+      product_cost: DataTypes.DECIMAL(10, 2),
       total_amount: DataTypes.DECIMAL,
       profit: DataTypes.DECIMAL,
       quantity_purchased: DataTypes.INTEGER,

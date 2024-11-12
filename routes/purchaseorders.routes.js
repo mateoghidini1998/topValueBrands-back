@@ -17,6 +17,7 @@ const {
   addExpireDateToPOProduct,
   deletePurchaseOrderProductFromAnOrder,
   updatePONumber,
+  addProductToPurchaseOrder,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 
@@ -41,6 +42,9 @@ router.delete(
   '/purchaseorderproduct/:purchaseOrderProductId',
   deletePurchaseOrderProductFromAnOrder
 );
+
+// add products to existing purchase order
+router.post('/add-products/:id', addProductToPurchaseOrder);
 
 //update purchase order number
 

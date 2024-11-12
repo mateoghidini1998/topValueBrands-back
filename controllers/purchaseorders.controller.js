@@ -10,10 +10,12 @@ const {
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
-const { where } = require("sequelize");
+const { where, Transaction } = require("sequelize");
 const {
   getTrackedProductsFromAnOrder,
 } = require("./trackedproducts.controller");
+
+const { sequelize } = require('../models');
 
 exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   const {
@@ -96,6 +98,7 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
+
   const updatedPurchaseOrder = await purchaseOrder.update({ notes: notes });
   return res.status(200).json({
     success: true,
@@ -105,6 +108,59 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+// method to add new product to an existing purchase order
+// Asegúrate de importar el objeto `sequelize` correctamente desde tus modelos
+
+exports.addProductToPurchaseOrder = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { products } = req.body;
+
+  const transaction = await sequelize.transaction(); // Inicia la transacción
+
+  try {
+    const purchaseOrder = await PurchaseOrder.findByPk(id, { transaction });
+    if (!purchaseOrder) {
+      return res.status(404).json({ message: "Purchase Order not found" });
+    }
+
+    // Creación de entradas de `PurchaseOrderProduct` y cálculo del total
+    let newAmount = 0;
+    if (products && products.length > 0) {
+      newAmount = await createPurchaseOrderProducts(purchaseOrder.id, products);
+    }
+
+    // Actualiza el precio total de la orden de compra en la misma transacción
+    await purchaseOrder.update(
+      { total_price: parseFloat(purchaseOrder.total_price) + newAmount },
+      { transaction }
+    );
+
+    // Commit de la transacción si todas las operaciones son exitosas
+    await transaction.commit();
+
+    // Consulta la orden de compra actualizada junto con sus productos
+    const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
+        },
+      ],
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: updatedPurchaseOrder,
+    });
+
+  } catch (error) {
+    // Rollback de la transacción en caso de error
+    await transaction.rollback();
+    return next(error);
+  }
+});
+
 
 exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
@@ -127,14 +183,14 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
 
     if (purchaseOrderProduct) {
       // Actualizar los valores
-      purchaseOrderProduct.unit_price = parseFloat(
-        purchaseOrderProductUpdate.unit_price
+      purchaseOrderProduct.product_cost = parseFloat(
+        purchaseOrderProductUpdate.product_cost
       );
       purchaseOrderProduct.quantity_purchased = parseInt(
         purchaseOrderProductUpdate.quantityPurchased
       );
       purchaseOrderProduct.total_amount =
-        purchaseOrderProduct.unit_price *
+        purchaseOrderProduct.product_cost *
         purchaseOrderProduct.quantity_purchased;
 
       purchaseOrderProduct.profit = parseFloat(
@@ -150,7 +206,7 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
           purchaseOrder.id
         );
         const totalPrice = purchaseOrderProducts.reduce((acc, product) => {
-          return acc + product.unit_price * product.quantity_purchased;
+          return acc + product.product_cost * product.quantity_purchased;
         }, 0);
         await purchaseOrder.update({ total_price: totalPrice });
       }
@@ -666,14 +722,15 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
 
   for (const product of products) {
     console.log(product);
-    const { product_id, unit_price, quantity, fees, lowest_fba_price } = product;
+    const { product_id, product_cost, quantity, fees, lowest_fba_price } = product;
     const purchaseOrderProduct = await PurchaseOrderProduct.create({
       purchase_order_id: purchaseOrderId,
       product_id,
-      unit_price: unit_price,
+      product_cost: parseFloat(product_cost),
+      unit_price: parseFloat(product_cost),
       quantity_purchased: quantity,
-      total_amount: unit_price * quantity,
-      profit: lowest_fba_price - fees - unit_price,
+      total_amount: product_cost * quantity,
+      profit: lowest_fba_price - fees - product_cost,
     });
 
     totalPrice += purchaseOrderProduct.total_amount;
@@ -790,7 +847,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
       return {
         ASIN: productData.ASIN,
         product_id: product.product_id,
-        unit_price: parseFloat(product.unit_price),
+        product_cost: parseFloat(product.product_cost),
         quantity_purchased: product.quantity,
         total_amount: product.total_amount,
       };
@@ -889,7 +946,7 @@ const generatePDF = (data) => {
       doc.text(product.product_id, TABLE_LEFT, position);
       // doc.text(product.ASIN, TABLE_LEFT + 70, position);
       doc.text(
-        "$" + Number(product.unit_price).toFixed(2),
+        "$" + Number(product.product_cost).toFixed(2),
         TABLE_LEFT + 180,
         position
       );
