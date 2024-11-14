@@ -71,7 +71,7 @@ app.listen(PORT, () => {
   swaggerDoc(app, PORT);
 
 
-  cron.schedule('30 5,12 * * *', async () => {
+  cron.schedule('30 3,12 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
 
     // Mock request, response, and next for the cron job context
