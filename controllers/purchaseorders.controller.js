@@ -113,6 +113,40 @@ exports.addProductToPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const { products } = req.body;
 
+  // check if the products are not already in the purchase order
+  const existingProducts = await PurchaseOrderProduct.findAll({
+    where: { purchase_order_id: id, is_active: true },
+  });
+
+  for (const product of products) {
+    const existingProduct = existingProducts.find(
+      (p) => p.product_id === product.product_id
+    );
+    if (existingProduct) {
+      return res.status(400).json({
+        message: `Product ${product.product_id} is already in the purchase order`,
+      });
+    }
+  }
+
+  const supplier_id = await PurchaseOrder.findByPk(id, {
+    attributes: ["supplier_id"],
+  });
+  if (!supplier_id) {
+    return res.status(404).json({ message: "Supplier not found" });
+  }
+
+
+  // check if the supplier product is the same as the one in the purchase order
+  for (const product of products) {
+    const supplierProduct = await Product.findByPk(product.product_id);
+    if (supplierProduct.supplier_id !== supplier_id.supplier_id) {
+      return res.status(400).json({
+        message: `Product ${product.product_id} does not belong to supplier ${supplier_id.values}`,
+      });
+    }
+  }
+
   const transaction = await sequelize.transaction(); // Inicia la transacción
 
   try {
