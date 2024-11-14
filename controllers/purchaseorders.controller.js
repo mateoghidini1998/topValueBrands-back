@@ -109,9 +109,6 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
-// method to add new product to an existing purchase order
-// Asegúrate de importar el objeto `sequelize` correctamente desde tus modelos
-
 exports.addProductToPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const { products } = req.body;
@@ -233,6 +230,7 @@ exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
       {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
+        where: { is_active: true },
       },
     ],
   });
@@ -287,8 +285,11 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
         purchaseOrder.purchaseOrderProducts.map(
           async (purchaseOrderProduct) => {
             const purchaseProduct = await Product.findByPk(
-              purchaseOrderProduct.product_id
-            );
+              purchaseOrderProduct.product_id,
+              {
+                where: { is_active: true }
+              }
+            )
             purchaseOrderProduct.setDataValue(
               "product_name",
               purchaseProduct.product_name
@@ -408,6 +409,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
+        where: { is_active: true },
       },
       {
         model: PurchaseOrderStatus,
@@ -553,6 +555,20 @@ exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(async (req, res, ne
       .json({ message: "Purchase order product not found" });
   }
   await purchaseOrderProduct.update({ is_active: false });
+
+  const purchaseOrder = await PurchaseOrder.findByPk(
+    purchaseOrderProduct.purchase_order_id
+  );
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: "Purchase order not found" });
+  }
+
+  // Actualizar el total de la orden de compra
+  await purchaseOrder.update({
+    total_price: purchaseOrder.total_price - purchaseOrderProduct.total_amount,
+  });
+
+
   return res.status(200).json({
     success: true,
     data: purchaseOrderProduct,
@@ -564,7 +580,9 @@ exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
 
   // Encontrar el producto de la orden de compra por ID
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId
+    purchaseOrderProductId, {
+    where: { is_active: true }
+  }
   );
 
   // Verificar si el producto existe
@@ -612,7 +630,7 @@ exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
 
   // Obtener todos los productos de la orden de compra
   const purchaseOrderProductList = await PurchaseOrderProduct.findAll({
-    where: { purchase_order_id: purchaseOrderProduct.purchase_order_id },
+    where: { purchase_order_id: purchaseOrderProduct.purchase_order_id, is_active: true },
   });
 
   // Verificar si la lista de productos existe
@@ -651,7 +669,9 @@ exports.addNotesToPurchaseOrderProduct = asyncHandler(
   async (req, res, next) => {
     const purchaseOrderProductId = req.params.purchaseOrderProductId;
     const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-      purchaseOrderProductId
+      purchaseOrderProductId, {
+      where: { is_active: true }
+    }
     );
     if (!purchaseOrderProduct) {
       return res
@@ -674,7 +694,9 @@ exports.addNotesToPurchaseOrderProduct = asyncHandler(
 exports.addReasonToPOProduct = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId
+    purchaseOrderProductId, {
+    where: { is_active: true }
+  }
   );
   if (!purchaseOrderProduct) {
     return res
@@ -697,7 +719,9 @@ exports.addReasonToPOProduct = asyncHandler(async (req, res, next) => {
 exports.addExpireDateToPOProduct = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId
+    purchaseOrderProductId, {
+    where: { is_active: true }
+  }
   );
   if (!purchaseOrderProduct) {
     return res
@@ -778,7 +802,7 @@ exports.updatePurchaseOrderStatus = asyncHandler(async (req, res, next) => {
 
 const getPurchaseOrderProducts = async (purchaseOrderId) => {
   const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
-    where: { purchase_order_id: purchaseOrderId },
+    where: { purchase_order_id: purchaseOrderId, is_active: true },
   });
 
   for (const product of purchaseOrderProducts) {
@@ -816,6 +840,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
       {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
+        where: { is_active: true },
       },
     ],
   });
