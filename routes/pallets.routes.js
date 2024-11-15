@@ -13,7 +13,7 @@ const {
 
 router.post('/', createPallet)
 router.get('/', protect, getPallets)
-router.get('/:id', protect, getPallet)
+router.get('/:id', getPallet)
 router.delete('/:id', protect, deletePallet)
 router.put('/:id', protect, updatePallet)
 

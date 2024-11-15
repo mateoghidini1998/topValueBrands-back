@@ -25,8 +25,12 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'purchaseorderproduct_id',
         as: 'purchaseorderproducts'
       });
-      
-      
+
+      Pallet.hasMany(models.PalletProduct, {
+        foreignKey: 'pallet_id',
+      });
+
+
     }
   }
   Pallet.init({

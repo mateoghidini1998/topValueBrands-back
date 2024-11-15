@@ -133,16 +133,17 @@ exports.getPallet = asyncHandler(async (req, res) => {
     include: [
       {
         model: PalletProduct,
-        include: [
-          {
-            model: PurchaseOrderProduct,
-            attributes: ['id', 'product_name']
-          }
-        ],
-        attributes: ['id', 'quantity', 'available_quantity']
+        // include: [
+        //   {
+        //     model: PurchaseOrderProduct,
+        //     attributes: ['id', 'product_name']
+        //   }
+        // ],
+        // attributes: ['id', 'quantity', 'available_quantity']
       }
     ]
   });
+
 
   if (!pallet) {
     return res.status(404).json({ msg: "Pallet not found" });
