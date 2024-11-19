@@ -66,6 +66,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'FBA_available_inventory',
       'reserved_quantity',
       'Inbound_to_FBA',
+      'supplier_item_number',
     ],
     include: [
       {
