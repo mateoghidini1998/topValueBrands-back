@@ -45,7 +45,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   // }
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 50;
+  const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
   const supplier_id = req.query.supplier_id || null;
@@ -66,6 +66,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'FBA_available_inventory',
       'reserved_quantity',
       'Inbound_to_FBA',
+      'supplier_item_number',
     ],
     include: [
       {

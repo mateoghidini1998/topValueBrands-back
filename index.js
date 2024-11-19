@@ -21,7 +21,6 @@ const corsOptions = {
     "https://top-value-brands-front.vercel.app",
     "https://www.thepopro.com",
     "https://thepopro.com",
-    "http://localhost:3000",
   ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
@@ -72,7 +71,7 @@ app.listen(PORT, () => {
   swaggerDoc(app, PORT);
 
 
-  cron.schedule('30 5,12 * * *', async () => {
+  cron.schedule('30 3,12 * * *', async () => {
     logger.info('Cron executed at ' + new Date().toLocaleString());
 
     // Mock request, response, and next for the cron job context
