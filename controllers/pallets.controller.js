@@ -133,14 +133,16 @@ exports.getPallet = asyncHandler(async (req, res) => {
     include: [
       {
         model: PalletProduct,
-        // include: [
-        //   {
-        //     model: PurchaseOrderProduct,
-        //     attributes: ['id', 'product_name']
-        //   }
-        // ],
-        // attributes: ['id', 'quantity', 'available_quantity']
-      }
+      }, {
+        model: WarehouseLocation,
+        as: 'warehouseLocation',
+        attributes: ['id', 'location'],
+      },
+      {
+        model: PurchaseOrder,
+        as: 'purchaseOrder',
+        attributes: ['id', 'order_number'],
+      },
     ]
   });
 
@@ -148,6 +150,8 @@ exports.getPallet = asyncHandler(async (req, res) => {
   if (!pallet) {
     return res.status(404).json({ msg: "Pallet not found" });
   }
+
+  const { warehouseLocation, purchaseOrder, ...rest } = pallet;
 
   return res.status(200).json({
     pallet
