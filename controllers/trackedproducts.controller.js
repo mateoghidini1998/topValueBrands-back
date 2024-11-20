@@ -115,7 +115,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         ...trackedProductData,
         ...productData,
         supplier_name: supplier ? supplier.supplier_name : null,
-        roi: productData.product_cost ? (trackedProductData.profit / productData.product_cost) * 100 : 0
+        roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
       };
     });
 
