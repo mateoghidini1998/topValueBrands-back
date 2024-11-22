@@ -120,10 +120,6 @@ exports.getPallets = asyncHandler(async (req, res) => {
   }
 });
 
-
-
-
-
 //@route    GET api/v1/pallets/:id
 //@desc     Get pallet by id
 //@access   Private
@@ -181,7 +177,6 @@ exports.deletePallet = asyncHandler(async (req, res) => {
 
   return res.status(204).end();
 });
-
 
 //@route    PUT api/v1/pallets/:id
 //@desc     update pallet by id

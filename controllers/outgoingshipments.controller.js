@@ -1,4 +1,4 @@
-const { OutgoingShipment, PurchaseOrderProduct, OutgoingShipmentProduct } = require("../models");
+const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
 
@@ -10,6 +10,7 @@ exports.createShipment = asyncHandler(async (req, res) => {
     return res.status(401).json({ msg: "Unauthorized" });
   }
 
+  // Comprobar si el envío ya existe
   const existingShipment = await OutgoingShipment.findOne({
     where: { shipment_number: req.body.shipment_number },
   });
@@ -18,52 +19,69 @@ exports.createShipment = asyncHandler(async (req, res) => {
     return res.status(400).json({ msg: "Shipment already exists" });
   }
 
-  const purchaseOrderProducts = req.body.purchaseorderproducts;
+  const palletProducts = req.body.palletproducts;
 
-  for (let item of purchaseOrderProducts) {
-    const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
-      where: { id: item.purchase_order_product_id },
+  // Verificar si la cantidad solicitada no excede la cantidad disponible
+  for (let item of palletProducts) {
+    const palletProduct = await PalletProduct.findOne({
+      where: { id: item.pallet_product_id },
     });
 
-    if (!purchaseOrderProduct) {
+    if (!palletProduct) {
       return res.status(404).json({
-        msg: `PurchaseOrderProduct with id ${item.purchase_order_product_id} not found`,
+        msg: `PalletProduct with id ${item.pallet_product_id} not found`,
       });
     }
 
-    if (item.quantity > purchaseOrderProduct.quantity_available) {
+    if (item.quantity > palletProduct.available_quantity) {
       return res.status(400).json({
-        msg: `Quantity of ${item.quantity} exceeds the available quantity of ${purchaseOrderProduct.quantity_available} for product ID ${item.purchase_order_product_id}`,
+        msg: `Quantity of ${item.quantity} exceeds the available quantity of ${palletProduct.available_quantity} for product ID ${item.pallet_product_id}`,
       });
     }
   }
 
+  // Crear el nuevo envío
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
+    status: 'PENDING',
   });
 
-  for (let item of purchaseOrderProducts) {
-    const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
-      where: { id: item.purchase_order_product_id },
+  // Reducir las cantidades disponibles y asociar los productos al envío
+  for (let item of palletProducts) {
+    const palletProduct = await PalletProduct.findOne({
+      where: { id: item.pallet_product_id },
     });
 
-    const newQuantityAvailable =
-      purchaseOrderProduct.quantity_available - item.quantity;
-    await purchaseOrderProduct.update({
-      quantity_available: newQuantityAvailable,
+    const newAvailableQuantity = palletProduct.available_quantity - item.quantity;
+
+    await palletProduct.update({
+      available_quantity: newAvailableQuantity,
     });
 
-    await newShipment.addPurchaseOrderProduct(item.purchase_order_product_id, {
-      through: { quantity: item.quantity },
+    // Asociar el producto con el envío usando OutgoingShipmentProduct
+    await OutgoingShipmentProduct.create({
+      outgoing_shipment_id: newShipment.id,
+      pallet_product_id: item.pallet_product_id,
+      quantity: item.quantity,
     });
   }
 
+  // Obtener el envío con los productos asociados para incluir la cantidad en la respuesta
   const shipmentWithProducts = await OutgoingShipment.findOne({
     where: { id: newShipment.id },
     include: [
       {
-        model: PurchaseOrderProduct,
-        through: { attributes: ["quantity"] },
+        model: PalletProduct,
+        attributes: [
+          'id', // Asegura que el id del PalletProduct (pallet_product_id) esté incluido
+          'purchaseorderproduct_id',
+          'pallet_id',
+          'quantity',
+          'available_quantity',
+          'createdAt',
+          'updatedAt'
+        ],
+        through: { attributes: ["quantity"] }, // Cantidad de OutgoingShipmentProduct
       },
     ],
   });
@@ -73,6 +91,7 @@ exports.createShipment = asyncHandler(async (req, res) => {
     shipment: shipmentWithProducts,
   });
 });
+
 
 //@route    GET api/v1/shipments
 //@desc     Get all outgoing shipments
@@ -85,10 +104,17 @@ exports.getShipments = asyncHandler(async (req, res) => {
   const shipments = await OutgoingShipment.findAll({
     include: [
       {
-        model: PurchaseOrderProduct,
-        through: {
-          attributes: ["quantity"],
-        },
+        model: PalletProduct,
+        attributes: [
+          'id',
+          'purchaseorderproduct_id',
+          'pallet_id',
+          'quantity',
+          'available_quantity',
+          'createdAt',
+          'updatedAt'
+        ],
+        through: { attributes: ["quantity"] },
       },
     ],
   });
@@ -110,10 +136,17 @@ exports.getShipment = asyncHandler(async (req, res) => {
     where: { id: req.params.id },
     include: [
       {
-        model: PurchaseOrderProduct,
-        through: {
-          attributes: ["quantity"],
-        },
+        model: PalletProduct,
+        attributes: [
+          'id', // Asegura que el id del PalletProduct (pallet_product_id) esté incluido
+          'purchaseorderproduct_id',
+          'pallet_id',
+          'quantity',
+          'available_quantity',
+          'createdAt',
+          'updatedAt'
+        ],
+        through: { attributes: ["quantity"] }, // Cantidad de OutgoingShipmentProduct
       },
     ],
   });
@@ -139,11 +172,20 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
       where: { id: req.params.id },
       include: [
         {
-          model: PurchaseOrderProduct,
-          through: { attributes: ["quantity"] },
+          model: PalletProduct,
+          attributes: [
+            'id', 
+            'purchaseorderproduct_id',
+            'pallet_id',
+            'quantity',
+            'available_quantity',
+            'createdAt',
+            'updatedAt'
+          ],
+          through: { attributes: ["quantity"] }, 
         },
       ],
-      transaction,
+      transaction
     });
 
     if (!shipment) {
@@ -151,8 +193,8 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
       return res.status(404).json({ msg: "Shipment not found" });
     }
 
-    for (let product of shipment.PurchaseOrderProducts) {
-      const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+    for (let product of shipment.PalletProducts) {
+      const palletProduct = await PalletProduct.findOne({
         where: { id: product.id },
         transaction,
       });
@@ -166,10 +208,10 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
       }
 
       const restoredQuantity =
-        purchaseOrderProduct.quantity_available + quantityFromShipment;
+        palletProduct.available_quantity + quantityFromShipment;
 
-      await purchaseOrderProduct.update(
-        { quantity_available: restoredQuantity },
+      await palletProduct.update(
+        { available_quantity: restoredQuantity },
         { transaction }
       );
     }
@@ -198,7 +240,7 @@ exports.updateShipment = asyncHandler(async (req, res) => {
     const shipment = await OutgoingShipment.findOne({
         where: { id: req.params.id },
         include: [{
-            model: PurchaseOrderProduct,
+            model: PalletProduct,
             through: { attributes: ['quantity'] }
         }]
     });
@@ -210,10 +252,10 @@ exports.updateShipment = asyncHandler(async (req, res) => {
     const transaction = await sequelize.transaction();
 
     try {
-        const updatedPurchaseOrderProducts = req.body.purchaseorderproducts;
+        const updatedPalletProducts = req.body.palletProducts;
 
-        for (let product of shipment.PurchaseOrderProducts) {
-            const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+        for (let product of shipment.PalletProducts) {
+            const palleProduct = await PalletProduct.findOne({
                 where: { id: product.id }
             });
 
