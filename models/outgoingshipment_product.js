@@ -8,8 +8,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'outgoing_shipment_id',
         onDelete: 'CASCADE', // Configuración opcional para borrar en cascada
       });
-      OutgoingShipmentProduct.belongsTo(models.PurchaseOrderProduct, {
-        foreignKey: 'purchase_order_product_id',
+      OutgoingShipmentProduct.belongsTo(models.PalletProduct, {
+        foreignKey: 'pallet_product_id',
         onDelete: 'CASCADE',
       });
     }
@@ -21,14 +21,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      purchase_order_product_id: {
+      pallet_product_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
       quantity: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 1, // Valor por defecto de la cantidad
+        defaultValue: 1,
       },
     },
     {
