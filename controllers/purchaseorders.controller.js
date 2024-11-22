@@ -660,7 +660,7 @@ exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
     Number(purchaseOrderProduct.quantity_purchased) -
     Number(purchaseOrderProduct.quantity_received);
 
-  await purchaseOrderProduct.update({ quantity_missing: quantityMissing });
+  await purchaseOrderProduct.update({ quantity_missing: quantityMissing, quantity_available: quantityReceived });
 
   // Obtener todos los productos de la orden de compra
   const purchaseOrderProductList = await PurchaseOrderProduct.findAll({
