@@ -497,6 +497,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         product_cost: product.product_cost,
         in_seller_account: product.in_seller_account,
         supplier_item_number: product.supplier_item_number,
+        pack_type: product.pack_type,
       };
     })
   );
