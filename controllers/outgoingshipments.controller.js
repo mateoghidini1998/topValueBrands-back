@@ -1,6 +1,9 @@
-const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct } = require("../models");
+const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
+const ExcelJS = require('exceljs')
+const path = require('path')
+const fs = require('fs')
 
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
@@ -91,7 +94,6 @@ exports.createShipment = asyncHandler(async (req, res) => {
     shipment: shipmentWithProducts,
   });
 });
-
 
 //@route    GET api/v1/shipments
 //@desc     Get all outgoing shipments
@@ -330,4 +332,95 @@ exports.updateShipment = asyncHandler(async (req, res) => {
         await transaction.rollback();
         return res.status(500).json({ msg: 'Something went wrong', error: error.message });
     }
+});
+
+
+exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
+  const shipmentId = req.params.id;
+
+  // Buscar el shipment con sus productos asociados
+  const shipment = await OutgoingShipment.findOne({
+    where: { id: shipmentId },
+    include: [
+      {
+        model: PalletProduct,
+        attributes: [
+          'id',
+          'purchaseorderproduct_id',
+          'available_quantity',
+          'quantity',
+        ],
+        include: [
+          {
+            model: PurchaseOrderProduct,
+            attributes: ['product_id'],
+            include: [
+              {
+                model: Product,
+                attributes: ['seller_sku'], // Campo SKU desde Product
+              },
+            ],
+          },
+        ],
+        through: { attributes: ["quantity"] },
+      },
+    ],
+  });
+
+  if (!shipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+
+  const templatePath = path.join(
+    __dirname,
+    '..',
+    'templates',
+    '2DWorkflow_Create_Shipment_Template.xlsx'
+  );
+
+  if (!fs.existsSync(templatePath)) {
+    return res.status(500).json({ msg: "Template not found" });
+  }
+
+  // Crear el workbook usando el template
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(templatePath);
+
+  // Seleccionar la primera hoja del workbook
+  const worksheet = workbook.getWorksheet(1);
+
+  // Agregar los datos al Excel
+  shipment.PalletProducts.forEach((product, index) => {
+    const rowIndex = index + 2; // Comenzar en la segunda fila después del encabezado
+    const sku =
+      product.PurchaseOrderProduct?.Product?.seller_sku || "N/A"; // SKU desde Product
+    const qty = product.OutgoingShipmentProduct?.quantity || 0; // QTY
+    const unitsPerCase = 1; // UNITS_PER_CASE
+
+    const row = worksheet.getRow(rowIndex);
+    row.getCell(1).value = sku; // Columna SKU
+    row.getCell(2).value = qty; // Columna QTY
+    row.getCell(3).value = unitsPerCase; // Columna UNITS_PER_CASE
+    row.commit();
+  });
+
+  // Generar un nombre único para el archivo
+  const fileName = `Shipment_${shipment.shipment_number}.xlsx`;
+  const savePath = path.join(__dirname, '..', 'exports', fileName);
+
+  // Guardar el archivo en el servidor
+  await workbook.xlsx.writeFile(savePath);
+
+  // Descargar el archivo al cliente
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename=${fileName}`
+  );
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+
+  await workbook.xlsx.write(res); // Escribir directamente al cliente
+  res.end();
 });
