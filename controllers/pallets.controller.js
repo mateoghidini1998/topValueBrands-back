@@ -1,4 +1,4 @@
-const { Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
+const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
 const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
 
@@ -129,7 +129,22 @@ exports.getPallet = asyncHandler(async (req, res) => {
     include: [
       {
         model: PalletProduct,
-      }, {
+        include: [
+          {
+            model: PurchaseOrderProduct, // Relación intermedia
+            attributes: [
+              'id',
+            ],
+            include: [
+              {
+                model: Product, // Relación final con Product
+                attributes: ['product_name', 'product_image', 'seller_sku'], // Atributos que necesitamos
+              },
+            ],
+          },
+        ],
+      },
+      {
         model: WarehouseLocation,
         as: 'warehouseLocation',
         attributes: ['id', 'location'],
@@ -139,20 +154,35 @@ exports.getPallet = asyncHandler(async (req, res) => {
         as: 'purchaseOrder',
         attributes: ['id', 'order_number'],
       },
-    ]
+    ],
   });
-
 
   if (!pallet) {
     return res.status(404).json({ msg: "Pallet not found" });
   }
 
-  const { warehouseLocation, purchaseOrder, ...rest } = pallet;
+  // Convierte a un objeto plano para manipulación
+  const palletData = pallet.toJSON();
 
-  return res.status(200).json({
-    pallet
-  });
+  // Procesa los datos para incluir los campos de Product directamente en PalletProducts
+  const formattedPallet = {
+    ...palletData,
+    PalletProducts: palletData.PalletProducts.map((palletProduct) => {
+      const product =
+        palletProduct.PurchaseOrderProduct?.Product || {};
+      return {
+        ...palletProduct,
+        product_name: product.product_name,
+        product_image: product.product_image,
+        seller_sku: product.seller_sku,
+      };
+    }),
+  };
+
+  return res.status(200).json(formattedPallet);
 });
+
+
 
 //@route    DELETE api/v1/pallets/:id
 //@desc     Delete pallet by id
