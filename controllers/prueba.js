@@ -139,7 +139,7 @@ exports.addProductVelocityAndUnitsSold = asyncHandler(async (req, res, next) => 
 
   const filteredOrders = jsonData.filter(
     (item) =>
-      item['order-status'] === 'Shipped' &&
+      (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
       new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000
   );
 
