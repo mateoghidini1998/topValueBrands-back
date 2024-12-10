@@ -1,4 +1,5 @@
 const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product } = require("../models");
+const { Op } = require('sequelize');
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
 const ExcelJS = require('exceljs')
@@ -94,6 +95,92 @@ exports.createShipment = asyncHandler(async (req, res) => {
     shipment: shipmentWithProducts,
   });
 });
+
+//@route    POST api/v1/shipments/po/:id
+//@desc     Create an outgoing shipment from a purchase order
+//@access   Private
+exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  const { id } = req.params; 
+  const { shipment_number } = req.body;
+
+  const existingShipment = await OutgoingShipment.findOne({
+    where: { shipment_number },
+  });
+
+  if (existingShipment) {
+    return res.status(400).json({ msg: "Shipment already exists" });
+  }
+
+  const palletProducts = await PalletProduct.findAll({
+    attributes: ["id", "purchaseorderproduct_id", "pallet_id", "quantity", "available_quantity"],
+    include: [
+      {
+        model: sequelize.models.Pallet,
+        where: { purchase_order_id: id },
+      },
+    ],
+    where: {
+      available_quantity: { [Op.gt]: 0 },
+    },
+  });
+
+  if (palletProducts.length === 0) {
+    return res.status(404).json({
+      msg: `No PalletProducts with available quantity > 0 found for PurchaseOrder ID ${id}`,
+    });
+  }
+
+  const newShipment = await OutgoingShipment.create({
+    shipment_number,
+    status: "PENDING",
+  });
+
+  for (let palletProduct of palletProducts) {
+    const { id: palletProductId, available_quantity } = palletProduct;
+
+    if (available_quantity > 0) {
+      await palletProduct.update({
+        available_quantity: 0,
+      });
+
+      await OutgoingShipmentProduct.create({
+        outgoing_shipment_id: newShipment.id,
+        pallet_product_id: palletProductId,
+        quantity: available_quantity,
+      });
+    }
+  }
+
+  const shipmentWithProducts = await OutgoingShipment.findOne({
+    where: { id: newShipment.id },
+    include: [
+      {
+        model: PalletProduct,
+        attributes: [
+          "id",
+          "purchaseorderproduct_id",
+          "pallet_id",
+          "quantity",
+          "available_quantity",
+          "createdAt",
+          "updatedAt",
+        ],
+        through: { attributes: ["quantity"] },
+      },
+    ],
+  });
+
+  return res.status(200).json({
+    msg: "Shipment created successfully from PurchaseOrder",
+    shipment: shipmentWithProducts,
+  });
+});
+
+
 
 //@route    GET api/v1/shipments
 //@desc     Get all outgoing shipments
@@ -333,6 +420,7 @@ exports.updateShipment = asyncHandler(async (req, res) => {
         return res.status(500).json({ msg: 'Something went wrong', error: error.message });
     }
 });
+
 
 
 exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
