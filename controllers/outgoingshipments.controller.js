@@ -1,4 +1,4 @@
-const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product } = require("../models");
+const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product, Pallet, PurchaseOrder } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
 const ExcelJS = require('exceljs')
@@ -463,4 +463,106 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   await workbook.xlsx.write(res); // Escribir directamente al cliente
   res.end();
+});
+
+//@route    GET api/v1/pallets/:purchase_order_id
+//@desc     Get all pallets and their products by purchase order ID
+//@access   Private
+exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
+  const { purchase_order_id } = req.params;
+
+  // Obtener el purchase order asociado al purchase_order_id
+  const purchaseOrder = await PurchaseOrder.findByPk(purchase_order_id);
+
+  if (!purchaseOrder) {
+    return res.status(404).json({ msg: "Purchase order not found" });
+  }
+
+  // Obtener todos los pallets relacionados con el purchase_order_id
+  const pallets = await Pallet.findAll({
+    where: { purchase_order_id },
+    include: [
+      {
+        model: PalletProduct,
+        attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity'],
+        include: [
+          {
+            model: PurchaseOrderProduct,
+            attributes: ['id', 'product_id'],
+            include: [
+              {
+                model: Product,
+                attributes: ['id', 'ASIN', 'seller_sku', 'product_image', 'product_name', 'in_seller_account'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!pallets || pallets.length === 0) {
+    return res.status(404).json({ msg: "No pallets found for the given purchase order ID" });
+  }
+
+  // Formatear la respuesta para que sea más clara
+  const formattedPallets = pallets.map((pallet) => {
+    return {
+      pallet_number: pallet.pallet_number,
+      pallet_id: pallet.id,
+      purchase_order_id: pallet.purchase_order_id,
+      products: pallet.PalletProducts.map((palletProduct) => {
+        const productData = palletProduct.PurchaseOrderProduct?.Product || {};
+        return {
+          pallet_product_id: palletProduct.id,
+          quantity: palletProduct.quantity,
+          product_id: productData.id,
+          ASIN: productData.ASIN,
+          seller_sku: productData.seller_sku,
+          product_image: productData.product_image,
+          product_name: productData.product_name,
+          in_seller_account: productData.in_seller_account,
+          available_quantity: palletProduct.available_quantity,
+          pallet_number: pallet.pallet_number
+        };
+      }),
+    };
+  });
+
+  return res.status(200).json({
+    order_number: purchaseOrder.order_number,
+    purchase_order_id: parseInt(purchase_order_id),
+    pallets: formattedPallets,
+  });
+});
+
+//@route    GET api/v1/purchaseorders/with-pallets
+//@desc     Get all purchase orders associated with pallets
+//@access   Private
+exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
+  // Verificar si el usuario tiene el rol adecuado
+  if (req.user.role !== "admin") {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  // Obtener los purchase_order_id únicos de la tabla de Pallets
+  const purchaseOrderIds = await Pallet.findAll({
+    attributes: ['purchase_order_id'], // Solo el campo `purchase_order_id`
+    group: ['purchase_order_id'], // Agrupar por `purchase_order_id`
+  });
+
+  // Si no se encontraron purchase_order_id
+  if (!purchaseOrderIds || purchaseOrderIds.length === 0) {
+    return res.status(404).json({ msg: "No purchase orders associated with pallets found" });
+  }
+
+  // Extraer los IDs en un array
+  const ids = purchaseOrderIds.map((pallet) => pallet.purchase_order_id);
+
+  // Obtener los detalles completos de los PurchaseOrders utilizando los IDs
+  const purchaseOrders = await PurchaseOrder.findAll({
+    where: { id: ids },
+  });
+
+  return res.status(200).json(purchaseOrders);
 });
