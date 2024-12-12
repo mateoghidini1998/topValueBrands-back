@@ -397,18 +397,18 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
             include: [
               {
                 model: Product,
-                attributes: ['seller_sku'], // Campo SKU desde Product
+                attributes: ['seller_sku'],
               },
             ],
           },
         ],
-        through: { attributes: ["quantity"] },
+        through: { attributes: ['quantity'] },
       },
     ],
   });
 
   if (!shipment) {
-    return res.status(404).json({ msg: "Shipment not found" });
+    return res.status(404).json({ msg: 'Shipment not found' });
   }
 
   const templatePath = path.join(
@@ -419,7 +419,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   );
 
   if (!fs.existsSync(templatePath)) {
-    return res.status(500).json({ msg: "Template not found" });
+    return res.status(500).json({ msg: 'Template not found' });
   }
 
   // Crear el workbook usando el template
@@ -429,23 +429,38 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   // Seleccionar la primera hoja del workbook
   const worksheet = workbook.getWorksheet(1);
 
-  // Agregar los datos al Excel
-  shipment.PalletProducts.forEach((product, index) => {
-    const rowIndex = index + 2; // Comenzar en la segunda fila después del encabezado
-    const sku =
-      product.PurchaseOrderProduct?.Product?.seller_sku || "N/A"; // SKU desde Product
-    const qty = product.OutgoingShipmentProduct?.quantity || 0; // QTY
-    const unitsPerCase = 1; // UNITS_PER_CASE
+  // Agrupar los productos por seller_sku y sumar quantities
+  const aggregatedProducts = {};
 
+  shipment.PalletProducts.forEach((product) => {
+    const sellerSku =
+      product.PurchaseOrderProduct?.Product?.seller_sku || 'N/A';
+    const quantity = product.OutgoingShipmentProduct?.quantity || 0;
+
+    if (aggregatedProducts[sellerSku]) {
+      aggregatedProducts[sellerSku].quantity += quantity;
+    } else {
+      aggregatedProducts[sellerSku] = {
+        sellerSku,
+        quantity,
+        unitsPerCase: 1, // Valor constante para UNITS_PER_CASE
+      };
+    }
+  });
+
+  // Escribir los datos agrupados en el Excel
+  let rowIndex = 2; // Comenzar en la segunda fila después del encabezado
+  Object.values(aggregatedProducts).forEach((product) => {
     const row = worksheet.getRow(rowIndex);
-    row.getCell(1).value = sku; // Columna SKU
-    row.getCell(2).value = qty; // Columna QTY
-    row.getCell(3).value = unitsPerCase; // Columna UNITS_PER_CASE
+    row.getCell(1).value = product.sellerSku; // Columna SKU
+    row.getCell(2).value = product.quantity; // Columna QTY
+    row.getCell(3).value = product.unitsPerCase; // Columna UNITS_PER_CASE
     row.commit();
+    rowIndex++;
   });
 
   // Generar un nombre único para el archivo
-  const fileName = `Shipment_${shipment.shipment_number}.xlsx`;
+  const fileName = `2DWorkflow_Shipment_${shipment.shipment_number}.xlsx`;
   const savePath = path.join(__dirname, '..', 'exports', fileName);
 
   // Guardar el archivo en el servidor
