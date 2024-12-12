@@ -9,7 +9,9 @@ const {
     getShipment,
     deleteShipment,
     updateShipment,
-    download2DWorkflowTemplate
+    download2DWorkflowTemplate,
+    getPalletsByPurchaseOrder,
+    getPurchaseOrdersWithPallets
 } = require('../controllers/outgoingshipments.controller')
 
 router.post('/', protect, createShipment)
@@ -19,6 +21,7 @@ router.get('/:id', protect, getShipment)
 router.delete('/:id', protect, deleteShipment)
 router.put('/:id', protect, updateShipment)
 router.get('/:id/download', protect, download2DWorkflowTemplate);
-
+router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
+router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
 
 module.exports = router;

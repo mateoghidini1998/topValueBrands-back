@@ -1,5 +1,5 @@
-const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product } = require("../models");
 const { Op } = require('sequelize');
+const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product, Pallet, PurchaseOrder } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
 const ExcelJS = require('exceljs')
@@ -233,9 +233,21 @@ exports.getShipment = asyncHandler(async (req, res) => {
           'quantity',
           'available_quantity',
           'createdAt',
-          'updatedAt'
+          'updatedAt',
         ],
         through: { attributes: ["quantity"] }, // Cantidad de OutgoingShipmentProduct
+        include: [
+          {
+            model: PurchaseOrderProduct,
+            attributes: ['id', 'product_id'], // Incluye el product_id
+            include: [
+              {
+                model: Product,
+                attributes: ['id', 'product_name', 'product_image', 'seller_sku'], // Incluye el product_name
+              },
+            ],
+          },
+        ],
       },
     ],
   });
@@ -243,7 +255,35 @@ exports.getShipment = asyncHandler(async (req, res) => {
   if (!shipment) {
     return res.status(404).json({ msg: "Shipment not found" });
   }
-  return res.status(200).json(shipment);
+
+  // Convierte `shipment` a un objeto plano
+  const shipmentData = shipment.toJSON();
+
+  // Reorganiza los datos
+  const formattedShipment = {
+    ...shipmentData,
+    PalletProducts: shipmentData.PalletProducts.map((palletProduct) => {
+      const productName =
+        palletProduct.PurchaseOrderProduct?.Product?.product_name || null;
+
+      const productImage =
+        palletProduct.PurchaseOrderProduct?.Product?.product_image || null;
+
+      const sellerSku =
+        palletProduct.PurchaseOrderProduct?.Product?.seller_sku || null;
+
+      return {
+        ...palletProduct,
+        product_name: productName, // Agrega el campo directamente aquí
+        product_image: productImage, // Agrega el campo directamente aquí
+        seller_sku: sellerSku, // Agrega el campo directamente aquí
+        PurchaseOrderProduct: undefined, // Opcional: elimina datos anidados innecesarios
+      };
+    }),
+  };
+
+  // Envía los datos procesados
+  return res.status(200).json(formattedShipment);
 });
 
 //@route    DELETE api/v1/shipments
@@ -263,7 +303,7 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
         {
           model: PalletProduct,
           attributes: [
-            'id', 
+            'id',
             'purchaseorderproduct_id',
             'pallet_id',
             'quantity',
@@ -271,7 +311,7 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
             'createdAt',
             'updatedAt'
           ],
-          through: { attributes: ["quantity"] }, 
+          through: { attributes: ["quantity"] },
         },
       ],
       transaction
@@ -322,103 +362,103 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
 // @desc    Update shipment and adjust available quantities in PurchaseOrderProduct
 // @access  Private
 exports.updateShipment = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') {
-        return res.status(401).json({ msg: 'Unauthorized' });
+  if (req.user.role !== 'admin') {
+    return res.status(401).json({ msg: 'Unauthorized' });
+  }
+
+  const shipment = await OutgoingShipment.findOne({
+    where: { id: req.params.id },
+    include: [{
+      model: PalletProduct,
+      through: { attributes: ['quantity'] }
+    }]
+  });
+
+  if (!shipment) {
+    return res.status(404).json({ msg: 'Shipment not found' });
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    const updatedPalletProducts = req.body.palletProducts;
+
+    for (let product of shipment.PalletProducts) {
+      const palleProduct = await PalletProduct.findOne({
+        where: { id: product.id }
+      });
+
+      const updatedProduct = updatedPurchaseOrderProducts.find(item => item.purchase_order_product_id === product.id);
+
+      if (updatedProduct) {
+        const oldQuantity = product.OutgoingShipmentProduct.quantity;
+        const newQuantity = updatedProduct.quantity;
+
+        console.log("OLD QUANTITY: ", oldQuantity);
+        console.log("NEW QUANTITY: ", newQuantity);
+
+        let currentAvailableQuantity = purchaseOrderProduct.quantity_available
+        console.log("CURRENT AV QTY: ", currentAvailableQuantity);
+
+        if (newQuantity > currentAvailableQuantity) {
+          throw new Error(`Quantity of ${newQuantity} exceeds the available stock for product ID ${product.id}. Available stock: ${currentAvailableQuantity}`);
+        }
+
+        let finalAvailableQuantity;
+        if (newQuantity > oldQuantity) {
+          finalAvailableQuantity = currentAvailableQuantity - (newQuantity - oldQuantity);
+        } else if (newQuantity < oldQuantity) {
+          finalAvailableQuantity = currentAvailableQuantity + (oldQuantity - newQuantity);
+        } else {
+          finalAvailableQuantity = currentAvailableQuantity;
+        }
+
+        console.log("FINAL AV QTY: ", finalAvailableQuantity);
+
+
+        await purchaseOrderProduct.update({ quantity_available: finalAvailableQuantity }, { transaction });
+
+        await OutgoingShipmentProduct.update(
+          { quantity: newQuantity },
+          {
+            where: {
+              outgoing_shipment_id: shipment.id,
+              purchase_order_product_id: product.id
+            },
+            transaction
+          }
+        );
+      }
     }
 
-    const shipment = await OutgoingShipment.findOne({
-        where: { id: req.params.id },
-        include: [{
-            model: PalletProduct,
-            through: { attributes: ['quantity'] }
-        }]
+    // 7. Guardar el número de shipment si ha sido modificado
+    if (req.body.shipment_number) {
+      shipment.shipment_number = req.body.shipment_number;
+      await shipment.save({ transaction });
+    }
+
+    // 8. Confirmar la transacción
+    await transaction.commit();
+
+    // Obtener el shipment actualizado con los productos asociados
+    const updatedShipment = await OutgoingShipment.findOne({
+      where: { id: shipment.id },
+      include: [{
+        model: PurchaseOrderProduct,
+        through: { attributes: ['quantity'] }
+      }]
     });
 
-    if (!shipment) {
-        return res.status(404).json({ msg: 'Shipment not found' });
-    }
+    return res.status(200).json({
+      msg: 'Shipment updated successfully',
+      shipment: updatedShipment
+    });
 
-    const transaction = await sequelize.transaction();
 
-    try {
-        const updatedPalletProducts = req.body.palletProducts;
-
-        for (let product of shipment.PalletProducts) {
-            const palleProduct = await PalletProduct.findOne({
-                where: { id: product.id }
-            });
-
-            const updatedProduct = updatedPurchaseOrderProducts.find(item => item.purchase_order_product_id === product.id);
-        
-            if (updatedProduct) {
-                const oldQuantity = product.OutgoingShipmentProduct.quantity;
-                const newQuantity = updatedProduct.quantity;
-        
-                console.log("OLD QUANTITY: ", oldQuantity);
-                console.log("NEW QUANTITY: ", newQuantity);
-
-                let currentAvailableQuantity = purchaseOrderProduct.quantity_available
-                console.log("CURRENT AV QTY: ", currentAvailableQuantity);
-
-                if (newQuantity > currentAvailableQuantity) {
-                    throw new Error(`Quantity of ${newQuantity} exceeds the available stock for product ID ${product.id}. Available stock: ${currentAvailableQuantity}`);
-                }
-
-                let finalAvailableQuantity;
-                if (newQuantity > oldQuantity) {
-                    finalAvailableQuantity = currentAvailableQuantity - (newQuantity - oldQuantity);
-                } else if (newQuantity < oldQuantity) {
-                    finalAvailableQuantity = currentAvailableQuantity + (oldQuantity - newQuantity);
-                } else {
-                    finalAvailableQuantity = currentAvailableQuantity;
-                }
-        
-                console.log("FINAL AV QTY: ", finalAvailableQuantity);
-        
-
-                await purchaseOrderProduct.update({ quantity_available: finalAvailableQuantity }, { transaction });
-
-                await OutgoingShipmentProduct.update(
-                    { quantity: newQuantity },
-                    {
-                        where: {
-                            outgoing_shipment_id: shipment.id,
-                            purchase_order_product_id: product.id
-                        },
-                        transaction
-                    }
-                );
-            }
-        }
-        
-        // 7. Guardar el número de shipment si ha sido modificado
-        if (req.body.shipment_number) {
-            shipment.shipment_number = req.body.shipment_number;
-            await shipment.save({ transaction });
-        }
-        
-        // 8. Confirmar la transacción
-        await transaction.commit();
-        
-        // Obtener el shipment actualizado con los productos asociados
-        const updatedShipment = await OutgoingShipment.findOne({
-            where: { id: shipment.id },
-            include: [{
-                model: PurchaseOrderProduct,
-                through: { attributes: ['quantity'] }
-            }]
-        });
-        
-        return res.status(200).json({
-            msg: 'Shipment updated successfully',
-            shipment: updatedShipment
-        });
-        
-
-    } catch (error) {
-        await transaction.rollback();
-        return res.status(500).json({ msg: 'Something went wrong', error: error.message });
-    }
+  } catch (error) {
+    await transaction.rollback();
+    return res.status(500).json({ msg: 'Something went wrong', error: error.message });
+  }
 });
 
 
@@ -445,18 +485,18 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
             include: [
               {
                 model: Product,
-                attributes: ['seller_sku'], // Campo SKU desde Product
+                attributes: ['seller_sku'],
               },
             ],
           },
         ],
-        through: { attributes: ["quantity"] },
+        through: { attributes: ['quantity'] },
       },
     ],
   });
 
   if (!shipment) {
-    return res.status(404).json({ msg: "Shipment not found" });
+    return res.status(404).json({ msg: 'Shipment not found' });
   }
 
   const templatePath = path.join(
@@ -467,7 +507,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   );
 
   if (!fs.existsSync(templatePath)) {
-    return res.status(500).json({ msg: "Template not found" });
+    return res.status(500).json({ msg: 'Template not found' });
   }
 
   // Crear el workbook usando el template
@@ -477,23 +517,38 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   // Seleccionar la primera hoja del workbook
   const worksheet = workbook.getWorksheet(1);
 
-  // Agregar los datos al Excel
-  shipment.PalletProducts.forEach((product, index) => {
-    const rowIndex = index + 2; // Comenzar en la segunda fila después del encabezado
-    const sku =
-      product.PurchaseOrderProduct?.Product?.seller_sku || "N/A"; // SKU desde Product
-    const qty = product.OutgoingShipmentProduct?.quantity || 0; // QTY
-    const unitsPerCase = 1; // UNITS_PER_CASE
+  // Agrupar los productos por seller_sku y sumar quantities
+  const aggregatedProducts = {};
 
+  shipment.PalletProducts.forEach((product) => {
+    const sellerSku =
+      product.PurchaseOrderProduct?.Product?.seller_sku || 'N/A';
+    const quantity = product.OutgoingShipmentProduct?.quantity || 0;
+
+    if (aggregatedProducts[sellerSku]) {
+      aggregatedProducts[sellerSku].quantity += quantity;
+    } else {
+      aggregatedProducts[sellerSku] = {
+        sellerSku,
+        quantity,
+        unitsPerCase: 1, // Valor constante para UNITS_PER_CASE
+      };
+    }
+  });
+
+  // Escribir los datos agrupados en el Excel
+  let rowIndex = 2; // Comenzar en la segunda fila después del encabezado
+  Object.values(aggregatedProducts).forEach((product) => {
     const row = worksheet.getRow(rowIndex);
-    row.getCell(1).value = sku; // Columna SKU
-    row.getCell(2).value = qty; // Columna QTY
-    row.getCell(3).value = unitsPerCase; // Columna UNITS_PER_CASE
+    row.getCell(1).value = product.sellerSku; // Columna SKU
+    row.getCell(2).value = product.quantity; // Columna QTY
+    row.getCell(3).value = product.unitsPerCase; // Columna UNITS_PER_CASE
     row.commit();
+    rowIndex++;
   });
 
   // Generar un nombre único para el archivo
-  const fileName = `Shipment_${shipment.shipment_number}.xlsx`;
+  const fileName = `2DWorkflow_Shipment_${shipment.shipment_number}.xlsx`;
   const savePath = path.join(__dirname, '..', 'exports', fileName);
 
   // Guardar el archivo en el servidor
@@ -511,4 +566,106 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   await workbook.xlsx.write(res); // Escribir directamente al cliente
   res.end();
+});
+
+//@route    GET api/v1/pallets/:purchase_order_id
+//@desc     Get all pallets and their products by purchase order ID
+//@access   Private
+exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
+  const { purchase_order_id } = req.params;
+
+  // Obtener el purchase order asociado al purchase_order_id
+  const purchaseOrder = await PurchaseOrder.findByPk(purchase_order_id);
+
+  if (!purchaseOrder) {
+    return res.status(404).json({ msg: "Purchase order not found" });
+  }
+
+  // Obtener todos los pallets relacionados con el purchase_order_id
+  const pallets = await Pallet.findAll({
+    where: { purchase_order_id },
+    include: [
+      {
+        model: PalletProduct,
+        attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity'],
+        include: [
+          {
+            model: PurchaseOrderProduct,
+            attributes: ['id', 'product_id'],
+            include: [
+              {
+                model: Product,
+                attributes: ['id', 'ASIN', 'seller_sku', 'product_image', 'product_name', 'in_seller_account'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!pallets || pallets.length === 0) {
+    return res.status(404).json({ msg: "No pallets found for the given purchase order ID" });
+  }
+
+  // Formatear la respuesta para que sea más clara
+  const formattedPallets = pallets.map((pallet) => {
+    return {
+      pallet_number: pallet.pallet_number,
+      pallet_id: pallet.id,
+      purchase_order_id: pallet.purchase_order_id,
+      products: pallet.PalletProducts.map((palletProduct) => {
+        const productData = palletProduct.PurchaseOrderProduct?.Product || {};
+        return {
+          pallet_product_id: palletProduct.id,
+          quantity: palletProduct.quantity,
+          product_id: productData.id,
+          ASIN: productData.ASIN,
+          seller_sku: productData.seller_sku,
+          product_image: productData.product_image,
+          product_name: productData.product_name,
+          in_seller_account: productData.in_seller_account,
+          available_quantity: palletProduct.available_quantity,
+          pallet_number: pallet.pallet_number
+        };
+      }),
+    };
+  });
+
+  return res.status(200).json({
+    order_number: purchaseOrder.order_number,
+    purchase_order_id: parseInt(purchase_order_id),
+    pallets: formattedPallets,
+  });
+});
+
+//@route    GET api/v1/purchaseorders/with-pallets
+//@desc     Get all purchase orders associated with pallets
+//@access   Private
+exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
+  // Verificar si el usuario tiene el rol adecuado
+  if (req.user.role !== "admin") {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  // Obtener los purchase_order_id únicos de la tabla de Pallets
+  const purchaseOrderIds = await Pallet.findAll({
+    attributes: ['purchase_order_id'], // Solo el campo `purchase_order_id`
+    group: ['purchase_order_id'], // Agrupar por `purchase_order_id`
+  });
+
+  // Si no se encontraron purchase_order_id
+  if (!purchaseOrderIds || purchaseOrderIds.length === 0) {
+    return res.status(404).json({ msg: "No purchase orders associated with pallets found" });
+  }
+
+  // Extraer los IDs en un array
+  const ids = purchaseOrderIds.map((pallet) => pallet.purchase_order_id);
+
+  // Obtener los detalles completos de los PurchaseOrders utilizando los IDs
+  const purchaseOrders = await PurchaseOrder.findAll({
+    where: { id: ids },
+  });
+
+  return res.status(200).json(purchaseOrders);
 });
