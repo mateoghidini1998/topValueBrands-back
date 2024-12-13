@@ -4,6 +4,7 @@ const { protect } = require('../middlewares/auth')
 
 const {
     createShipment,
+    createShipmentByPurchaseOrder,
     getShipments,
     getShipment,
     deleteShipment,
@@ -14,6 +15,7 @@ const {
 } = require('../controllers/outgoingshipments.controller')
 
 router.post('/', protect, createShipment)
+router.post('/po/:id', protect, createShipmentByPurchaseOrder)
 router.get('/', protect, getShipments)
 router.get('/:id', protect, getShipment)
 router.delete('/:id', protect, deleteShipment)
