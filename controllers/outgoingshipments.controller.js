@@ -1,4 +1,3 @@
-const { Op } = require('sequelize');
 const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product, Pallet, PurchaseOrder } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
@@ -105,7 +104,7 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
     return res.status(401).json({ msg: "Unauthorized" });
   }
 
-  const { id } = req.params; 
+  const { id } = req.params;
   const { shipment_number } = req.body;
 
   const existingShipment = await OutgoingShipment.findOne({

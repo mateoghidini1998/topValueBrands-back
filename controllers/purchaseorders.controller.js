@@ -783,7 +783,7 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   let totalPrice = 0;
 
   for (const product of products) {
-    console.log(product);
+    // console.log(product);
     const { product_id, product_cost, quantity, fees, lowest_fba_price } = product;
     const purchaseOrderProduct = await PurchaseOrderProduct.create({
       purchase_order_id: purchaseOrderId,
@@ -887,11 +887,22 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
   }
 
   const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
+
+  // console.log(purchaseOrderProducts[0].dataValues);
+  //log every purchaseOrderProduct from the purchaseOrderProducts array
+
+  let totalQuantity = 0
+
+  for (const product of purchaseOrderProducts) {
+    // console.log(product.dataValues);
+    totalQuantity += parseInt(product.dataValues.quantity_purchased);
+  }
+
   const totalPrice = purchaseOrder.total_price;
-  const totalQuantity = purchaseOrderProducts.reduce(
-    (total, product) => total + product.quantity,
-    0
-  );
+  // const totalQuantity = purchaseOrderProducts.reduce(
+  //   (total, product) => parseInt(total) + parseInt(product.quantity),
+  //   0
+  // );
   const totalAmount = purchaseOrderProducts.reduce(
     (total, product) => Number(total) + Number(product.total_amount),
     0
@@ -899,7 +910,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
 
   // Obtener los nombres de los productos de forma asíncrona
   const products = await Promise.all(
-    purchaseOrderProducts.map(async (product) => {
+    purchaseOrderProducts.map(async (product, i) => {
       const productData = await Product.findOne({
         where: { id: product.product_id },
       });
@@ -907,12 +918,19 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
         return null;
       }
 
+      console.log(product);
+
+      const unit_price = parseInt(productData.dataValues.pack_type) ? product.dataValues.unit_price / parseInt(productData.dataValues.pack_type) : product.dataValues.unit_price;
+      const quantity_purchased = parseInt(productData.dataValues.pack_type) ? product.quantity_purchased * parseInt(productData.dataValues.pack_type) : product.quantity_purchased;
+      const total_amount = unit_price * quantity_purchased;
+
       return {
-        ASIN: productData.ASIN,
+        ASIN: productData.dataValues.ASIN,
         product_id: product.product_id,
-        product_cost: parseFloat(product.product_cost),
-        quantity_purchased: product.quantity,
-        total_amount: product.total_amount,
+        product_cost: unit_price,
+        quantity_purchased: quantity_purchased,
+        total_amount: total_amount,
+        pack_type: parseInt(productData.dataValues.pack_type),
       };
     })
   );
@@ -942,7 +960,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
     products: filteredProducts,
   };
 
-  console.log(pdfData);
+  // console.log(pdfData);
 
   const pdfBuffer = await generatePDF(pdfData);
 
@@ -955,7 +973,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
 });
 
 const generatePDF = (data) => {
-  console.log(data);
+  // console.log(data);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument();
@@ -1013,7 +1031,7 @@ const generatePDF = (data) => {
         TABLE_LEFT + 180,
         position
       );
-      doc.text(product.quantity, TABLE_LEFT + 300, position);
+      doc.text(product.quantity_purchased, TABLE_LEFT + 300, position);
       doc.text(
         "$" + Number(product.total_amount).toFixed(2),
         TABLE_LEFT + 400,
