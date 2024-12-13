@@ -3,7 +3,8 @@ const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
 const ExcelJS = require('exceljs')
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs');
+const { where, Op } = require("sequelize");
 
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
@@ -500,6 +501,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity'],
+        where: { available_quantity: { [Op.gt]: 0 } },
         include: [
           {
             model: PurchaseOrderProduct,
