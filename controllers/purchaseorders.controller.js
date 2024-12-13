@@ -7,6 +7,7 @@ const {
   TrackedProduct,
   PurchaseOrderStatus,
 } = require("../models");
+const { addUPC } = require('./products.controller')
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
@@ -206,14 +207,12 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
     purchaseOrder.id
   );
 
-  // Iterar sobre los productos actualizados
   for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
     const purchaseOrderProduct = purchaseorderproducts.find(
       (p) => p.id === purchaseOrderProductUpdate.purchaseOrderProductId
     );
 
     if (purchaseOrderProduct) {
-      // Actualizar los valores
       purchaseOrderProduct.product_cost = parseFloat(
         purchaseOrderProductUpdate.product_cost
       );
@@ -228,11 +227,9 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
         purchaseOrderProductUpdate.profit
       );
 
-      // Guardar los cambios en la base de datos
       const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
 
       if (updatedPurchaseOrderProduct) {
-        //update total_price of purchase order
         const purchaseOrderProducts = await getPurchaseOrderProducts(
           purchaseOrder.id
         );
@@ -240,6 +237,16 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
           return acc + product.product_cost * product.quantity_purchased;
         }, 0);
         await purchaseOrder.update({ total_price: totalPrice });
+
+        const product = await Product.findByPk(purchaseOrderProduct.product_id);
+        if (product) {
+          const { upc } = purchaseOrderProductUpdate;
+          try {
+            await addUPC(product, upc);
+          } catch (error) {
+            console.error(`Error updating UPC for product ${product.id}: ${error.message}`);
+          }
+        }
       }
     } else {
       return res
@@ -249,12 +256,11 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
         });
     }
   }
-
-  // Enviar respuesta exitosa
   res
     .status(200)
     .json({ message: "Purchase Order Products updated successfully" });
 });
+
 
 exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
@@ -551,8 +557,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   });
 });
 
-// update purchase order number
-
 exports.updatePONumber = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
   const { order_number } = req.body;
@@ -578,7 +582,6 @@ exports.updatePONumber = asyncHandler(async (req, res, next) => {
   });
 })
 
-// delete purchase order product of and order by ID
 exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(

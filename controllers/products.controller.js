@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
+const req = require('express/lib/request');
 
 dotenv.config({
   path: './.env',
@@ -216,7 +217,6 @@ exports.getProducts = asyncHandler(async (req, res) => {
     attributes: ['supplier_name'],
   };
 
-  // Construcción dinámica de la consulta
   const whereConditions = {
     is_active: true,
   };
@@ -256,7 +256,6 @@ exports.getProducts = asyncHandler(async (req, res) => {
       data: products.rows,
     });
   } catch (error) {
-    // Manejo centralizado de errores
     return res.status(500).json({
       success: false,
       msg: 'Error fetching products',
@@ -444,3 +443,15 @@ const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
   }
 
 })
+
+exports.addUPC = async(product, upc) => {
+  if(!product.upc) {
+    if(!upc || upc.trim() === '') {
+      throw new Error(`Invalid UPC provided for product ${product.id}`);
+    }
+    product.upc = upc.trim();
+    await product.save();
+  } else {
+    console.log(`Product ${product.id} already has a valid UPC: ${product.upc}`);
+  }
+}
