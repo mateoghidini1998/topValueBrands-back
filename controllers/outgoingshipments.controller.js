@@ -217,9 +217,9 @@ exports.getShipments = asyncHandler(async (req, res) => {
 //@desc     Get outgoing shipment by id
 //@access   Private
 exports.getShipment = asyncHandler(async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
+  // if (req.user.role !== "admin") {
+  //   return res.status(401).json({ msg: "Unauthorized" });
+  // }
 
   const shipment = await OutgoingShipment.findOne({
     where: { id: req.params.id },
@@ -243,7 +243,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
             include: [
               {
                 model: Product,
-                attributes: ['id', 'product_name', 'product_image', 'seller_sku'], // Incluye el product_name
+                attributes: ['id', 'product_name', 'product_image', 'seller_sku', 'in_seller_account'], // Incluye el product_name
               },
             ],
           },
@@ -271,12 +271,15 @@ exports.getShipment = asyncHandler(async (req, res) => {
 
       const sellerSku =
         palletProduct.PurchaseOrderProduct?.Product?.seller_sku || null;
+      const in_seller_account =
+        palletProduct.PurchaseOrderProduct?.Product?.in_seller_account || null;
 
       return {
         ...palletProduct,
         product_name: productName, // Agrega el campo directamente aquí
         product_image: productImage, // Agrega el campo directamente aquí
         seller_sku: sellerSku, // Agrega el campo directamente aquí
+        in_seller_account: in_seller_account,
         PurchaseOrderProduct: undefined, // Opcional: elimina datos anidados innecesarios
       };
     }),
@@ -612,6 +615,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
   // Formatear la respuesta para que sea más clara
   const formattedPallets = pallets.map((pallet) => {
     return {
+      purchase_order_number: purchaseOrder.order_number,
       pallet_number: pallet.pallet_number,
       pallet_id: pallet.id,
       purchase_order_id: pallet.purchase_order_id,
