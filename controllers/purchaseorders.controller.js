@@ -7,7 +7,7 @@ const {
   TrackedProduct,
   PurchaseOrderStatus,
 } = require("../models");
-const { addUPC } = require('./products.controller')
+const { addUPCToPOProduct: addUPC } = require('./products.controller')
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
@@ -450,6 +450,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
+
       },
       {
         model: PurchaseOrderStatus,
@@ -496,6 +497,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       return {
         ...trackedProduct.toJSON(),
         product_name: product.product_name,
+        product_id: product.id,
+        upc: product.upc,
         ASIN: product.ASIN,
         seller_sku: product.seller_sku,
         supplier_name: supplier.supplier_name,
