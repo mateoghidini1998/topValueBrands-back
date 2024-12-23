@@ -19,7 +19,7 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 router.post('/', protect, createShipment)
 router.post('/po/:id', protect, createShipmentByPurchaseOrder)
 router.get('/', protect, getShipments)
-router.get('/:id', protect, getShipment)
+router.get('/:id', getShipment)
 router.delete('/:id', protect, deleteShipment)
 router.put('/:id', protect, updateShipment)
 router.get('/:id/download', protect, download2DWorkflowTemplate);

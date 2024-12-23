@@ -7,7 +7,7 @@ const {
   TrackedProduct,
   PurchaseOrderStatus,
 } = require("../models");
-const { addUPC } = require('./products.controller')
+const { addUPCToPOProduct: addUPC } = require('./products.controller')
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
@@ -450,6 +450,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
+
       },
       {
         model: PurchaseOrderStatus,
@@ -496,6 +497,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       return {
         ...trackedProduct.toJSON(),
         product_name: product.product_name,
+        product_id: product.id,
+        upc: product.upc,
         ASIN: product.ASIN,
         seller_sku: product.seller_sku,
         supplier_name: supplier.supplier_name,
@@ -931,6 +934,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
         quantity_purchased: quantity_purchased,
         total_amount: total_amount,
         pack_type: parseInt(productData.dataValues.pack_type),
+        supplier_item_number: productData.dataValues.supplier_item_number,
       };
     })
   );
@@ -1024,7 +1028,7 @@ const generatePDF = (data) => {
           .stroke();
       }
       doc.fillColor("black");
-      doc.text(product.product_id, TABLE_LEFT, position);
+      doc.text(product.supplier_item_number, TABLE_LEFT, position);
       // doc.text(product.ASIN, TABLE_LEFT + 70, position);
       doc.text(
         "$" + Number(product.product_cost).toFixed(2),

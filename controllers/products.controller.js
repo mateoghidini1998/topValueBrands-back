@@ -405,14 +405,37 @@ const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
 
 })
 
-exports.addUPC = async(product, upc) => {
-  if(!product.upc) {
-    if(!upc || upc.trim() === '') {
-      throw new Error(`Invalid UPC provided for product ${product.id}`);
-    }
-    product.upc = upc.trim();
-    await product.save();
-  } else {
-    console.log(`Product ${product.id} already has a valid UPC: ${product.upc}`);
+exports.addUPCToPOProduct = async (product, upc) => {
+
+  // if (!product.upc) {
+  if (!upc || upc.trim() === '') {
+    throw new Error(`Invalid UPC provided for product ${product.id}`);
   }
+  product.upc = upc.trim();
+  await product.save();
+  // } 
+  // else {
+  //   console.log(`Product ${product.id} already has a valid UPC: ${product.upc}`);
+  //   throw new Error(`Product ${product.id} already has a valid UPC: ${product.upc}`);
+  // }
 }
+
+exports.addUPC = asyncHandler(async (req, res) => {
+
+  const { upc } = req.body;
+  const { id } = req.params;
+
+  const product = await Product.findByPk(id);
+
+  if (!product) {
+    return res.status(404).json({ msg: 'Product not found' });
+  }
+
+  try {
+    await exports.addUPCToPOProduct(product, upc);
+    res.status(200).json({ msg: 'UPC added successfully' });
+  } catch (error) {
+    console.error({ msg: error.message });
+    res.status(500).json({ msg: 'Error adding UPC to product' });
+  }
+})
