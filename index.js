@@ -7,14 +7,10 @@ const app = express();
 
 app.use(express.json());
 
-
 //Load env vars
 dotenv.config({
   path: './.env',
 });
-
-
-
 
 const corsOptions = {
   origin: [
