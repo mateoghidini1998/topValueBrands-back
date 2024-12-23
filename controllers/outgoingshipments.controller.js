@@ -10,10 +10,6 @@ const { where, Op } = require("sequelize");
 //@desc     Create an outgoing shipment
 //@access   Private
 exports.createShipment = asyncHandler(async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
-
   // Comprobar si el envío ya existe
   const existingShipment = await OutgoingShipment.findOne({
     where: { shipment_number: req.body.shipment_number },
@@ -100,10 +96,6 @@ exports.createShipment = asyncHandler(async (req, res) => {
 //@desc     Create an outgoing shipment from a purchase order
 //@access   Private
 exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
-
   const { id } = req.params;
   const { shipment_number } = req.body;
 
@@ -186,10 +178,6 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 //@desc     Get all outgoing shipments
 //@access   Private
 exports.getShipments = asyncHandler(async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
-
   const shipments = await OutgoingShipment.findAll({
     include: [
       {
@@ -293,9 +281,6 @@ exports.getShipment = asyncHandler(async (req, res) => {
 //@desc     Delete shipment by id
 //@access   Private
 exports.deleteShipment = asyncHandler(async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
 
   const transaction = await sequelize.transaction();
 
@@ -365,9 +350,6 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
 // @desc    Update shipment and adjust available quantities in PurchaseOrderProduct
 // @access  Private
 exports.updateShipment = asyncHandler(async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ msg: 'Unauthorized' });
-  }
 
   const shipment = await OutgoingShipment.findOne({
     where: { id: req.params.id },
@@ -648,10 +630,6 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
 //@desc     Get all purchase orders associated with pallets
 //@access   Private
 exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
-  // Verificar si el usuario tiene el rol adecuado
-  if (req.user.role !== "admin") {
-    return res.status(401).json({ msg: "Unauthorized" });
-  }
 
   // Obtener los purchase_order_id únicos de la tabla de Pallets
   const purchaseOrderIds = await Pallet.findAll({
