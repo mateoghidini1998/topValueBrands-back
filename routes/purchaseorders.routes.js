@@ -20,6 +20,7 @@ const {
   addProductToPurchaseOrder,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
+const { addUPC } = require('../controllers/products.controller');
 
 router.get('/', getPurchaseOrders);
 router.post('/', createPurchaseOrder);
@@ -53,6 +54,7 @@ router.patch('/orderNumber/:id', updatePONumber);
 router.patch('/received/:purchaseOrderProductId', addQuantityReceived);
 
 router.patch('/:id/products', updatePurchaseOrderProducts);
+router.patch('/:id/addUPC', addUPC);
 
 // add notes to purchase order product
 router.patch('/notes/:purchaseOrderProductId', addNotesToPurchaseOrderProduct);
