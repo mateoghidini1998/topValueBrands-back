@@ -7,7 +7,8 @@ const fs = require('fs');
 const { where, Op } = require("sequelize");
 const req = require("express/lib/request");
 const axios = require('axios')
-const { fetchNewTokenForFees } = require('../middlewares/lwa_token')
+const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
+const logger = require("../logger/logger");
 
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
@@ -656,14 +657,27 @@ exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
 //@desc    Track shipments from amazon
 //@access  Private
 exports.getShipmentTracking = asyncHandler(async (req, res) => {
+  console.log('Tracking shipments...');
   const baseUrl = `https://sellingpartnerapi-na.amazon.com/fba/inbound/v0/shipments`;
 
   const marketPlace = process.env.MARKETPLACE_US_ID;
   const lastUpdatedAfter = getLastMonthDate();
   const shipmentStatuses = SHIPMENT_STATUSES.join(',');
-  const accessToken = await fetchNewTokenForFees();
+  let accessToken = await fetchNewTokenForFees();
+  console.log(accessToken);
+  logger.info('Access token:', accessToken);
 
   try {
+
+    if (!accessToken) {
+      console.log('fetching new token for sync db with amazon...');
+      logger.info('fetching new token for sync db with amazon...');
+      accessToken = await fetchNewTokenForFees();
+    } else {
+      console.log('Token is still valid...');
+      logger.info('Token is still valid...');
+    }
+
     let url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
 
     const response = await axios.get(url, {
