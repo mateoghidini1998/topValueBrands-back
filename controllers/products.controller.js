@@ -16,17 +16,15 @@ dotenv.config({
 //@desc     Create a product
 //@access   Private
 exports.createProduct = asyncHandler(async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ msg: 'Unauthorized' });
-  }
+
 
   const product = await Product.findOne({
     where: { ASIN: req.body.ASIN },
   });
   if (product) {
     return res.status(400).json({ msg: 'Product already exists' });
-  
-  } else {  
+
+  } else {
     const accessToken = req.headers['x-amz-access-token']
     const productName = await getProductNameByASIN(req.body.ASIN, req.headers['x-amz-access-token']);
     req.body.product_name = productName;
@@ -74,9 +72,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
 //@desc     Update product
 //@access   Private
 exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ msg: 'Unauthorized' });
-  }
+
 
   const product = await Product.findOne({
     where: { id: req.body.id },
@@ -129,11 +125,6 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 //@desc     Update is_active as a toggle field of products
 //@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ where: { id: req.user.id } });
-
-  if (user.role !== 'admin') {
-    return res.status(401).json({ msg: 'Unauthorized' });
-  }
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
@@ -165,18 +156,14 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@desc     Get products
 //@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ where: { id: req.user.id } });
-  if (user.role !== 'admin') {
-    return res.status(401).json({ msg: 'Unauthorized' });
-  }
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
   const supplier = req.query.supplier || null;
-  const orderBy = req.query.orderBy || 'supplier_item_number';
-  const orderWay = req.query.orderWay || 'ASC';
+  const orderBy = req.query.orderBy || 'updatedAt';
+  const orderWay = req.query.orderWay || 'DESC';
 
   const includeSupplier = {
     model: Supplier,

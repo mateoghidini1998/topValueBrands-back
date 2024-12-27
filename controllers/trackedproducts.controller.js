@@ -48,7 +48,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
-  const supplier_id = req.query.supplier_id || null;
+  const supplier_id = req.query.supplier || null;
   const orderBy = req.query.orderBy || 'updatedAt';
   const orderWay = req.query.orderWay || 'ASC';
 

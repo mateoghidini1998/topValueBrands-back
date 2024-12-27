@@ -13,7 +13,7 @@ const {
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
-router.post('/add', protect, addAccessTokenHeader, authorize("admin"), createProduct);
+router.post('/add', addAccessTokenHeader, createProduct);
 
 /**
  * @openapi
@@ -102,7 +102,7 @@ router.post('/add', protect, addAccessTokenHeader, authorize("admin"), createPro
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/', protect, authorize('admin'), getProducts);
+router.get('/', getProducts);
 
 // get product by seller_sku
 router.get('/:seller_sku', getProductBySellerSku);
@@ -215,8 +215,8 @@ router.post('/', createProduct);
  */
 router.patch(
   '/addExtraInfoToProduct',
-  protect,
-  authorize('admin'),
+
+
   addExtraInfoToProduct
 );
 
@@ -306,14 +306,14 @@ router.patch(
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.patch('/disable', protect, authorize('admin'), toggleShowProduct);
+router.patch('/disable', toggleShowProduct);
 
 router.patch('/addImage', addAccessTokenHeader, addImageToAllProducts);
 
 router.patch(
   '/syncImages',
-  protect,
-  authorize('admin'),
+
+
   addAccessTokenHeader,
   addImageToNewProducts
 );
