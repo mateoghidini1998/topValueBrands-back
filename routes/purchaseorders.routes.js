@@ -36,7 +36,7 @@ router.get('/download/:id', downloadPurchaseOrder);
 // delete purchase order
 router.delete('/delete/:id', deletePurchaseOrder);
 
-router.get('/summary/:id', protect, getPurchaseOrderSummary);
+router.get('/summary/:id', getPurchaseOrderSummary);
 
 // delete purchase order product of and order by ID
 router.delete(

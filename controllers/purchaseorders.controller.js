@@ -11,7 +11,7 @@ const { addUPCToPOProduct: addUPC } = require('./products.controller')
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
-const { where, Transaction } = require("sequelize");
+const { where, Transaction, or, Op } = require("sequelize");
 const {
   getTrackedProductsFromAnOrder,
 } = require("./trackedproducts.controller");
@@ -271,6 +271,13 @@ exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
+        include: [
+          {
+            model: Product,
+            as: "Product",
+            attributes: ["product_name", "product_image", "in_seller_account"],
+          },
+        ]
       },
     ],
   });
@@ -281,164 +288,145 @@ exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
-  const purchaseOrders = await PurchaseOrder.findAll({
-    where: { is_active: true },
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: "purchaseOrderProducts",
-        where: { is_active: true },
-      },
-      {
-        model: PurchaseOrderStatus,
-        as: "purchaseOrderStatus", // Incluido el modelo con alias
-        attributes: ["description"], // Solo trae el campo 'description'
-      },
-    ],
-  });
+//@route    GET api/purchaseorders/
+//@desc     Get purchase orders
+//@access   Private
+exports.getPurchaseOrders = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+  const keyword = req.query.keyword || ''; // Para filtrar por order_number
+  const supplierId = req.query.supplier || null; // Para filtrar por supplier_id
 
-  // Obtener supplier_name para cada purchase order
-  await Promise.all(
-    purchaseOrders.map(async (purchaseOrder) => {
-      const purchaseSupplier = await Supplier.findByPk(
-        purchaseOrder.supplier_id
-      );
-      purchaseOrder.setDataValue(
-        "supplier_name",
-        purchaseSupplier.supplier_name
-      );
+  try {
+    const whereConditions = {
+      is_active: true,
+    };
 
-      // Utiliza la asociación ya existente para obtener la descripción
-      const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
-      purchaseOrder.setDataValue(
-        "status",
-        (statusDescription || "Unknown")
-      );
-    })
-  );
+    // Filtrar por order_number usando keyword
+    if (keyword) {
+      whereConditions[Op.or] = [
+        { order_number: { [Op.like]: `%${keyword}%` } },
+      ];
+    }
 
-  // Obtener product_name para cada purchase order product
-  await Promise.all(
-    purchaseOrders.map(async (purchaseOrder) => {
-      await Promise.all(
-        purchaseOrder.purchaseOrderProducts.map(
-          async (purchaseOrderProduct) => {
-            const purchaseProduct = await Product.findByPk(
-              purchaseOrderProduct.product_id,
-              {
-                where: { is_active: true }
-              }
-            )
-            purchaseOrderProduct.setDataValue(
-              "product_name",
-              purchaseProduct.product_name
-            );
+    // Filtrar por supplier_id si se especifica
+    if (supplierId) {
+      whereConditions.supplier_id = supplierId;
+    }
+
+    const count = await PurchaseOrder.count({
+      where: whereConditions,
+    });
+
+
+    const purchaseOrders = await PurchaseOrder.findAll({
+      where: whereConditions,
+      offset,
+      limit,
+      order: [["updatedAt", "DESC"]],
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
+          where: { is_active: true },
+        },
+        {
+          model: PurchaseOrderStatus,
+          as: "purchaseOrderStatus",
+          attributes: ["description"],
+        },
+        {
+          model: Supplier,
+          as: "suppliers",
+          attributes: ["supplier_name"],
+          where: keyword ? { supplier_name: { [Op.like]: `%${keyword}%` } } : undefined,
+        },
+      ],
+    });
+
+
+    // Procesar datos adicionales de las órdenes
+    await Promise.all(
+      purchaseOrders.map(async (purchaseOrder) => {
+        // Añadir descripción de estado
+        const statusDescription = purchaseOrder.purchaseOrderStatus?.description || "Unknown";
+        purchaseOrder.setDataValue("status", statusDescription);
+
+        // Añadir el nombre del supplier
+        const supplierName = purchaseOrder.suppliers?.supplier_name || "Unknown";
+        purchaseOrder.setDataValue("supplier_name", supplierName);
+
+        // Procesar productos de la orden
+        const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
+
+        await Promise.all(
+          purchaseOrderProducts.map(async (purchaseOrderProduct) => {
+            const product = await Product.findByPk(purchaseOrderProduct.product_id);
+            purchaseOrderProduct.setDataValue("product_name", product?.product_name || "Unknown");
             purchaseOrderProduct.setDataValue(
               "quantity_missing",
-              purchaseOrderProduct.quantity_purchased -
-              (purchaseOrderProduct.quantity_received || 0)
+              purchaseOrderProduct.quantity_purchased - (purchaseOrderProduct.quantity_received || 0)
             );
-          }
-        )
-      );
-    })
-  );
-
-  // Calcular el ROI promedio para cada purchase order
-  await Promise.all(
-    purchaseOrders.map(async (purchaseOrder) => {
-      const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
-      const roiArr = [];
-
-      // Obtener todos los IDs de productos de la orden de compra
-      const productIds = purchaseOrderProducts.map(
-        (purchaseOrderProduct) => purchaseOrderProduct.product_id
-      );
-
-      // Obtener productos rastreados y productos de la orden
-      const [trackedProductsOfTheOrder, productsOfTheOrder] = await Promise.all(
-        [
-          TrackedProduct.findAll({ where: { product_id: productIds } }),
-          Product.findAll({ where: { id: productIds } }),
-        ]
-      );
-
-      // Calcular el ROI de cada producto rastreado
-      trackedProductsOfTheOrder.forEach((trackedProduct) => {
-        const product = productsOfTheOrder.find(
-          (product) => product.id === trackedProduct.product_id
+          })
         );
 
-        if (product && product.product_cost !== 0) {
-          const profit = (trackedProduct.profit / product.product_cost) * 100;
-          roiArr.push(profit);
-        }
-      });
+        // Calcular el ROI promedio
+        const trackedProducts = await TrackedProduct.findAll({
+          where: { product_id: purchaseOrderProducts.map((p) => p.product_id) },
+        });
 
-      // Calcular el promedio de ROI y establecer el valor
-      const totalRoi = roiArr.reduce((a, b) => a + b, 0);
-      purchaseOrder.setDataValue("average_roi", totalRoi / roiArr.length);
-    })
-  );
+        const roiArr = trackedProducts.map((trackedProduct) => {
+          const product = purchaseOrderProducts.find(
+            (p) => p.product_id === trackedProduct.product_id
+          );
+          return product?.product_cost
+            ? (trackedProduct.profit / product.product_cost) * 100
+            : 0;
+        });
 
-  await Promise.all(
-    purchaseOrders.map(async (purchaseOrder) => {
-      // 1. get the purchaseorderproducts by purchase_order_id
-      const products = await PurchaseOrderProduct.findAll({
-        where: { purchase_order_id: purchaseOrder.id },
-      });
-      if (!products) {
-        return res.status(404).json({ message: "Products not found" });
-      }
+        const averageRoi = roiArr.length ? roiArr.reduce((a, b) => a + b, 0) / roiArr.length : 0;
+        purchaseOrder.setDataValue("average_roi", averageRoi);
 
-      // 2. get the trackedproducts by product_id
-      const trackedProducts = await TrackedProduct.findAll({
-        where: { product_id: products.map((product) => product.product_id) },
-      });
-      if (!trackedProducts) {
-        return res.status(404).json({ message: "Tracked products not found" });
-      }
+        // Añadir datos de productos rastreados
+        const trackedProductDetails = await Promise.all(
+          trackedProducts.map(async (trackedProduct) => {
+            const product = await Product.findByPk(trackedProduct.product_id);
+            const supplier = await Supplier.findByPk(product?.supplier_id);
+            return {
+              ...trackedProduct.toJSON(),
+              product_name: product?.product_name || "Unknown",
+              ASIN: product?.ASIN || "Unknown",
+              seller_sku: product?.seller_sku || "Unknown",
+              supplier_name: supplier?.supplier_name || "Unknown",
+              product_image: product?.product_image || "Unknown",
+              product_cost: product?.product_cost || 0,
+            };
+          })
+        );
+        purchaseOrder.setDataValue("trackedProducts", trackedProductDetails);
+      })
+    );
 
-      // 3. transform the trackedproducts to include product_name, ASIN, seller_sku, supplier_name, product_image
+    const totalPages = Math.ceil(count / limit);
 
-      const trackedProductInTheOrder = await Promise.all(
-        trackedProducts.map(async (trackedProduct) => {
-          const product = await Product.findOne({
-            where: { id: trackedProduct.product_id },
-          });
-          if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-          }
-
-          const supplier = await Supplier.findOne({
-            where: { id: product.supplier_id },
-          });
-          if (!supplier) {
-            return res.status(404).json({ message: "Supplier not found" });
-          }
-
-          return {
-            ...trackedProduct.toJSON(),
-            product_name: product.product_name,
-            ASIN: product.ASIN,
-            seller_sku: product.seller_sku,
-            supplier_name: supplier.supplier_name,
-            product_image: product.product_image,
-            product_cost: product.product_cost,
-          };
-        })
-      );
-
-      purchaseOrder.setDataValue("trackedProducts", trackedProductInTheOrder);
-    })
-  );
-
-  return res.status(200).json({
-    success: true,
-    data: purchaseOrders,
-  });
+    return res.status(200).json({
+      success: true,
+      total: count,
+      pages: totalPages,
+      currentPage: page,
+      data: purchaseOrders,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      msg: "Error fetching purchase orders",
+      error: error.message,
+    });
+  }
 });
+
+
 
 exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
