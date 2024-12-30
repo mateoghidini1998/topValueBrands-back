@@ -71,81 +71,81 @@ app.listen(PORT, () => {
   swaggerDoc(app, PORT);
 
   // Cron job to sync database with Amazon
-  cron.schedule('30 3,12 * * *', async () => {
-    logger.info('Cron executed at ' + new Date().toLocaleString());
-    const req = { headers: {} };
-    const res = {
-      status: (code) => {
-        logger.info(`Cron job response status: ${code}`);
-        return res;
-      },
-      json: (data) => logger.info('Cron job response: ' + JSON.stringify(data)),
-    };
-    const next = (error) => {
-      if (error) logger.error('Cron job error:', error);
-    };
+  // cron.schedule('30 3,12 * * *', async () => {
+  //   logger.info('Cron executed at ' + new Date().toLocaleString());
+  //   const req = { headers: {} };
+  //   const res = {
+  //     status: (code) => {
+  //       logger.info(`Cron job response status: ${code}`);
+  //       return res;
+  //     },
+  //     json: (data) => logger.info('Cron job response: ' + JSON.stringify(data)),
+  //   };
+  //   const next = (error) => {
+  //     if (error) logger.error('Cron job error:', error);
+  //   };
 
-    try {
-      logger.info('1. Syncing database with Amazon...');
-      await syncDBWithAmazon(req, res, next);
-      logger.info('2. Generating tracked products data...');
-      await generateTrackedProductsData(req, res, next);
-    } catch (error) {
-      logger.error('Error during scheduled cron job:', error);
-    }
-  }, {
-    timezone: "America/New_York",
-    scheduled: true,
-  });
+  //   try {
+  //     logger.info('1. Syncing database with Amazon...');
+  //     await syncDBWithAmazon(req, res, next);
+  //     logger.info('2. Generating tracked products data...');
+  //     await generateTrackedProductsData(req, res, next);
+  //   } catch (error) {
+  //     logger.error('Error during scheduled cron job:', error);
+  //   }
+  // }, {
+  //   timezone: "America/New_York",
+  //   scheduled: true,
+  // });
 
-  // Cron job to track shipments every hour
-  cron.schedule('0 * * * *', async () => {
-    logger.info('Executing shipment tracking cron job at ' + new Date().toLocaleString());
-    const req = { headers: {} };
-    const res = {
-      status: (code) => {
-        logger.info(`Shipment tracking response status: ${code}`);
-        return res;
-      },
-      json: (data) => logger.info(`Shipment tracking response: ${JSON.stringify(data)}`),
-    };
+  // // Cron job to track shipments every hour
+  // cron.schedule('0 * * * *', async () => {
+  //   logger.info('Executing shipment tracking cron job at ' + new Date().toLocaleString());
+  //   const req = { headers: {} };
+  //   const res = {
+  //     status: (code) => {
+  //       logger.info(`Shipment tracking response status: ${code}`);
+  //       return res;
+  //     },
+  //     json: (data) => logger.info(`Shipment tracking response: ${JSON.stringify(data)}`),
+  //   };
 
-    try {
-      await getShipmentTracking(req, res);
-      logger.info('Shipment tracking cron job completed successfully.');
-    } catch (error) {
-      logger.error('Error during shipment tracking cron job:', error);
-    }
-  }, {
-    timezone: 'America/New_York',
-    scheduled: true,
-  });
+  //   try {
+  //     await getShipmentTracking(req, res);
+  //     logger.info('Shipment tracking cron job completed successfully.');
+  //   } catch (error) {
+  //     logger.error('Error during shipment tracking cron job:', error);
+  //   }
+  // }, {
+  //   timezone: 'America/New_York',
+  //   scheduled: true,
+  // });
 
-  // Cron job to delete old shipments
-  const deleteOldShipments = async () => {
-    const threeWeeksAgo = new Date();
-    threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21);
+  // // Cron job to delete old shipments
+  // const deleteOldShipments = async () => {
+  //   const threeWeeksAgo = new Date();
+  //   threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21);
 
-    try {
-      const result = await OutgoingShipment.destroy({
-        where: {
-          ShipmentStatus: { [Op.not]: 'PENDING' },
-          createdAt: { [Op.lt]: threeWeeksAgo },
-        },
-      });
+  //   try {
+  //     const result = await OutgoingShipment.destroy({
+  //       where: {
+  //         ShipmentStatus: { [Op.not]: 'PENDING' },
+  //         createdAt: { [Op.lt]: threeWeeksAgo },
+  //       },
+  //     });
 
-      logger.info(`Deleted ${result} old shipments successfully.`);
-    } catch (error) {
-      logger.error('Error deleting old shipments:', error);
-    }
-  };
+  //     logger.info(`Deleted ${result} old shipments successfully.`);
+  //   } catch (error) {
+  //     logger.error('Error deleting old shipments:', error);
+  //   }
+  // };
 
-  // Cron job to delete old shipments every day at 6am
-  cron.schedule('0 6 * * *', async () => {
-    logger.info('Executing old shipments cleanup cron job at ' + new Date().toLocaleString());
-    await deleteOldShipments();
-  }, {
-    timezone: 'America/New_York',
-    scheduled: true,
-  });
+  // // Cron job to delete old shipments every day at 6am
+  // cron.schedule('0 6 * * *', async () => {
+  //   logger.info('Executing old shipments cleanup cron job at ' + new Date().toLocaleString());
+  //   await deleteOldShipments();
+  // }, {
+  //   timezone: 'America/New_York',
+  //   scheduled: true,
+  // });
 });
