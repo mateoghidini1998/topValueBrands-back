@@ -339,7 +339,7 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
 
     await transaction.commit();
 
-    return res.status(204).json({ msg: "Shipment deleted successfully" });
+    return res.status(200).json({ msg: "Shipment deleted successfully" });
   } catch (error) {
     await transaction.rollback();
     return res
