@@ -47,12 +47,37 @@ exports.createPallet = asyncHandler(async (req, res) => {
       for (const product of products) {
         const { purchaseorderproduct_id, quantity } = product;
 
+        // Crear la relación del pallet con el producto
         await createPalletProduct({
           purchaseorderproduct_id,
           pallet_id: pallet.id,
           quantity,
           transaction,
         });
+
+        // Obtener el producto asociado al purchaseorderproduct_id
+        const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+          where: { id: purchaseorderproduct_id },
+          transaction,
+        });
+
+        if (!purchaseOrderProduct) {
+          throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
+        }
+
+        // Actualizar el warehouse_stock del producto
+        const productToUpdate = await Product.findOne({
+          where: { id: purchaseOrderProduct.product_id },
+          transaction,
+        });
+
+        if (!productToUpdate) {
+          throw new Error(`Product with ID ${purchaseOrderProduct.product_id} not found.`);
+        }
+
+        productToUpdate.warehouse_stock = parseInt(productToUpdate.warehouse_stock) + parseInt(quantity);
+
+        await productToUpdate.save({ transaction });
       }
     } else {
       return res.status(400).json({ msg: "No products provided to associate with the pallet." });
@@ -61,13 +86,15 @@ exports.createPallet = asyncHandler(async (req, res) => {
     await transaction.commit();
 
     return res.status(201).json({ pallet });
-
   } catch (error) {
-
     await transaction.rollback();
-    return res.status(500).json({ msg: "Error creating pallet and products", error: error.message });
+    return res.status(500).json({
+      msg: "Error creating pallet and updating warehouse stock",
+      error: error.message,
+    });
   }
 });
+
 
 //@route    GET api/v1/pallets
 //@desc     Get pallets

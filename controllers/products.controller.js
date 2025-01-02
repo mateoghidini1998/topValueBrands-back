@@ -12,34 +12,26 @@ dotenv.config({
   path: './.env',
 });
 
-
 //@route    POST api/products/add
 //@desc     Create a product
 //@access   Private
 exports.createProduct = asyncHandler(async (req, res) => {
-  // check if the user is admin
   if (req.user.role !== 'admin') {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
 
-  // check if the product exists
   const product = await Product.findOne({
     where: { ASIN: req.body.ASIN },
   });
   if (product) {
     return res.status(400).json({ msg: 'Product already exists' });
-  } else {
+  
+  } else {  
     const accessToken = req.headers['x-amz-access-token']
-    // if the product does not exist get the product name from amazon with the getProductNameByASIN function
-
-    console.log(req.body)
-    console.log(req.headers['x-amz-access-token'])
-
     const productName = await getProductNameByASIN(req.body.ASIN, req.headers['x-amz-access-token']);
     req.body.product_name = productName;
   }
 
-  // check if there is missing any required fields from the array
   const requiredFields = [
     // 'seller_sku',
     'product_cost',
@@ -54,31 +46,24 @@ exports.createProduct = asyncHandler(async (req, res) => {
     }
   }
 
-  // check if the supplier exists
   const supplier = await Supplier.findByPk(req.body.supplier_id);
-  // if the supplier does not exist add the supplier Unknown
+
   if (!supplier) {
-    // find the supplier with the name Unknown
     let newSupplier = await Supplier.findOne({
       where: { supplier_name: 'Unknown' },
     });
 
-    // if the "Unknown" supplier does not exist, create it
     if (!newSupplier) {
       newSupplier = await Supplier.create({
         supplier_name: 'Unknown',
       });
     }
-
     req.body.supplier_id = newSupplier.id;
     req.body.in_seller_account = false;
-
   }
 
   try {
     const newProduct = await Product.create(req.body);
-
-    // await invalidateProductCache();
     res.status(201).json(newProduct);
   } catch (error) {
     res.status(400).json({ msg: error.message });
@@ -89,12 +74,10 @@ exports.createProduct = asyncHandler(async (req, res) => {
 //@desc     Update product
 //@access   Private
 exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
-  // check if the user is admin
   if (req.user.role !== 'admin') {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
 
-  // check if the product exists
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
@@ -109,22 +92,15 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
   }
 
   try {
-
-    // add the product changes
     product.product_name = req.body.product_name;
     product.product_image = req.body.product_image;
     product.ASIN = req.body.ASIN;
     product.seller_sku = req.body.seller_sku;
 
-    // add the supplier info to the product
     product.supplier_id = req.body.supplier_id;
     product.supplier_item_number = req.body.supplier_item_number;
-
-
-    // add the product cost to the product
     product.product_cost = req.body.product_cost;
 
-    // We update the trackedProducts profit by substracting the old product cost from the new product cost
     const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
     console.log(trackedProduct);
     if (trackedProduct) {
@@ -132,11 +108,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
       await trackedProduct.save();
     }
 
-
-
     product.pack_type = req.body.pack_type;
-
-    // add the inventory stock info to the product
     product.FBA_available_inventory = req.body.FBA_available_inventory;
     product.reserved_quantity = req.body.reserved_quantity;
     product.Inbound_to_FBA = req.body.Inbound_to_FBA;
@@ -157,14 +129,11 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 //@desc     Update is_active as a toggle field of products
 //@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
-  // Get user role to restrict access
   const user = await User.findOne({ where: { id: req.user.id } });
-  // console.log(user);
+
   if (user.role !== 'admin') {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
-
-  // Get the product by seller_sku to check if the product exists
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
@@ -196,9 +165,7 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@desc     Get products
 //@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
-  // Get user role to restrict access
   const user = await User.findOne({ where: { id: req.user.id } });
-
   if (user.role !== 'admin') {
     return res.status(401).json({ msg: 'Unauthorized' });
   }
@@ -277,11 +244,10 @@ exports.getProductBySellerSku = asyncHandler(async (req, res) => {
   res.status(200).json(product);
 });
 
-// Function to add images to all products
 exports.addImageToAllProducts = asyncHandler(async (req, res) => {
   const products = await Product.findAll();
-  const delay = 2000; // Delay between requests in milliseconds
-  const maxRequests = 5; // Maximum number of requests
+  const delay = 2000;
+  const maxRequests = 5;
   let index = 1000;
   const accessToken = req.headers['x-amz-access-token'];
 
@@ -301,13 +267,11 @@ exports.addImageToAllProducts = asyncHandler(async (req, res) => {
         const imageLink = response.data.images[0].images[0].link;
         const imageLinks = response.data.images[0].images;
 
-        // Get the image from imageLinks where the width or the height is = 75;
         const image =
           imageLinks.find(
             (image) => image.width === 75 || image.height === 75
           ) || imageLinks[0];
 
-        // console.log(image.link);
         Product.update(
           { product_image: image.link },
           { where: { ASIN: ASIN } }
@@ -319,7 +283,6 @@ exports.addImageToAllProducts = asyncHandler(async (req, res) => {
     }
 
     if (index < products.length) {
-      // Log the number of requests made
       setTimeout(fetchProductImage, delay);
     } else {
       res.json(products);
@@ -330,8 +293,8 @@ exports.addImageToAllProducts = asyncHandler(async (req, res) => {
 });
 
 const addImageToProducts = async (products, accessToken) => {
-  const delay = 2000; // Delay between requests in milliseconds
-  const maxRequests = 5; // Maximum number of requests
+  const delay = 2000;
+  const maxRequests = 5;
   let index = 0;
 
   const productsWithoutImage = [];
@@ -406,7 +369,6 @@ const addImageToProducts = async (products, accessToken) => {
   };
 };
 
-
 exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   const newProducts = await Product.findAll({
     where: { product_image: null } || { product_image: '' },
@@ -415,7 +377,6 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   const result = await addImageToProducts(newProducts, accessToken);
   return result;
 });
-
 
 const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
   console.log('ASIN: ' + req);

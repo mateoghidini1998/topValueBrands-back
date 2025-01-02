@@ -23,6 +23,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 'PENDING'
       },
+      fba_shipment_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      }
     },
     {
       sequelize,

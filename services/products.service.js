@@ -1,4 +1,4 @@
-const { Product } = require('../models');
+const { Product, TrackedProduct } = require('../models');
 const { Op } = require('sequelize');
 const redisClient = require('../redis/redis');
 const logger = require('../logger/logger')
@@ -75,3 +75,20 @@ exports.productService = {
     }
   })
 }
+
+exports.toggleProductActivation = async (seller_sku) => {
+  const product = await Product.findOne({ where: { seller_sku } });
+  if (!product) return { success: false, message: 'Product not found' };
+
+  const trackedProduct = await TrackedProduct.findOne({ where: { product_id: productId } });
+
+  product.is_active = !product.is_active;
+  await product.save();
+
+  if (trackedProduct) {
+    trackedProduct.is_active = !trackedProduct.is_active;
+    await trackedProduct.save();
+  }
+
+  return { success: true, data: product };
+};

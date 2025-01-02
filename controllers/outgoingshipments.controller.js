@@ -5,6 +5,10 @@ const ExcelJS = require('exceljs')
 const path = require('path')
 const fs = require('fs');
 const { where, Op } = require("sequelize");
+const req = require("express/lib/request");
+const axios = require('axios')
+const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
+const logger = require("../logger/logger");
 
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
@@ -172,8 +176,6 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 //@route    GET api/v1/shipments
 //@desc     Get all outgoing shipments
 //@access   Private
@@ -337,7 +339,7 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
 
     await transaction.commit();
 
-    return res.status(204).json({ msg: "Shipment deleted successfully" });
+    return res.status(200).json({ msg: "Shipment deleted successfully" });
   } catch (error) {
     await transaction.rollback();
     return res
@@ -445,8 +447,6 @@ exports.updateShipment = asyncHandler(async (req, res) => {
     return res.status(500).json({ msg: 'Something went wrong', error: error.message });
   }
 });
-
-
 
 exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   const shipmentId = req.params.id;
@@ -652,3 +652,153 @@ exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
 
   return res.status(200).json(purchaseOrders);
 });
+
+//@route   GET api/v1/shipments/tracking
+//@desc    Track shipments from amazon
+//@access  Private
+exports.getShipmentTracking = asyncHandler(async (req, res) => {
+  console.log('Tracking shipments...');
+  const baseUrl = `https://sellingpartnerapi-na.amazon.com/fba/inbound/v0/shipments`;
+
+  const marketPlace = process.env.MARKETPLACE_US_ID;
+  const lastUpdatedAfter = getLastMonthDate();
+  const shipmentStatuses = SHIPMENT_STATUSES.join(',');
+  let accessToken = await fetchNewTokenForFees();
+  console.log(accessToken);
+  logger.info('Access token:', accessToken);
+
+  try {
+
+    if (!accessToken) {
+      console.log('fetching new token for sync db with amazon...');
+      logger.info('fetching new token for sync db with amazon...');
+      accessToken = await fetchNewTokenForFees();
+    } else {
+      console.log('Token is still valid...');
+      logger.info('Token is still valid...');
+    }
+
+    let url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': accessToken,
+      },
+    });
+
+    const amazonShipments = response.data.payload.ShipmentData;
+
+    for (const amazonShipment of amazonShipments) {
+      const { ShipmentId, ShipmentName, ShipmentStatus } = amazonShipment;
+
+      const shipment = await OutgoingShipment.findOne({
+        where: { shipment_number: ShipmentName },
+      });
+
+      if (shipment) {
+        await updateShipmentId(shipment, ShipmentId);
+        await updateShipmentStatus(shipment, ShipmentStatus);
+      } else {
+        console.warn(`Shipment no encontrado: ${ShipmentName}`);
+      }
+    }
+
+    return res.status(200).json({ msg: "Shipments tracked and updated successfully." });
+  } catch (error) {
+    console.error("Error fetching shipment data:", error.response?.data || error.message);
+    return res.status(500).json({ error: "Failed to fetch shipments", details: error.message });
+  }
+});
+
+const updateShipmentId = async (shipment, shipmentId) => {
+  try {
+    if (shipment.fba_shipment_id !== shipmentId) {
+      shipment.fba_shipment_id = shipmentId;
+      await shipment.save();
+      console.log(`FBA Shipment ID actualizado para shipment_number: ${shipment.shipment_number}`);
+    }
+  } catch (error) {
+    console.error(
+      `Error actualizando fba_shipment_id para shipment_number: ${shipment.shipment_number}`,
+      error.message
+    );
+  }
+};
+
+const updateShipmentStatus = async (shipment, shipmentStatus) => {
+  try {
+    if (shipment.status !== shipmentStatus) {
+      shipment.status = shipmentStatus;
+      await shipment.save();
+      console.log(`Shipment status actualizado para shipment_number: ${shipment.shipment_number}`);
+    }
+  } catch (error) {
+    console.error(`Error actualizando status para shipment_number: ${shipment.shipment_number}`, error.message);
+  }
+};
+
+const getLastMonthDate = () => {
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  return lastMonth.toISOString();
+};
+
+const SHIPMENT_STATUSES = [
+  "IN_TRANSIT",
+  "DELIVERED"
+];
+
+
+const updateWarehouseStockForShipment = async (shipment) => {
+  try {
+    const shipmentProducts = await OutgoingShipmentProduct.findAll({
+      where: { outgoing_shipment_id: shipment.id },
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: 'purchaseOrderProduct',
+          include: [
+            {
+              model: Product,
+              as: 'product',
+            },
+          ],
+        },
+      ],
+    });
+
+    for (let shipmentProduct of shipmentProducts) {
+      const purchaseOrderProduct = shipmentProduct.purchaseOrderProduct;
+      const product = purchaseOrderProduct?.product;
+
+      if (!product) {
+        console.warn(
+          `Producto no encontrado para shipment_product_id: ${shipmentProduct.id}`
+        );
+        continue;
+      }
+      if (product.warehouse_stock < shipmentProduct.quantity) {
+        console.warn(
+          `Stock insuficiente para el producto ${product.id}. Stock actual: ${product.warehouse_stock}, requerido: ${shipmentProduct.quantity}`
+        );
+        continue;
+      }
+
+      const newWarehouseStock = product.warehouse_stock - shipmentProduct.quantity;
+
+      await product.update({
+        warehouse_stock: newWarehouseStock,
+      });
+
+      console.log(
+        `Stock actualizado para producto ${product.id}. Nuevo stock: ${newWarehouseStock}`
+      );
+    }
+  } catch (error) {
+    console.error(
+      `Error actualizando warehouse_stock para shipment_number: ${shipment.shipment_number}`,
+      error.message
+    );
+  }
+};
