@@ -47,7 +47,7 @@ exports.createShipment = asyncHandler(async (req, res) => {
   // Crear el nuevo envío
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
-    status: 'PENDING',
+    status: 'WORKING',
   });
 
   // Reducir las cantidades disponibles y asociar los productos al envío
@@ -418,16 +418,13 @@ exports.updateShipment = asyncHandler(async (req, res) => {
       }
     }
 
-    // 7. Guardar el número de shipment si ha sido modificado
     if (req.body.shipment_number) {
       shipment.shipment_number = req.body.shipment_number;
       await shipment.save({ transaction });
     }
 
-    // 8. Confirmar la transacción
     await transaction.commit();
 
-    // Obtener el shipment actualizado con los productos asociados
     const updatedShipment = await OutgoingShipment.findOne({
       where: { id: shipment.id },
       include: [{
@@ -746,18 +743,26 @@ const getLastMonthDate = () => {
 
 const SHIPMENT_STATUSES = [
   "IN_TRANSIT",
-  "DELIVERED"
+  "DELIVERED",
+  "WORKING",
+  "SHIPPED",
+  "RECEIVING",
+  "CLOSED",
+  "CANCELLED",
+  "DELETED",
+  "ERROR",
+  "CHECKED_IN",
+  "READY_TO_SHIP",
 ];
 
-
-const updateWarehouseStockForShipment = async (shipment) => {
+/* const updateWarehouseStockForShipment = async (shipment) => {
   try {
     const shipmentProducts = await OutgoingShipmentProduct.findAll({
       where: { outgoing_shipment_id: shipment.id },
       include: [
         {
-          model: PurchaseOrderProduct,
-          as: 'purchaseOrderProduct',
+          model: PalletProduct,
+          as: 'palletProducts',
           include: [
             {
               model: Product,
@@ -769,8 +774,8 @@ const updateWarehouseStockForShipment = async (shipment) => {
     });
 
     for (let shipmentProduct of shipmentProducts) {
-      const purchaseOrderProduct = shipmentProduct.purchaseOrderProduct;
-      const product = purchaseOrderProduct?.product;
+      const palletProduct = shipmentProduct.palletProduct;
+      const product = palletProduct?.product;
 
       if (!product) {
         console.warn(
@@ -801,4 +806,4 @@ const updateWarehouseStockForShipment = async (shipment) => {
       error.message
     );
   }
-};
+}; */
