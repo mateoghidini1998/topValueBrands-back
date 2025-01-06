@@ -47,7 +47,7 @@ exports.createShipment = asyncHandler(async (req, res) => {
   // Crear el nuevo envío
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
-    status: 'PENDING',
+    status: 'WORKING',
   });
 
   // Reducir las cantidades disponibles y asociar los productos al envío
@@ -132,7 +132,7 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 
   const newShipment = await OutgoingShipment.create({
     shipment_number,
-    status: "PENDING",
+    status: "WORKING",
   });
 
   for (let palletProduct of palletProducts) {
@@ -719,7 +719,16 @@ const getLastMonthDate = () => {
 
 const SHIPMENT_STATUSES = [
   "IN_TRANSIT",
-  "DELIVERED"
+  "DELIVERED",
+  "WORKING",
+  "CANCELLED",
+  "CLOSED",
+  "RECEIVING",
+  "SHIPPED",
+  "READY_TO_SHIP",
+  "ERROR",
+  "CHECKED_IN",
+  "DELETED"
 ];
 
 const updateWarehouseStockForShipment = async (shipment) => {
