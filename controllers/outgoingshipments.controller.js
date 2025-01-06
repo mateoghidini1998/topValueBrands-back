@@ -283,28 +283,12 @@ exports.getShipment = asyncHandler(async (req, res) => {
 //@desc     Delete shipment by id
 //@access   Private
 exports.deleteShipment = asyncHandler(async (req, res) => {
-
   const transaction = await sequelize.transaction();
 
   try {
     const shipment = await OutgoingShipment.findOne({
       where: { id: req.params.id },
-      include: [
-        {
-          model: PalletProduct,
-          attributes: [
-            'id',
-            'purchaseorderproduct_id',
-            'pallet_id',
-            'quantity',
-            'available_quantity',
-            'createdAt',
-            'updatedAt'
-          ],
-          through: { attributes: ["quantity"] },
-        },
-      ],
-      transaction
+      transaction,
     });
 
     if (!shipment) {
@@ -312,28 +296,7 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
       return res.status(404).json({ msg: "Shipment not found" });
     }
 
-    for (let product of shipment.PalletProducts) {
-      const palletProduct = await PalletProduct.findOne({
-        where: { id: product.id },
-        transaction,
-      });
-
-      const quantityFromShipment = product.OutgoingShipmentProduct.quantity;
-
-      if (typeof quantityFromShipment === "undefined") {
-        throw new Error(
-          `Shipment quantity for product ID ${product.id} is undefined.`
-        );
-      }
-
-      const restoredQuantity =
-        palletProduct.available_quantity + quantityFromShipment;
-
-      await palletProduct.update(
-        { available_quantity: restoredQuantity },
-        { transaction }
-      );
-    }
+    await revertWarehouseStockForShipment(shipment);
 
     await shipment.destroy({ transaction });
 
@@ -729,12 +692,22 @@ const updateShipmentId = async (shipment, shipmentId) => {
 const updateShipmentStatus = async (shipment, shipmentStatus) => {
   try {
     if (shipment.status !== shipmentStatus) {
+      const previousStatus = shipment.status;
       shipment.status = shipmentStatus;
       await shipment.save();
-      console.log(`Shipment status actualizado para shipment_number: ${shipment.shipment_number}`);
+      console.log(
+        `Shipment status actualizado para shipment_number: ${shipment.shipment_number}`
+      );
+
+      if (shipmentStatus === "IN_TRANSIT" && previousStatus !== "IN_TRANSIT") {
+        await updateWarehouseStockForShipment(shipment);
+      }
     }
   } catch (error) {
-    console.error(`Error actualizando status para shipment_number: ${shipment.shipment_number}`, error.message);
+    console.error(
+      `Error actualizando status para shipment_number: ${shipment.shipment_number}`,
+      error.message
+    );
   }
 };
 
@@ -748,7 +721,6 @@ const SHIPMENT_STATUSES = [
   "IN_TRANSIT",
   "DELIVERED"
 ];
-
 
 const updateWarehouseStockForShipment = async (shipment) => {
   try {
@@ -798,6 +770,53 @@ const updateWarehouseStockForShipment = async (shipment) => {
   } catch (error) {
     console.error(
       `Error actualizando warehouse_stock para shipment_number: ${shipment.shipment_number}`,
+      error.message
+    );
+  }
+};
+
+const revertWarehouseStockForShipment = async (shipment) => {
+  try {
+    const shipmentProducts = await OutgoingShipmentProduct.findAll({
+      where: { outgoing_shipment_id: shipment.id },
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: 'purchaseOrderProduct',
+          include: [
+            {
+              model: Product,
+              as: 'product',
+            },
+          ],
+        },
+      ],
+    });
+
+    for (let shipmentProduct of shipmentProducts) {
+      const purchaseOrderProduct = shipmentProduct.purchaseOrderProduct;
+      const product = purchaseOrderProduct?.product;
+
+      if (!product) {
+        console.warn(
+          `Producto no encontrado para shipment_product_id: ${shipmentProduct.id}`
+        );
+        continue;
+      }
+
+      const restoredStock = product.warehouse_stock + shipmentProduct.quantity;
+
+      await product.update({
+        warehouse_stock: restoredStock,
+      });
+
+      console.log(
+        `Stock restaurado para producto ${product.id}. Nuevo stock: ${restoredStock}`
+      );
+    }
+  } catch (error) {
+    console.error(
+      `Error restaurando warehouse_stock para shipment_number: ${shipment.shipment_number}`,
       error.message
     );
   }
