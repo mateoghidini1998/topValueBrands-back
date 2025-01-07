@@ -203,7 +203,7 @@ exports.getShipments = asyncHandler(async (req, res) => {
   });
 });
 
-//@route    GET api/v1/shipments
+//@route    GET api/v1/shipment/:id
 //@desc     Get outgoing shipment by id
 //@access   Private
 exports.getShipment = asyncHandler(async (req, res) => {
@@ -276,6 +276,80 @@ exports.getShipment = asyncHandler(async (req, res) => {
   };
 
   // Envía los datos procesados
+  return res.status(200).json(formattedShipment);
+});
+
+//@route    GET api/v1/shipment/:shipment_number
+//@desc     Get outgoing shipment by shipment number
+//@access   Private
+exports.getShipmentByNumber = asyncHandler(async (req, res) => {
+  // if (req.user.role !== "admin") {
+  //   return res.status(401).json({ msg: "Unauthorized" });
+  // }
+
+  const shipment = await OutgoingShipment.findOne({
+    where: { shipment_number: req.params.shipment_number },
+    include: [
+      {
+        model: PalletProduct,
+        attributes: [
+          'id', 
+          'purchaseorderproduct_id',
+          'pallet_id',
+          'quantity',
+          'available_quantity',
+          'createdAt',
+          'updatedAt',
+        ],
+        through: { attributes: ["quantity"] }, 
+        include: [
+          {
+            model: PurchaseOrderProduct,
+            attributes: ['id', 'product_id'], 
+            include: [
+              {
+                model: Product,
+                attributes: ['id', 'product_name', 'product_image', 'seller_sku', 'in_seller_account'], 
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  
+
+  if (!shipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+
+  const shipmentData = shipment.toJSON();
+
+  const formattedShipment = {
+    ...shipmentData,
+    PalletProducts: shipmentData.PalletProducts.map((palletProduct) => {
+      const productName =
+        palletProduct.PurchaseOrderProduct?.Product?.product_name || null;
+
+      const productImage =
+        palletProduct.PurchaseOrderProduct?.Product?.product_image || null;
+
+      const sellerSku =
+        palletProduct.PurchaseOrderProduct?.Product?.seller_sku || null;
+      const in_seller_account =
+        palletProduct.PurchaseOrderProduct?.Product?.in_seller_account || null;
+
+      return {
+        ...palletProduct,
+        product_name: productName, 
+        product_image: productImage, 
+        seller_sku: sellerSku, 
+        in_seller_account: in_seller_account,
+        PurchaseOrderProduct: undefined,
+      };
+    }),
+  };
+
   return res.status(200).json(formattedShipment);
 });
 
@@ -755,55 +829,3 @@ const SHIPMENT_STATUSES = [
   "READY_TO_SHIP",
 ];
 
-/* const updateWarehouseStockForShipment = async (shipment) => {
-  try {
-    const shipmentProducts = await OutgoingShipmentProduct.findAll({
-      where: { outgoing_shipment_id: shipment.id },
-      include: [
-        {
-          model: PalletProduct,
-          as: 'palletProducts',
-          include: [
-            {
-              model: Product,
-              as: 'product',
-            },
-          ],
-        },
-      ],
-    });
-
-    for (let shipmentProduct of shipmentProducts) {
-      const palletProduct = shipmentProduct.palletProduct;
-      const product = palletProduct?.product;
-
-      if (!product) {
-        console.warn(
-          `Producto no encontrado para shipment_product_id: ${shipmentProduct.id}`
-        );
-        continue;
-      }
-      if (product.warehouse_stock < shipmentProduct.quantity) {
-        console.warn(
-          `Stock insuficiente para el producto ${product.id}. Stock actual: ${product.warehouse_stock}, requerido: ${shipmentProduct.quantity}`
-        );
-        continue;
-      }
-
-      const newWarehouseStock = product.warehouse_stock - shipmentProduct.quantity;
-
-      await product.update({
-        warehouse_stock: newWarehouseStock,
-      });
-
-      console.log(
-        `Stock actualizado para producto ${product.id}. Nuevo stock: ${newWarehouseStock}`
-      );
-    }
-  } catch (error) {
-    console.error(
-      `Error actualizando warehouse_stock para shipment_number: ${shipment.shipment_number}`,
-      error.message
-    );
-  }
-}; */
