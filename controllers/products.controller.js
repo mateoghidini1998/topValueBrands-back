@@ -30,10 +30,12 @@ exports.createProduct = asyncHandler(async (req, res) => {
     const accessToken = req.headers['x-amz-access-token']
     const productName = await getProductNameByASIN(req.body.ASIN, req.headers['x-amz-access-token']);
     req.body.product_name = productName;
+
+    const productImage = await getImageForProduct(req.body.ASIN, accessToken);
+    req.body.product_image = productImage || null;
   }
 
   const requiredFields = [
-    // 'seller_sku',
     'product_cost',
     'ASIN',
     'supplier_item_number',
@@ -439,3 +441,34 @@ exports.addUPC = asyncHandler(async (req, res) => {
     res.status(500).json({ msg: 'Error adding UPC to product' });
   }
 })
+
+const getImageForProduct = async (asin, accessToken) => {
+  const url = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${asin}?marketplaceIds=ATVPDKIKX0DER&includedData=images`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': accessToken,
+      },
+    });
+
+    const imagesData = response.data.images;
+    if (!imagesData || imagesData.length === 0) {
+      console.warn(`No images found for ASIN: ${asin}`);
+      return null;
+    }
+
+    const imageLinks = imagesData[0]?.images || [];
+    const image =
+      imageLinks.find((img) => img.width === 75 || img.height === 75) || imageLinks[0];
+    return image?.link || null;
+  } catch (error) {
+    console.error({
+      msg: error.message,
+      response: error.response?.data || 'No response body',
+      status: error.response?.status || 'No status code',
+    });
+    return null;
+  }
+}
