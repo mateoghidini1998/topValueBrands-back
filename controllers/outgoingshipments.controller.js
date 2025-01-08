@@ -1,94 +1,142 @@
-const { OutgoingShipment, PalletProduct, OutgoingShipmentProduct, PurchaseOrderProduct, Product, Pallet, PurchaseOrder } = require("../models");
+const {
+  OutgoingShipment,
+  PalletProduct,
+  OutgoingShipmentProduct,
+  PurchaseOrderProduct,
+  Product,
+  Pallet,
+  PurchaseOrder,
+} = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
-const ExcelJS = require('exceljs')
-const path = require('path')
-const fs = require('fs');
+const ExcelJS = require("exceljs");
+const path = require("path");
+const fs = require("fs");
 const { where, Op } = require("sequelize");
 const req = require("express/lib/request");
-const axios = require('axios')
-const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
+const axios = require("axios");
+const { fetchNewTokenForFees } = require("../middlewares/lwa_token");
 const logger = require("../logger/logger");
+const {
+  recalculateWarehouseStock,
+} = require("../utils/warehouse_stock_calculator");
 
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
 //@access   Private
 exports.createShipment = asyncHandler(async (req, res) => {
-  // Comprobar si el envío ya existe
+  console.log('Request body:', req.body);
+
   const existingShipment = await OutgoingShipment.findOne({
     where: { shipment_number: req.body.shipment_number },
   });
 
   if (existingShipment) {
+    console.warn(`Shipment already exists with shipment_number: ${req.body.shipment_number}`);
     return res.status(400).json({ msg: "Shipment already exists" });
   }
 
   const palletProducts = req.body.palletproducts;
 
-  // Verificar si la cantidad solicitada no excede la cantidad disponible
   for (let item of palletProducts) {
+    console.log(`Processing pallet_product_id: ${item.pallet_product_id}`);
     const palletProduct = await PalletProduct.findOne({
       where: { id: item.pallet_product_id },
     });
 
     if (!palletProduct) {
+      console.error(`PalletProduct with id ${item.pallet_product_id} not found`);
       return res.status(404).json({
         msg: `PalletProduct with id ${item.pallet_product_id} not found`,
       });
     }
 
+    console.log(`PalletProduct found:`, palletProduct);
+
     if (item.quantity > palletProduct.available_quantity) {
+      console.error(
+        `Quantity of ${item.quantity} exceeds available quantity of ${palletProduct.available_quantity} for pallet_product_id ${item.pallet_product_id}`
+      );
       return res.status(400).json({
         msg: `Quantity of ${item.quantity} exceeds the available quantity of ${palletProduct.available_quantity} for product ID ${item.pallet_product_id}`,
       });
     }
   }
 
-  // Crear el nuevo envío
+  console.log(`Creating new shipment with shipment_number: ${req.body.shipment_number}`);
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
-    status: 'WORKING',
+    status: "WORKING",
   });
 
-  // Reducir las cantidades disponibles y asociar los productos al envío
+  console.log(`New shipment created:`, newShipment);
+
+  const affectedProducts = new Set(); // Productos afectados para recalcular el stock
+
   for (let item of palletProducts) {
+    console.log(`Processing pallet_product_id: ${item.pallet_product_id}`);
     const palletProduct = await PalletProduct.findOne({
       where: { id: item.pallet_product_id },
     });
 
-    const newAvailableQuantity = palletProduct.available_quantity - item.quantity;
+    console.log(`Updating available_quantity for pallet_product_id: ${item.pallet_product_id}`);
+    const newAvailableQuantity =
+      palletProduct.available_quantity - item.quantity;
 
+    console.log(`New available_quantity: ${newAvailableQuantity}`);
     await palletProduct.update({
       available_quantity: newAvailableQuantity,
     });
 
-    // Asociar el producto con el envío usando OutgoingShipmentProduct
+    console.log(`Creating OutgoingShipmentProduct for shipment_id: ${newShipment.id}`);
     await OutgoingShipmentProduct.create({
       outgoing_shipment_id: newShipment.id,
       pallet_product_id: item.pallet_product_id,
       quantity: item.quantity,
     });
+
+    console.log(`Fetching PurchaseOrderProduct for pallet_product_id: ${item.pallet_product_id}`);
+    const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
+      palletProduct.purchaseorderproduct_id
+    );
+
+    if (!purchaseOrderProduct) {
+      console.warn(
+        `No PurchaseOrderProduct found for pallet_product_id: ${item.pallet_product_id}`
+      );
+    } else {
+      console.log(`PurchaseOrderProduct found:`, purchaseOrderProduct);
+      affectedProducts.add(purchaseOrderProduct.product_id);
+    }
   }
 
-  // Obtener el envío con los productos asociados para incluir la cantidad en la respuesta
+  console.log(`Recalculating warehouse stock for affected products:`, [...affectedProducts]);
+  for (const productId of affectedProducts) {
+    console.log(`Recalculating warehouse stock for product_id: ${productId}`);
+    await recalculateWarehouseStock(productId);
+  }
+
+  console.log(`Fetching shipment with products for shipment_id: ${newShipment.id}`);
   const shipmentWithProducts = await OutgoingShipment.findOne({
     where: { id: newShipment.id },
     include: [
       {
         model: PalletProduct,
         attributes: [
-          'id', // Asegura que el id del PalletProduct (pallet_product_id) esté incluido
-          'purchaseorderproduct_id',
-          'pallet_id',
-          'quantity',
-          'available_quantity',
-          'createdAt',
-          'updatedAt'
+          "id",
+          "purchaseorderproduct_id",
+          "pallet_id",
+          "quantity",
+          "available_quantity",
+          "createdAt",
+          "updatedAt",
         ],
-        through: { attributes: ["quantity"] }, // Cantidad de OutgoingShipmentProduct
+        through: { attributes: ["quantity"] },
       },
     ],
   });
+
+  console.log(`Shipment created successfully:`, shipmentWithProducts);
 
   return res.status(200).json({
     msg: "Shipment created successfully",
@@ -112,7 +160,13 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
   }
 
   const palletProducts = await PalletProduct.findAll({
-    attributes: ["id", "purchaseorderproduct_id", "pallet_id", "quantity", "available_quantity"],
+    attributes: [
+      "id",
+      "purchaseorderproduct_id",
+      "pallet_id",
+      "quantity",
+      "available_quantity",
+    ],
     include: [
       {
         model: sequelize.models.Pallet,
@@ -185,13 +239,13 @@ exports.getShipments = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: [
-          'id',
-          'purchaseorderproduct_id',
-          'pallet_id',
-          'quantity',
-          'available_quantity',
-          'createdAt',
-          'updatedAt'
+          "id",
+          "purchaseorderproduct_id",
+          "pallet_id",
+          "quantity",
+          "available_quantity",
+          "createdAt",
+          "updatedAt",
         ],
         through: { attributes: ["quantity"] },
       },
@@ -217,23 +271,29 @@ exports.getShipment = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: [
-          'id', // Asegura que el id del PalletProduct (pallet_product_id) esté incluido
-          'purchaseorderproduct_id',
-          'pallet_id',
-          'quantity',
-          'available_quantity',
-          'createdAt',
-          'updatedAt',
+          "id", // Asegura que el id del PalletProduct (pallet_product_id) esté incluido
+          "purchaseorderproduct_id",
+          "pallet_id",
+          "quantity",
+          "available_quantity",
+          "createdAt",
+          "updatedAt",
         ],
         through: { attributes: ["quantity"] }, // Cantidad de OutgoingShipmentProduct
         include: [
           {
             model: PurchaseOrderProduct,
-            attributes: ['id', 'product_id'], // Incluye el product_id
+            attributes: ["id", "product_id"], // Incluye el product_id
             include: [
               {
                 model: Product,
-                attributes: ['id', 'product_name', 'product_image', 'seller_sku', 'in_seller_account'], // Incluye el product_name
+                attributes: [
+                  "id",
+                  "product_name",
+                  "product_image",
+                  "seller_sku",
+                  "in_seller_account",
+                ], // Incluye el product_name
               },
             ],
           },
@@ -293,23 +353,29 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: [
-          'id', 
-          'purchaseorderproduct_id',
-          'pallet_id',
-          'quantity',
-          'available_quantity',
-          'createdAt',
-          'updatedAt',
+          "id",
+          "purchaseorderproduct_id",
+          "pallet_id",
+          "quantity",
+          "available_quantity",
+          "createdAt",
+          "updatedAt",
         ],
-        through: { attributes: ["quantity"] }, 
+        through: { attributes: ["quantity"] },
         include: [
           {
             model: PurchaseOrderProduct,
-            attributes: ['id', 'product_id'], 
+            attributes: ["id", "product_id"],
             include: [
               {
                 model: Product,
-                attributes: ['id', 'product_name', 'product_image', 'seller_sku', 'in_seller_account'], 
+                attributes: [
+                  "id",
+                  "product_name",
+                  "product_image",
+                  "seller_sku",
+                  "in_seller_account",
+                ],
               },
             ],
           },
@@ -317,7 +383,6 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
       },
     ],
   });
-  
 
   if (!shipment) {
     return res.status(404).json({ msg: "Shipment not found" });
@@ -341,9 +406,9 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
 
       return {
         ...palletProduct,
-        product_name: productName, 
-        product_image: productImage, 
-        seller_sku: sellerSku, 
+        product_name: productName,
+        product_image: productImage,
+        seller_sku: sellerSku,
         in_seller_account: in_seller_account,
         PurchaseOrderProduct: undefined,
       };
@@ -357,7 +422,6 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
 //@desc     Delete shipment by id
 //@access   Private
 exports.deleteShipment = asyncHandler(async (req, res) => {
-
   const transaction = await sequelize.transaction();
 
   try {
@@ -367,18 +431,18 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
         {
           model: PalletProduct,
           attributes: [
-            'id',
-            'purchaseorderproduct_id',
-            'pallet_id',
-            'quantity',
-            'available_quantity',
-            'createdAt',
-            'updatedAt'
+            "id",
+            "purchaseorderproduct_id",
+            "pallet_id",
+            "quantity",
+            "available_quantity",
+            "createdAt",
+            "updatedAt",
           ],
           through: { attributes: ["quantity"] },
         },
       ],
-      transaction
+      transaction,
     });
 
     if (!shipment) {
@@ -426,17 +490,18 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
 // @desc    Update shipment and adjust available quantities in PurchaseOrderProduct
 // @access  Private
 exports.updateShipment = asyncHandler(async (req, res) => {
-
   const shipment = await OutgoingShipment.findOne({
     where: { id: req.params.id },
-    include: [{
-      model: PalletProduct,
-      through: { attributes: ['quantity'] }
-    }]
+    include: [
+      {
+        model: PalletProduct,
+        through: { attributes: ["quantity"] },
+      },
+    ],
   });
 
   if (!shipment) {
-    return res.status(404).json({ msg: 'Shipment not found' });
+    return res.status(404).json({ msg: "Shipment not found" });
   }
 
   const transaction = await sequelize.transaction();
@@ -446,10 +511,12 @@ exports.updateShipment = asyncHandler(async (req, res) => {
 
     for (let product of shipment.PalletProducts) {
       const palleProduct = await PalletProduct.findOne({
-        where: { id: product.id }
+        where: { id: product.id },
       });
 
-      const updatedProduct = updatedPurchaseOrderProducts.find(item => item.purchase_order_product_id === product.id);
+      const updatedProduct = updatedPurchaseOrderProducts.find(
+        (item) => item.purchase_order_product_id === product.id
+      );
 
       if (updatedProduct) {
         const oldQuantity = product.OutgoingShipmentProduct.quantity;
@@ -458,35 +525,41 @@ exports.updateShipment = asyncHandler(async (req, res) => {
         console.log("OLD QUANTITY: ", oldQuantity);
         console.log("NEW QUANTITY: ", newQuantity);
 
-        let currentAvailableQuantity = purchaseOrderProduct.quantity_available
+        let currentAvailableQuantity = purchaseOrderProduct.quantity_available;
         console.log("CURRENT AV QTY: ", currentAvailableQuantity);
 
         if (newQuantity > currentAvailableQuantity) {
-          throw new Error(`Quantity of ${newQuantity} exceeds the available stock for product ID ${product.id}. Available stock: ${currentAvailableQuantity}`);
+          throw new Error(
+            `Quantity of ${newQuantity} exceeds the available stock for product ID ${product.id}. Available stock: ${currentAvailableQuantity}`
+          );
         }
 
         let finalAvailableQuantity;
         if (newQuantity > oldQuantity) {
-          finalAvailableQuantity = currentAvailableQuantity - (newQuantity - oldQuantity);
+          finalAvailableQuantity =
+            currentAvailableQuantity - (newQuantity - oldQuantity);
         } else if (newQuantity < oldQuantity) {
-          finalAvailableQuantity = currentAvailableQuantity + (oldQuantity - newQuantity);
+          finalAvailableQuantity =
+            currentAvailableQuantity + (oldQuantity - newQuantity);
         } else {
           finalAvailableQuantity = currentAvailableQuantity;
         }
 
         console.log("FINAL AV QTY: ", finalAvailableQuantity);
 
-
-        await purchaseOrderProduct.update({ quantity_available: finalAvailableQuantity }, { transaction });
+        await purchaseOrderProduct.update(
+          { quantity_available: finalAvailableQuantity },
+          { transaction }
+        );
 
         await OutgoingShipmentProduct.update(
           { quantity: newQuantity },
           {
             where: {
               outgoing_shipment_id: shipment.id,
-              purchase_order_product_id: product.id
+              purchase_order_product_id: product.id,
             },
-            transaction
+            transaction,
           }
         );
       }
@@ -501,21 +574,23 @@ exports.updateShipment = asyncHandler(async (req, res) => {
 
     const updatedShipment = await OutgoingShipment.findOne({
       where: { id: shipment.id },
-      include: [{
-        model: PurchaseOrderProduct,
-        through: { attributes: ['quantity'] }
-      }]
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          through: { attributes: ["quantity"] },
+        },
+      ],
     });
 
     return res.status(200).json({
-      msg: 'Shipment updated successfully',
-      shipment: updatedShipment
+      msg: "Shipment updated successfully",
+      shipment: updatedShipment,
     });
-
-
   } catch (error) {
     await transaction.rollback();
-    return res.status(500).json({ msg: 'Something went wrong', error: error.message });
+    return res
+      .status(500)
+      .json({ msg: "Something went wrong", error: error.message });
   }
 });
 
@@ -529,41 +604,41 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: [
-          'id',
-          'purchaseorderproduct_id',
-          'available_quantity',
-          'quantity',
+          "id",
+          "purchaseorderproduct_id",
+          "available_quantity",
+          "quantity",
         ],
         include: [
           {
             model: PurchaseOrderProduct,
-            attributes: ['product_id'],
+            attributes: ["product_id"],
             include: [
               {
                 model: Product,
-                attributes: ['seller_sku'],
+                attributes: ["seller_sku"],
               },
             ],
           },
         ],
-        through: { attributes: ['quantity'] },
+        through: { attributes: ["quantity"] },
       },
     ],
   });
 
   if (!shipment) {
-    return res.status(404).json({ msg: 'Shipment not found' });
+    return res.status(404).json({ msg: "Shipment not found" });
   }
 
   const templatePath = path.join(
     __dirname,
-    '..',
-    'templates',
-    '2DWorkflow_Create_Shipment_Template.xlsx'
+    "..",
+    "templates",
+    "2DWorkflow_Create_Shipment_Template.xlsx"
   );
 
   if (!fs.existsSync(templatePath)) {
-    return res.status(500).json({ msg: 'Template not found' });
+    return res.status(500).json({ msg: "Template not found" });
   }
 
   // Crear el workbook usando el template
@@ -578,7 +653,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   shipment.PalletProducts.forEach((product) => {
     const sellerSku =
-      product.PurchaseOrderProduct?.Product?.seller_sku || 'N/A';
+      product.PurchaseOrderProduct?.Product?.seller_sku || "N/A";
     const quantity = product.OutgoingShipmentProduct?.quantity || 0;
 
     if (aggregatedProducts[sellerSku]) {
@@ -605,19 +680,16 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   // Generar un nombre único para el archivo
   const fileName = `2DWorkflow_Shipment_${shipment.shipment_number}.xlsx`;
-  const savePath = path.join(__dirname, '..', 'exports', fileName);
+  const savePath = path.join(__dirname, "..", "exports", fileName);
 
   // Guardar el archivo en el servidor
   await workbook.xlsx.writeFile(savePath);
 
   // Descargar el archivo al cliente
+  res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
   res.setHeader(
-    'Content-Disposition',
-    `attachment; filename=${fileName}`
-  );
-  res.setHeader(
-    'Content-Type',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   );
 
   await workbook.xlsx.write(res); // Escribir directamente al cliente
@@ -643,16 +715,28 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
     include: [
       {
         model: PalletProduct,
-        attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity'],
+        attributes: [
+          "id",
+          "purchaseorderproduct_id",
+          "quantity",
+          "available_quantity",
+        ],
         where: { available_quantity: { [Op.gt]: 0 } },
         include: [
           {
             model: PurchaseOrderProduct,
-            attributes: ['id', 'product_id'],
+            attributes: ["id", "product_id"],
             include: [
               {
                 model: Product,
-                attributes: ['id', 'ASIN', 'seller_sku', 'product_image', 'product_name', 'in_seller_account'],
+                attributes: [
+                  "id",
+                  "ASIN",
+                  "seller_sku",
+                  "product_image",
+                  "product_name",
+                  "in_seller_account",
+                ],
               },
             ],
           },
@@ -662,7 +746,9 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
   });
 
   if (!pallets || pallets.length === 0) {
-    return res.status(404).json({ msg: "No pallets found for the given purchase order ID" });
+    return res
+      .status(404)
+      .json({ msg: "No pallets found for the given purchase order ID" });
   }
 
   // Formatear la respuesta para que sea más clara
@@ -684,7 +770,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
           product_name: productData.product_name,
           in_seller_account: productData.in_seller_account,
           available_quantity: palletProduct.available_quantity,
-          pallet_number: pallet.pallet_number
+          pallet_number: pallet.pallet_number,
         };
       }),
     };
@@ -701,16 +787,17 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
 //@desc     Get all purchase orders associated with pallets
 //@access   Private
 exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
-
   // Obtener los purchase_order_id únicos de la tabla de Pallets
   const purchaseOrderIds = await Pallet.findAll({
-    attributes: ['purchase_order_id'], // Solo el campo `purchase_order_id`
-    group: ['purchase_order_id'], // Agrupar por `purchase_order_id`
+    attributes: ["purchase_order_id"], // Solo el campo `purchase_order_id`
+    group: ["purchase_order_id"], // Agrupar por `purchase_order_id`
   });
 
   // Si no se encontraron purchase_order_id
   if (!purchaseOrderIds || purchaseOrderIds.length === 0) {
-    return res.status(404).json({ msg: "No purchase orders associated with pallets found" });
+    return res
+      .status(404)
+      .json({ msg: "No purchase orders associated with pallets found" });
   }
 
   // Extraer los IDs en un array
@@ -728,33 +815,32 @@ exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
 //@desc    Track shipments from amazon
 //@access  Private
 exports.getShipmentTracking = asyncHandler(async (req, res) => {
-  console.log('Tracking shipments...');
+  console.log("Tracking shipments...");
   const baseUrl = `https://sellingpartnerapi-na.amazon.com/fba/inbound/v0/shipments`;
 
   const marketPlace = process.env.MARKETPLACE_US_ID;
   const lastUpdatedAfter = getLastMonthDate();
-  const shipmentStatuses = SHIPMENT_STATUSES.join(',');
+  const shipmentStatuses = SHIPMENT_STATUSES.join(",");
   let accessToken = await fetchNewTokenForFees();
   console.log(accessToken);
-  logger.info('Access token:', accessToken);
+  logger.info("Access token:", accessToken);
 
   try {
-
     if (!accessToken) {
-      console.log('fetching new token for sync db with amazon...');
-      logger.info('fetching new token for sync db with amazon...');
+      console.log("fetching new token for sync db with amazon...");
+      logger.info("fetching new token for sync db with amazon...");
       accessToken = await fetchNewTokenForFees();
     } else {
-      console.log('Token is still valid...');
-      logger.info('Token is still valid...');
+      console.log("Token is still valid...");
+      logger.info("Token is still valid...");
     }
 
     let url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
 
     const response = await axios.get(url, {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': accessToken,
+        "Content-Type": "application/json",
+        "x-amz-access-token": accessToken,
       },
     });
 
@@ -775,10 +861,17 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
       }
     }
 
-    return res.status(200).json({ msg: "Shipments tracked and updated successfully." });
+    return res
+      .status(200)
+      .json({ msg: "Shipments tracked and updated successfully." });
   } catch (error) {
-    console.error("Error fetching shipment data:", error.response?.data || error.message);
-    return res.status(500).json({ error: "Failed to fetch shipments", details: error.message });
+    console.error(
+      "Error fetching shipment data:",
+      error.response?.data || error.message
+    );
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch shipments", details: error.message });
   }
 });
 
@@ -787,7 +880,9 @@ const updateShipmentId = async (shipment, shipmentId) => {
     if (shipment.fba_shipment_id !== shipmentId) {
       shipment.fba_shipment_id = shipmentId;
       await shipment.save();
-      console.log(`FBA Shipment ID actualizado para shipment_number: ${shipment.shipment_number}`);
+      console.log(
+        `FBA Shipment ID actualizado para shipment_number: ${shipment.shipment_number}`
+      );
     }
   } catch (error) {
     console.error(
@@ -802,16 +897,25 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
     if (shipment.status !== shipmentStatus) {
       shipment.status = shipmentStatus;
       await shipment.save();
-      console.log(`Shipment status actualizado para shipment_number: ${shipment.shipment_number}`);
+      console.log(
+        `Shipment status actualizado para shipment_number: ${shipment.shipment_number}`
+      );
     }
   } catch (error) {
-    console.error(`Error actualizando status para shipment_number: ${shipment.shipment_number}`, error.message);
+    console.error(
+      `Error actualizando status para shipment_number: ${shipment.shipment_number}`,
+      error.message
+    );
   }
 };
 
 const getLastMonthDate = () => {
   const now = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const lastMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() - 1,
+    now.getDate()
+  );
   return lastMonth.toISOString();
 };
 
@@ -828,4 +932,3 @@ const SHIPMENT_STATUSES = [
   "CHECKED_IN",
   "READY_TO_SHIP",
 ];
-

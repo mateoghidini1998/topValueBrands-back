@@ -1,11 +1,11 @@
 const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
 const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
+const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculator');
 
 //@route    POST api/v1/pallets
 //@desc     Create a pallet
 //@access   Private
-
 exports.createPallet = asyncHandler(async (req, res) => {
   const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
@@ -44,6 +44,8 @@ exports.createPallet = asyncHandler(async (req, res) => {
     await location.save({ transaction });
 
     if (products && products.length > 0) {
+      const productsToUpdate = new Set(); // Usaremos un Set para recalcular solo los productos afectados
+
       for (const product of products) {
         const { purchaseorderproduct_id, quantity } = product;
 
@@ -65,19 +67,13 @@ exports.createPallet = asyncHandler(async (req, res) => {
           throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
         }
 
-        // Actualizar el warehouse_stock del producto
-        const productToUpdate = await Product.findOne({
-          where: { id: purchaseOrderProduct.product_id },
-          transaction,
-        });
+        // Añadir el product_id al Set para recalcular warehouse_stock
+        productsToUpdate.add(purchaseOrderProduct.product_id);
+      }
 
-        if (!productToUpdate) {
-          throw new Error(`Product with ID ${purchaseOrderProduct.product_id} not found.`);
-        }
-
-        productToUpdate.warehouse_stock = parseInt(productToUpdate.warehouse_stock) + parseInt(quantity);
-
-        await productToUpdate.save({ transaction });
+      // Recalcular warehouse_stock para cada producto afectado
+      for (const productId of productsToUpdate) {
+        await recalculateWarehouseStock(productId);
       }
     } else {
       return res.status(400).json({ msg: "No products provided to associate with the pallet." });
@@ -94,6 +90,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 
 //@route    GET api/v1/pallets
