@@ -26,7 +26,6 @@ module.exports = {
     for (const product of products) {
       const { product_id } = product;
 
-      // Calcular el warehouse_stock para este producto
       const result = await sequelize.query(
         `
         SELECT 
@@ -50,7 +49,8 @@ module.exports = {
             purchaseorders AS po ON pop.purchase_order_id = po.id
         WHERE 
             pop.product_id = :productId
-            AND po.is_active = true
+            AND po.is_active = 1
+            AND po.id IS NOT NULL
         GROUP BY 
             pop.product_id
         `,
