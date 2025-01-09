@@ -873,6 +873,37 @@ const updateShipmentId = async (shipment, shipmentId) => {
 
 const updateShipmentStatus = async (shipment, shipmentStatus) => {
   try {
+    if (shipment.status === 'WORKING' && shipment.status !== shipmentStatus) {
+      // Obtener los productos asociados al shipment
+      const shipmentProducts = await OutgoingShipmentProduct.findAll({
+        where: { outgoing_shipment_id: shipment.id },
+        include: [
+          {
+            model: PalletProduct,
+            as: 'palletProduct', 
+            include: [
+              {
+                model: PurchaseOrderProduct,
+                as: 'purchaseOrderProduct', 
+                attributes: ['product_id'],
+              },
+            ],
+          },
+        ],
+      });
+
+      const productIds = shipmentProducts
+        .map(
+          (sp) => sp.palletProduct?.purchaseOrderProduct?.product_id
+        )
+        .filter((id) => id);
+
+      const uniqueProductIds = [...new Set(productIds)];
+      for (const productId of uniqueProductIds) {
+        await recalculateWarehouseStock(productId);
+      }
+    }
+
     if (shipment.status !== shipmentStatus) {
       const previousStatus = shipment.status;
       shipment.status = shipmentStatus;

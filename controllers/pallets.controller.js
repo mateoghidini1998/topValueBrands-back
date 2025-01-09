@@ -91,8 +91,6 @@ exports.createPallet = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 //@route    GET api/v1/pallets
 //@desc     Get pallets
 //@access   Private
@@ -205,8 +203,6 @@ exports.getPallet = asyncHandler(async (req, res) => {
 
   return res.status(200).json(formattedPallet);
 });
-
-
 
 //@route    DELETE api/v1/pallets/:id
 //@desc     Delete pallet by id
