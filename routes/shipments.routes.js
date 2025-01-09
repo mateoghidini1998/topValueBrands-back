@@ -12,7 +12,7 @@ const {
     download2DWorkflowTemplate,
     getPalletsByPurchaseOrder,
     getPurchaseOrdersWithPallets,
-    getShipmentTracking
+    getShipmentTrackingV2
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
@@ -25,5 +25,4 @@ router.put('/:id', protect, updateShipment)
 router.get('/:id/download', protect, download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
-router.get('/tracking', addAccessTokenHeader, getShipmentTracking);
 module.exports = router;

@@ -815,7 +815,7 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
     }
 
     let url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
-
+    console.log("URL:", url)
     const response = await axios.get(url, {
       headers: {
         "Content-Type": "application/json",
@@ -824,7 +824,7 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
     });
 
     const amazonShipments = response.data.payload.ShipmentData;
-
+    console.log(amazonShipments)
     for (const amazonShipment of amazonShipments) {
       const { ShipmentId, ShipmentName, ShipmentStatus } = amazonShipment;
 
@@ -873,29 +873,31 @@ const updateShipmentId = async (shipment, shipmentId) => {
 
 const updateShipmentStatus = async (shipment, shipmentStatus) => {
   try {
-    if (shipment.status === 'WORKING' && shipment.status !== shipmentStatus) {
-      // Obtener los productos asociados al shipment
-      const shipmentProducts = await OutgoingShipmentProduct.findAll({
-        where: { outgoing_shipment_id: shipment.id },
-        include: [
-          {
-            model: PalletProduct,
-            as: 'palletProduct', 
-            include: [
-              {
-                model: PurchaseOrderProduct,
-                as: 'purchaseOrderProduct', 
-                attributes: ['product_id'],
-              },
-            ],
-          },
-        ],
-      });
+    console.log(`Shipment number: ${shipment.shipment_number}`);
+    console.log(`Estado actual en la base de datos: ${shipment.status}`);
+    console.log(`Nuevo estado desde Amazon: ${shipmentStatus}`);
+
+    if ((shipment.status === 'WORKING' || shipment.status === 'PENDING') && shipment.status !== shipmentStatus) {
+      const shipmentProducts = await sequelize.query(
+        `
+        SELECT osp.*, 
+               pp.*, 
+               pop.product_id
+        FROM outgoingshipmentproducts osp
+        LEFT JOIN palletproducts pp ON osp.pallet_product_id = pp.id
+        LEFT JOIN purchaseorderproducts pop ON pp.purchaseorderproduct_id = pop.id
+        WHERE osp.outgoing_shipment_id = :shipmentId
+        `,
+        {
+          type: sequelize.QueryTypes.SELECT,
+          replacements: { shipmentId: shipment.id }, 
+        }
+      );
+
+      console.log('Productos asociados al shipment:', JSON.stringify(shipmentProducts, null, 2));
 
       const productIds = shipmentProducts
-        .map(
-          (sp) => sp.palletProduct?.purchaseOrderProduct?.product_id
-        )
+        .map((sp) => sp.palletProduct?.purchaseOrderProduct?.product_id)
         .filter((id) => id);
 
       const uniqueProductIds = [...new Set(productIds)];
@@ -908,8 +910,9 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
       const previousStatus = shipment.status;
       shipment.status = shipmentStatus;
       await shipment.save();
+
       console.log(
-        `Shipment status actualizado para shipment_number: ${shipment.shipment_number}`
+        `Estado del shipment actualizado: ${shipment.shipment_number}, Anterior: ${previousStatus}, Nuevo: ${shipmentStatus}`
       );
     }
   } catch (error) {
@@ -919,6 +922,7 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
     );
   }
 };
+
 
 const getLastMonthDate = () => {
   const now = new Date();
@@ -934,68 +938,11 @@ const SHIPMENT_STATUSES = [
   "IN_TRANSIT",
   "DELIVERED",
   "WORKING",
-  "CANCELLED",
-  "CLOSED",
   "RECEIVING",
   "SHIPPED",
   "READY_TO_SHIP",
-  "ERROR",
   "CHECKED_IN",
-  "DELETED"
 ];
-
-const updateWarehouseStockForShipment = async (shipment) => {
-  try {
-    const shipmentProducts = await OutgoingShipmentProduct.findAll({
-      where: { outgoing_shipment_id: shipment.id },
-      include: [
-        {
-          model: PurchaseOrderProduct,
-          as: 'purchaseOrderProduct',
-          include: [
-            {
-              model: Product,
-              as: 'product',
-            },
-          ],
-        },
-      ],
-    });
-
-    for (let shipmentProduct of shipmentProducts) {
-      const purchaseOrderProduct = shipmentProduct.purchaseOrderProduct;
-      const product = purchaseOrderProduct?.product;
-
-      if (!product) {
-        console.warn(
-          `Producto no encontrado para shipment_product_id: ${shipmentProduct.id}`
-        );
-        continue;
-      }
-      if (product.warehouse_stock < shipmentProduct.quantity) {
-        console.warn(
-          `Stock insuficiente para el producto ${product.id}. Stock actual: ${product.warehouse_stock}, requerido: ${shipmentProduct.quantity}`
-        );
-        continue;
-      }
-
-      const newWarehouseStock = product.warehouse_stock - shipmentProduct.quantity;
-
-      await product.update({
-        warehouse_stock: newWarehouseStock,
-      });
-
-      console.log(
-        `Stock actualizado para producto ${product.id}. Nuevo stock: ${newWarehouseStock}`
-      );
-    }
-  } catch (error) {
-    console.error(
-      `Error actualizando warehouse_stock para shipment_number: ${shipment.shipment_number}`,
-      error.message
-    );
-  }
-};
 
 const revertWarehouseStockForShipment = async (shipment) => {
   try {
@@ -1043,3 +990,4 @@ const revertWarehouseStockForShipment = async (shipment) => {
     );
   }
 };
+
