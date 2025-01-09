@@ -20,8 +20,11 @@ exports.recalculateWarehouseStock = async (productId) => {
         outgoingshipmentproducts AS osp ON pp.id = osp.pallet_product_id
     LEFT JOIN 
         outgoingshipments AS os ON osp.outgoing_shipment_id = os.id AND os.status = 'WORKING'
+    LEFT JOIN 
+        purchaseorders AS po ON pop.purchase_order_id = po.id
     WHERE 
         pop.product_id = :productId
+        AND po.is_active = true
     GROUP BY 
         pop.product_id
     `,

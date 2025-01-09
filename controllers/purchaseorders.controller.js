@@ -7,7 +7,7 @@ const {
   TrackedProduct,
   PurchaseOrderStatus,
 } = require("../models");
-const { addUPCToPOProduct: addUPC } = require('./products.controller')
+const { addUPCToPOProduct: addUPC } = require("./products.controller");
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
@@ -15,8 +15,11 @@ const { where, Transaction } = require("sequelize");
 const {
   getTrackedProductsFromAnOrder,
 } = require("./trackedproducts.controller");
+const {
+  recalculateWarehouseStock,
+} = require("../utils/warehouse_stock_calculator");
 
-const { sequelize } = require('../models');
+const { sequelize } = require("../models");
 
 exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   const {
@@ -99,13 +102,12 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
-
   const updatedPurchaseOrder = await purchaseOrder.update({ notes: notes });
   return res.status(200).json({
     success: true,
     data: {
       notes: updatedPurchaseOrder.notes,
-      message: 'Notes updated successfully'
+      message: "Notes updated successfully",
     },
   });
 });
@@ -136,7 +138,6 @@ exports.addProductToPurchaseOrder = asyncHandler(async (req, res, next) => {
   if (!supplier_id) {
     return res.status(404).json({ message: "Supplier not found" });
   }
-
 
   // check if the supplier product is the same as the one in the purchase order
   for (const product of products) {
@@ -172,27 +173,28 @@ exports.addProductToPurchaseOrder = asyncHandler(async (req, res, next) => {
     await transaction.commit();
 
     // Consulta la orden de compra actualizada junto con sus productos
-    const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
-      include: [
-        {
-          model: PurchaseOrderProduct,
-          as: "purchaseOrderProducts",
-        },
-      ],
-    });
+    const updatedPurchaseOrder = await PurchaseOrder.findByPk(
+      purchaseOrder.id,
+      {
+        include: [
+          {
+            model: PurchaseOrderProduct,
+            as: "purchaseOrderProducts",
+          },
+        ],
+      }
+    );
 
     return res.status(201).json({
       success: true,
       data: updatedPurchaseOrder,
     });
-
   } catch (error) {
     // Rollback de la transacción en caso de error
     await transaction.rollback();
     return next(error);
   }
 });
-
 
 exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
@@ -206,6 +208,8 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
   const purchaseorderproducts = await getPurchaseOrderProducts(
     purchaseOrder.id
   );
+
+  const productsToRecalculate = new Set();
 
   for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
     const purchaseOrderProduct = purchaseorderproducts.find(
@@ -227,6 +231,16 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
         purchaseOrderProductUpdate.profit
       );
 
+      if (
+        purchaseOrderProduct.quantity_received !==
+        parseInt(purchaseOrderProductUpdate.quantityReceived)
+      ) {
+        purchaseOrderProduct.quantity_received = parseInt(
+          purchaseOrderProductUpdate.quantityReceived
+        );
+        productsToRecalculate.add(purchaseOrderProduct.product_id);
+      }
+
       const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
 
       if (updatedPurchaseOrderProduct) {
@@ -244,23 +258,33 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
           try {
             await addUPC(product, upc);
           } catch (error) {
-            console.error(`Error updating UPC for product ${product.id}: ${error.message}`);
+            console.error(
+              `Error updating UPC for product ${product.id}: ${error.message}`
+            );
           }
         }
       }
     } else {
-      return res
-        .status(404)
-        .json({
-          message: `Purchase Order Product not found: ${purchaseOrderProductUpdate.purchaseOrderProductId}`,
-        });
+      return res.status(404).json({
+        message: `Purchase Order Product not found: ${purchaseOrderProductUpdate.purchaseOrderProductId}`,
+      });
     }
   }
+
+  for (const productId of productsToRecalculate) {
+    try {
+      await recalculateWarehouseStock(productId);
+    } catch (error) {
+      console.error(
+        `Error recalculating warehouse stock for product ${productId}: ${error.message}`
+      );
+    }
+  }
+
   res
     .status(200)
     .json({ message: "Purchase Order Products updated successfully" });
 });
-
 
 exports.getPurchaseOrderById = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
@@ -311,10 +335,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
 
       // Utiliza la asociación ya existente para obtener la descripción
       const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
-      purchaseOrder.setDataValue(
-        "status",
-        (statusDescription || "Unknown")
-      );
+      purchaseOrder.setDataValue("status", statusDescription || "Unknown");
     })
   );
 
@@ -327,9 +348,9 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
             const purchaseProduct = await Product.findByPk(
               purchaseOrderProduct.product_id,
               {
-                where: { is_active: true }
+                where: { is_active: true },
               }
-            )
+            );
             purchaseOrderProduct.setDataValue(
               "product_name",
               purchaseProduct.product_name
@@ -337,7 +358,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res, next) => {
             purchaseOrderProduct.setDataValue(
               "quantity_missing",
               purchaseOrderProduct.quantity_purchased -
-              (purchaseOrderProduct.quantity_received || 0)
+                (purchaseOrderProduct.quantity_received || 0)
             );
           }
         )
@@ -450,7 +471,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
-
       },
       {
         model: PurchaseOrderStatus,
@@ -583,110 +603,105 @@ exports.updatePONumber = asyncHandler(async (req, res, next) => {
     success: true,
     data: purchaseOrder,
   });
-})
-
-exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(async (req, res, next) => {
-  const purchaseOrderProductId = req.params.purchaseOrderProductId;
-  const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId
-  );
-  if (!purchaseOrderProduct) {
-    return res
-      .status(404)
-      .json({ message: "Purchase order product not found" });
-  }
-  await purchaseOrderProduct.update({ is_active: false });
-
-  const purchaseOrder = await PurchaseOrder.findByPk(
-    purchaseOrderProduct.purchase_order_id
-  );
-  if (!purchaseOrder) {
-    return res.status(404).json({ message: "Purchase order not found" });
-  }
-
-  // Actualizar el total de la orden de compra
-  await purchaseOrder.update({
-    total_price: purchaseOrder.total_price - purchaseOrderProduct.total_amount,
-  });
-
-
-  return res.status(200).json({
-    success: true,
-    data: purchaseOrderProduct,
-  });
 });
+
+exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(
+  async (req, res, next) => {
+    const purchaseOrderProductId = req.params.purchaseOrderProductId;
+    const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
+      purchaseOrderProductId
+    );
+    if (!purchaseOrderProduct) {
+      return res
+        .status(404)
+        .json({ message: "Purchase order product not found" });
+    }
+    await purchaseOrderProduct.update({ is_active: false });
+
+    const purchaseOrder = await PurchaseOrder.findByPk(
+      purchaseOrderProduct.purchase_order_id
+    );
+    if (!purchaseOrder) {
+      return res.status(404).json({ message: "Purchase order not found" });
+    }
+
+    // Actualizar el total de la orden de compra
+    await purchaseOrder.update({
+      total_price:
+        purchaseOrder.total_price - purchaseOrderProduct.total_amount,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: purchaseOrderProduct,
+    });
+  }
+);
 
 exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
 
-  // Encontrar el producto de la orden de compra por ID
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId, {
-    where: { is_active: true }
-  }
+    purchaseOrderProductId,
+    {
+      where: { is_active: true },
+    }
   );
 
-  // Verificar si el producto existe
   if (!purchaseOrderProduct) {
     return res
       .status(404)
       .json({ message: "Purchase order product not found" });
   }
 
-  // Encontrar la orden de compra asociada
   const purchaseOrder = await PurchaseOrder.findByPk(
     purchaseOrderProduct.purchase_order_id
   );
 
-  // Verificar si la orden de compra existe
   if (!purchaseOrder) {
     return res.status(404).json({ message: "Purchase order not found" });
   }
 
   const { quantityReceived } = req.body;
 
-  // Validar que `quantityReceived` sea un número válido
   if (quantityReceived == null || quantityReceived < 0) {
     return res.status(400).json({ message: "Invalid quantity received" });
   }
 
-  // Actualizar la cantidad recibida del producto
+  // Actualizar el quantity_received
   const updatedProduct = await purchaseOrderProduct.update({
     quantity_received: quantityReceived,
+    quantity_missing:
+      Number(purchaseOrderProduct.quantity_purchased) -
+      Number(quantityReceived),
+    quantity_available: quantityReceived, // Actualizamos también quantity_available
   });
 
-  // Verificar si la actualización fue exitosa
   if (!updatedProduct) {
     return res
       .status(500)
       .json({ message: "Failed to update quantity received" });
   }
 
-  // Calcular la cantidad faltante y actualizar
-  const quantityMissing =
-    Number(purchaseOrderProduct.quantity_purchased) -
-    Number(purchaseOrderProduct.quantity_received);
-
-  await purchaseOrderProduct.update({ quantity_missing: quantityMissing, quantity_available: quantityReceived });
-
   // Obtener todos los productos de la orden de compra
   const purchaseOrderProductList = await PurchaseOrderProduct.findAll({
-    where: { purchase_order_id: purchaseOrderProduct.purchase_order_id, is_active: true },
+    where: {
+      purchase_order_id: purchaseOrderProduct.purchase_order_id,
+      is_active: true,
+    },
   });
 
-  // Verificar si la lista de productos existe
   if (!purchaseOrderProductList) {
     return res
       .status(404)
       .json({ message: "Purchase order product list not found" });
   }
 
-  // Verificar si todos los productos han sido recibidos (cantidad faltante es 0)
+  // Verificar si todos los productos están recibidos
   const allProductsReceived = purchaseOrderProductList.every(
     (product) => product.quantity_missing === 0
   );
 
-  // Si todos los productos han sido recibidos, actualizar el estado de la orden de compra a "Closed"
   if (allProductsReceived) {
     await PurchaseOrder.update(
       { purchase_order_status_id: PURCHASE_ORDER_STATUSES.CLOSED },
@@ -694,7 +709,13 @@ exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Responder con el estado actualizado del producto, la lista y el estado de la orden
+  // Recalcular el warehouse stock para el producto actualizado
+  try {
+    await recalculateWarehouseStock(purchaseOrderProduct.product_id);
+  } catch (error) {
+    console.error(`Error recalculating warehouse stock: ${error.message}`);
+  }
+
   return res.status(200).json({
     success: true,
     data: {
@@ -705,14 +726,14 @@ exports.addQuantityReceived = asyncHandler(async (req, res, next) => {
   });
 });
 
-
 exports.addNotesToPurchaseOrderProduct = asyncHandler(
   async (req, res, next) => {
     const purchaseOrderProductId = req.params.purchaseOrderProductId;
     const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-      purchaseOrderProductId, {
-      where: { is_active: true }
-    }
+      purchaseOrderProductId,
+      {
+        where: { is_active: true },
+      }
     );
     if (!purchaseOrderProduct) {
       return res
@@ -735,9 +756,10 @@ exports.addNotesToPurchaseOrderProduct = asyncHandler(
 exports.addReasonToPOProduct = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId, {
-    where: { is_active: true }
-  }
+    purchaseOrderProductId,
+    {
+      where: { is_active: true },
+    }
   );
   if (!purchaseOrderProduct) {
     return res
@@ -755,14 +777,15 @@ exports.addReasonToPOProduct = asyncHandler(async (req, res, next) => {
       data: purchaseOrderProduct,
     });
   }
-})
+});
 
 exports.addExpireDateToPOProduct = asyncHandler(async (req, res, next) => {
   const purchaseOrderProductId = req.params.purchaseOrderProductId;
   const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
-    purchaseOrderProductId, {
-    where: { is_active: true }
-  }
+    purchaseOrderProductId,
+    {
+      where: { is_active: true },
+    }
   );
   if (!purchaseOrderProduct) {
     return res
@@ -780,14 +803,15 @@ exports.addExpireDateToPOProduct = asyncHandler(async (req, res, next) => {
       data: purchaseOrderProduct,
     });
   }
-})
+});
 
 const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   let totalPrice = 0;
 
   for (const product of products) {
     // console.log(product);
-    const { product_id, product_cost, quantity, fees, lowest_fba_price } = product;
+    const { product_id, product_cost, quantity, fees, lowest_fba_price } =
+      product;
     const purchaseOrderProduct = await PurchaseOrderProduct.create({
       purchase_order_id: purchaseOrderId,
       product_id,
@@ -857,7 +881,7 @@ const getPurchaseOrderProducts = async (purchaseOrderId) => {
 };
 
 exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
-  // check if the user is admin
+  // Validar si el usuario tiene permiso
   // if (req.user.role !== 'admin') {
   //   return res.status(401).json({ message: 'Unauthorized' });
   // }
@@ -867,7 +891,21 @@ exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
+  // Actualizar el estado del Purchase Order
   await purchaseOrder.update({ is_active: false });
+
+  // Obtener los productos asociados al Purchase Order
+  const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
+    where: { purchase_order_id: purchaseOrder.id },
+    attributes: ["product_id"],
+    group: ["product_id"],
+  });
+
+  // Recalcular el stock para cada producto asociado
+  for (const { product_id } of purchaseOrderProducts) {
+    await recalculateWarehouseStock(product_id);
+  }
+
   return res.status(200).json({
     success: true,
     data: purchaseOrder,
@@ -894,7 +932,7 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
   // console.log(purchaseOrderProducts[0].dataValues);
   //log every purchaseOrderProduct from the purchaseOrderProducts array
 
-  let totalQuantity = 0
+  let totalQuantity = 0;
 
   for (const product of purchaseOrderProducts) {
     // console.log(product.dataValues);
@@ -923,8 +961,14 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
 
       console.log(product);
 
-      const unit_price = parseInt(productData.dataValues.pack_type) ? product.dataValues.unit_price / parseInt(productData.dataValues.pack_type) : product.dataValues.unit_price;
-      const quantity_purchased = parseInt(productData.dataValues.pack_type) ? product.quantity_purchased * parseInt(productData.dataValues.pack_type) : product.quantity_purchased;
+      const unit_price = parseInt(productData.dataValues.pack_type)
+        ? product.dataValues.unit_price /
+          parseInt(productData.dataValues.pack_type)
+        : product.dataValues.unit_price;
+      const quantity_purchased = parseInt(productData.dataValues.pack_type)
+        ? product.quantity_purchased *
+          parseInt(productData.dataValues.pack_type)
+        : product.quantity_purchased;
       const total_amount = unit_price * quantity_purchased;
 
       return {
