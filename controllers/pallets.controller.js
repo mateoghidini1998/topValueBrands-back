@@ -100,7 +100,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
       include: [
         {
           model: PurchaseOrderProduct,
-          as: 'purchaseorderproducts', // alias correcto según el modelo
+          as: 'purchaseorderproducts',
           through: {
             model: PalletProduct,
             attributes: ['quantity', 'available_quantity'],
@@ -109,12 +109,12 @@ exports.getPallets = asyncHandler(async (req, res) => {
         },
         {
           model: WarehouseLocation,
-          as: 'warehouseLocation', // alias correcto según el modelo
+          as: 'warehouseLocation', 
           attributes: ['id', 'location'],
         },
         {
           model: PurchaseOrder,
-          as: 'purchaseOrder', // alias correcto según el modelo
+          as: 'purchaseOrder',
           attributes: ['id', 'order_number'],
         },
       ],
@@ -153,14 +153,14 @@ exports.getPallet = asyncHandler(async (req, res) => {
         model: PalletProduct,
         include: [
           {
-            model: PurchaseOrderProduct, // Relación intermedia
+            model: PurchaseOrderProduct,
             attributes: [
               'id',
             ],
             include: [
               {
-                model: Product, // Relación final con Product
-                attributes: ['product_name', 'product_image', 'seller_sku'], // Atributos que necesitamos
+                model: Product,
+                attributes: ['product_name', 'product_image', 'seller_sku'],
               },
             ],
           },

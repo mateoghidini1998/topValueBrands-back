@@ -24,8 +24,6 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'pallet_id',
         as: 'pallets'
       });
-
-
     }
 
   }
