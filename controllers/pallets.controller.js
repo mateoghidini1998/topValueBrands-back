@@ -154,6 +154,7 @@ exports.getPallet = asyncHandler(async (req, res) => {
         include: [
           {
             model: PurchaseOrderProduct,
+            as: 'purchaseOrderProduct',
             attributes: [
               'id',
             ],
