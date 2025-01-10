@@ -279,11 +279,12 @@ exports.getShipment = asyncHandler(async (req, res) => {
           "createdAt",
           "updatedAt",
         ],
-        through: { attributes: ["quantity"] }, // Cantidad de OutgoingShipmentProduct
+        through: { attributes: ["quantity"] },
         include: [
           {
             model: PurchaseOrderProduct,
-            attributes: ["id", "product_id"], // Incluye el product_id
+            as: 'purchaseOrderProduct',
+            attributes: ["id", "product_id"], 
             include: [
               {
                 model: Product,
@@ -293,7 +294,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "product_image",
                   "seller_sku",
                   "in_seller_account",
-                ], // Incluye el product_name
+                ], 
               },
             ],
           },
