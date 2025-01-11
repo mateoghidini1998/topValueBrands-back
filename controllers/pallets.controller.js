@@ -109,7 +109,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
         },
         {
           model: WarehouseLocation,
-          as: 'warehouseLocation', 
+          as: 'warehouseLocation',
           attributes: ['id', 'location'],
         },
         {
@@ -161,7 +161,7 @@ exports.getPallet = asyncHandler(async (req, res) => {
             include: [
               {
                 model: Product,
-                attributes: ['product_name', 'product_image', 'seller_sku'],
+                attributes: ['product_name', 'product_image', 'seller_sku', "in_seller_account"],
               },
             ],
           },
@@ -191,13 +191,10 @@ exports.getPallet = asyncHandler(async (req, res) => {
   const formattedPallet = {
     ...palletData,
     PalletProducts: palletData.PalletProducts.map((palletProduct) => {
-      const product =
-        palletProduct.PurchaseOrderProduct?.Product || {};
+      // const product =
+      //   palletProduct.PurchaseOrderProduct?.Product || {};
       return {
         ...palletProduct,
-        product_name: product.product_name,
-        product_image: product.product_image,
-        seller_sku: product.seller_sku,
       };
     }),
   };
