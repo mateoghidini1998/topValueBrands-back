@@ -261,10 +261,6 @@ exports.getShipments = asyncHandler(async (req, res) => {
 //@desc     Get outgoing shipment by id
 //@access   Private
 exports.getShipment = asyncHandler(async (req, res) => {
-  // if (req.user.role !== "admin") {
-  //   return res.status(401).json({ msg: "Unauthorized" });
-  // }
-
   const shipment = await OutgoingShipment.findOne({
     where: { id: req.params.id },
     include: [
@@ -283,7 +279,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
         include: [
           {
             model: PurchaseOrderProduct,
-            as: "purchaseOrderProduct",  // 🔥 Se especifica el alias correctamente
+            as: "purchaseOrderProduct",
             attributes: ["id", "product_id"],
             include: [
               {
@@ -298,6 +294,10 @@ exports.getShipment = asyncHandler(async (req, res) => {
               },
             ],
           },
+          {
+            model: Pallet,  // 🔥 Incluimos el modelo Pallet
+            attributes: ["id", "pallet_number"],
+          },
         ],
       },
     ],
@@ -307,27 +307,25 @@ exports.getShipment = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: "Shipment not found" });
   }
 
-  // Convertir shipment a objeto plano
   const shipmentData = shipment.toJSON();
 
-  // Reorganizar los datos
   const formattedShipment = {
     ...shipmentData,
     PalletProducts: shipmentData.PalletProducts.map((palletProduct) => {
-      const product = palletProduct.purchaseOrderProduct?.Product;  // 🔥 Se usa el alias aquí
+      const product = palletProduct.purchaseOrderProduct?.Product;
 
       return {
         ...palletProduct,
+        pallet_number: palletProduct.Pallet?.pallet_number || null,  // 🔥 Obtenemos el pallet_number directamente
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
         seller_sku: product?.seller_sku || null,
         in_seller_account: product?.in_seller_account || null,
-        purchaseOrderProduct: undefined,  // 🔥 Ajuste para eliminar datos anidados
+        purchaseOrderProduct: undefined,
       };
     }),
   };
 
-  // Responder con los datos formateados
   return res.status(200).json(formattedShipment);
 });
 
