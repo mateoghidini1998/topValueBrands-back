@@ -271,7 +271,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: [
-          "id", // Asegura que el id del PalletProduct (pallet_product_id) esté incluido
+          "id",
           "purchaseorderproduct_id",
           "pallet_id",
           "quantity",
@@ -283,8 +283,8 @@ exports.getShipment = asyncHandler(async (req, res) => {
         include: [
           {
             model: PurchaseOrderProduct,
-            as: 'purchaseOrderProduct',
-            attributes: ["id", "product_id"], 
+            as: "purchaseOrderProduct",  // 🔥 Se especifica el alias correctamente
+            attributes: ["id", "product_id"],
             include: [
               {
                 model: Product,
@@ -294,7 +294,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "product_image",
                   "seller_sku",
                   "in_seller_account",
-                ], 
+                ],
               },
             ],
           },
@@ -307,38 +307,31 @@ exports.getShipment = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: "Shipment not found" });
   }
 
-  // Convierte `shipment` a un objeto plano
+  // Convertir shipment a objeto plano
   const shipmentData = shipment.toJSON();
 
-  // Reorganiza los datos
+  // Reorganizar los datos
   const formattedShipment = {
     ...shipmentData,
     PalletProducts: shipmentData.PalletProducts.map((palletProduct) => {
-      const productName =
-        palletProduct.PurchaseOrderProduct?.Product?.product_name || null;
-
-      const productImage =
-        palletProduct.PurchaseOrderProduct?.Product?.product_image || null;
-
-      const sellerSku =
-        palletProduct.PurchaseOrderProduct?.Product?.seller_sku || null;
-      const in_seller_account =
-        palletProduct.PurchaseOrderProduct?.Product?.in_seller_account || null;
+      const product = palletProduct.purchaseOrderProduct?.Product;  // 🔥 Se usa el alias aquí
 
       return {
         ...palletProduct,
-        product_name: productName, // Agrega el campo directamente aquí
-        product_image: productImage, // Agrega el campo directamente aquí
-        seller_sku: sellerSku, // Agrega el campo directamente aquí
-        in_seller_account: in_seller_account,
-        PurchaseOrderProduct: undefined, // Opcional: elimina datos anidados innecesarios
+        product_name: product?.product_name || null,
+        product_image: product?.product_image || null,
+        seller_sku: product?.seller_sku || null,
+        in_seller_account: product?.in_seller_account || null,
+        purchaseOrderProduct: undefined,  // 🔥 Ajuste para eliminar datos anidados
       };
     }),
   };
 
-  // Envía los datos procesados
+  // Responder con los datos formateados
   return res.status(200).json(formattedShipment);
 });
+
+
 
 //@route    GET api/v1/shipment/:shipment_number
 //@desc     Get outgoing shipment by shipment number
@@ -891,7 +884,7 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
         `,
         {
           type: sequelize.QueryTypes.SELECT,
-          replacements: { shipmentId: shipment.id }, 
+          replacements: { shipmentId: shipment.id },
         }
       );
 
