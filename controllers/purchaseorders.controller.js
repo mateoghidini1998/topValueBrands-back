@@ -319,49 +319,63 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
-  const keyword = req.query.keyword || ''; // Para filtrar por order_number
-  const supplierId = req.query.supplier || null; // Para filtrar por supplier_id
+  const keyword = req.query.keyword || '';
+  const supplierId = req.query.supplier || null;
 
   try {
     const whereConditions = {
       is_active: true,
     };
 
-    // Utiliza la asociación ya existente para obtener la descripción
-    const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
-    purchaseOrder.setDataValue("status", statusDescription || "Unknown");
+    if (keyword) {
+      whereConditions.order_number = { [Op.like]: `%${keyword}%` };
+    }
 
-    // Obtener product_name para cada purchase order product
+    if (supplierId) {
+      whereConditions.supplier_id = supplierId;
+    }
+
+    const { count, rows: purchaseOrders } = await PurchaseOrder.findAndCountAll({
+      where: whereConditions,
+      include: [
+        {
+          model: PurchaseOrderStatus,
+          as: "purchaseOrderStatus",
+        },
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
+          include: [{ model: Product }],
+        },
+      ],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
     await Promise.all(
       purchaseOrders.map(async (purchaseOrder) => {
+        const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
+        purchaseOrder.setDataValue("status", statusDescription || "Unknown");
+
         await Promise.all(
-          purchaseOrder.purchaseOrderProducts.map(
-            async (purchaseOrderProduct) => {
-              const purchaseProduct = await Product.findByPk(
-                purchaseOrderProduct.product_id,
-                {
-                  where: { is_active: true },
-                }
-              );
-              purchaseOrderProduct.setDataValue(
-                "product_name",
-                purchaseProduct.product_name
-              );
-              purchaseOrderProduct.setDataValue(
-                "quantity_missing",
-                purchaseOrderProduct.quantity_purchased -
-                (purchaseOrderProduct.quantity_received || 0)
-              );
-            })
+          purchaseOrder.purchaseOrderProducts.map(async (purchaseOrderProduct) => {
+            const purchaseProduct = purchaseOrderProduct.Product;
+            purchaseOrderProduct.setDataValue("product_name", purchaseProduct?.product_name || "Unknown");
+            purchaseOrderProduct.setDataValue(
+              "quantity_missing",
+              purchaseOrderProduct.quantity_purchased - (purchaseOrderProduct.quantity_received || 0)
+            );
+          })
         );
 
-        // Calcular el ROI promedio
+        const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
         const trackedProducts = await TrackedProduct.findAll({
-          where: { product_id: purchaseOrderProducts.map((p) => p.product_id) },
+          where: { product_id: productIds },
         });
 
         const roiArr = trackedProducts.map((trackedProduct) => {
-          const product = purchaseOrderProducts.find(
+          const product = purchaseOrder.purchaseOrderProducts.find(
             (p) => p.product_id === trackedProduct.product_id
           );
           return product?.product_cost
@@ -372,7 +386,9 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
         const averageRoi = roiArr.length ? roiArr.reduce((a, b) => a + b, 0) / roiArr.length : 0;
         purchaseOrder.setDataValue("average_roi", averageRoi);
 
-        // Añadir datos de productos rastreados
+        const supplierName = await Supplier.findByPk(purchaseOrder.supplier_id);
+        purchaseOrder.setDataValue('supplier_name', supplierName?.supplier_name || "Unknown");
+
         const trackedProductDetails = await Promise.all(
           trackedProducts.map(async (trackedProduct) => {
             const product = await Product.findByPk(trackedProduct.product_id);
