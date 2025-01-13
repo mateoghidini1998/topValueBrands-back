@@ -1,11 +1,11 @@
 const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
 const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
+const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculator');
 
 //@route    POST api/v1/pallets
 //@desc     Create a pallet
 //@access   Private
-
 exports.createPallet = asyncHandler(async (req, res) => {
   const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
@@ -44,15 +44,36 @@ exports.createPallet = asyncHandler(async (req, res) => {
     await location.save({ transaction });
 
     if (products && products.length > 0) {
+      const productsToUpdate = new Set(); // Usaremos un Set para recalcular solo los productos afectados
+
       for (const product of products) {
         const { purchaseorderproduct_id, quantity } = product;
 
+        // Crear la relación del pallet con el producto
         await createPalletProduct({
           purchaseorderproduct_id,
           pallet_id: pallet.id,
           quantity,
           transaction,
         });
+
+        // Obtener el producto asociado al purchaseorderproduct_id
+        const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+          where: { id: purchaseorderproduct_id },
+          transaction,
+        });
+
+        if (!purchaseOrderProduct) {
+          throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
+        }
+
+        // Añadir el product_id al Set para recalcular warehouse_stock
+        productsToUpdate.add(purchaseOrderProduct.product_id);
+      }
+
+      // Recalcular warehouse_stock para cada producto afectado
+      for (const productId of productsToUpdate) {
+        await recalculateWarehouseStock(productId);
       }
     } else {
       return res.status(400).json({ msg: "No products provided to associate with the pallet." });
@@ -61,11 +82,12 @@ exports.createPallet = asyncHandler(async (req, res) => {
     await transaction.commit();
 
     return res.status(201).json({ pallet });
-
   } catch (error) {
-
     await transaction.rollback();
-    return res.status(500).json({ msg: "Error creating pallet and products", error: error.message });
+    return res.status(500).json({
+      msg: "Error creating pallet and updating warehouse stock",
+      error: error.message,
+    });
   }
 });
 
@@ -78,7 +100,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
       include: [
         {
           model: PurchaseOrderProduct,
-          as: 'purchaseorderproducts', // alias correcto según el modelo
+          as: 'purchaseorderproducts',
           through: {
             model: PalletProduct,
             attributes: ['quantity', 'available_quantity'],
@@ -87,12 +109,12 @@ exports.getPallets = asyncHandler(async (req, res) => {
         },
         {
           model: WarehouseLocation,
-          as: 'warehouseLocation', // alias correcto según el modelo
+          as: 'warehouseLocation',
           attributes: ['id', 'location'],
         },
         {
           model: PurchaseOrder,
-          as: 'purchaseOrder', // alias correcto según el modelo
+          as: 'purchaseOrder',
           attributes: ['id', 'order_number'],
         },
       ],
@@ -131,14 +153,15 @@ exports.getPallet = asyncHandler(async (req, res) => {
         model: PalletProduct,
         include: [
           {
-            model: PurchaseOrderProduct, // Relación intermedia
+            model: PurchaseOrderProduct,
+            as: 'purchaseOrderProduct',
             attributes: [
               'id',
             ],
             include: [
               {
-                model: Product, // Relación final con Product
-                attributes: ['product_name', 'product_image', 'seller_sku'], // Atributos que necesitamos
+                model: Product,
+                attributes: ['product_name', 'product_image', 'seller_sku', "in_seller_account"],
               },
             ],
           },
@@ -168,21 +191,16 @@ exports.getPallet = asyncHandler(async (req, res) => {
   const formattedPallet = {
     ...palletData,
     PalletProducts: palletData.PalletProducts.map((palletProduct) => {
-      const product =
-        palletProduct.PurchaseOrderProduct?.Product || {};
+      // const product =
+      //   palletProduct.PurchaseOrderProduct?.Product || {};
       return {
         ...palletProduct,
-        product_name: product.product_name,
-        product_image: product.product_image,
-        seller_sku: product.seller_sku,
       };
     }),
   };
 
   return res.status(200).json(formattedPallet);
 });
-
-
 
 //@route    DELETE api/v1/pallets/:id
 //@desc     Delete pallet by id

@@ -6,9 +6,10 @@ module.exports = (sequelize, DataTypes) => {
       // Definir relaciones con los modelos OutgoingShipment y PurchaseOrderProduct
       OutgoingShipmentProduct.belongsTo(models.OutgoingShipment, {
         foreignKey: 'outgoing_shipment_id',
-        onDelete: 'CASCADE', // Configuración opcional para borrar en cascada
+        onDelete: 'CASCADE', 
       });
       OutgoingShipmentProduct.belongsTo(models.PalletProduct, {
+        as: 'palletProduct',
         foreignKey: 'pallet_product_id',
         onDelete: 'CASCADE',
       });

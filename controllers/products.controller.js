@@ -21,50 +21,89 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const product = await Product.findOne({
     where: { ASIN: req.body.ASIN },
   });
+
   if (product) {
-    return res.status(400).json({ msg: 'Product already exists' });
+    if (!product.is_active) {
+      const accessToken = req.headers['x-amz-access-token'];
 
+      const productName = await getProductNameByASIN(req.body.ASIN, accessToken);
+      req.body.product_name = productName;
+
+      const productImage = await getImageForProduct(req.body.ASIN, accessToken);
+      req.body.product_image = productImage || null;
+
+      const requiredFields = [
+        'product_cost',
+        'ASIN',
+        'supplier_item_number',
+        'supplier_id',
+      ];
+
+      for (const field of requiredFields) {
+        if (!req.body[field]) {
+          return res.status(400).json({ msg: `Missing required field: ${field}` });
+        }
+      }
+
+      try {
+        await product.update({
+          ...req.body,
+          is_active: true,
+        });
+        return res.status(200).json({
+          msg: 'Product reactivated and updated successfully',
+          product,
+        });
+      } catch (error) {
+        return res.status(400).json({ msg: error.message });
+      }
+    } else {
+      return res.status(400).json({ msg: 'Product already exists' });
+    }
   } else {
-    const accessToken = req.headers['x-amz-access-token']
-    const productName = await getProductNameByASIN(req.body.ASIN, req.headers['x-amz-access-token']);
+    const accessToken = req.headers['x-amz-access-token'];
+
+    const productName = await getProductNameByASIN(req.body.ASIN, accessToken);
     req.body.product_name = productName;
-  }
 
-  const requiredFields = [
-    // 'seller_sku',
-    'product_cost',
-    'ASIN',
-    'supplier_item_number',
-    'supplier_id',
-  ];
+    const productImage = await getImageForProduct(req.body.ASIN, accessToken);
+    req.body.product_image = productImage || null;
 
-  for (const field of requiredFields) {
-    if (!req.body[field]) {
-      return res.status(400).json({ msg: `Missing required field: ${field}` });
+    const requiredFields = [
+      'product_cost',
+      'ASIN',
+      'supplier_item_number',
+      'supplier_id',
+    ];
+
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({ msg: `Missing required field: ${field}` });
+      }
     }
-  }
 
-  const supplier = await Supplier.findByPk(req.body.supplier_id);
+    const supplier = await Supplier.findByPk(req.body.supplier_id);
 
-  if (!supplier) {
-    let newSupplier = await Supplier.findOne({
-      where: { supplier_name: 'Unknown' },
-    });
-
-    if (!newSupplier) {
-      newSupplier = await Supplier.create({
-        supplier_name: 'Unknown',
+    if (!supplier) {
+      let newSupplier = await Supplier.findOne({
+        where: { supplier_name: 'Unknown' },
       });
-    }
-    req.body.supplier_id = newSupplier.id;
-    req.body.in_seller_account = false;
-  }
 
-  try {
-    const newProduct = await Product.create(req.body);
-    res.status(201).json(newProduct);
-  } catch (error) {
-    res.status(400).json({ msg: error.message });
+      if (!newSupplier) {
+        newSupplier = await Supplier.create({
+          supplier_name: 'Unknown',
+        });
+      }
+      req.body.supplier_id = newSupplier.id;
+      req.body.in_seller_account = false;
+    }
+
+    try {
+      const newProduct = await Product.create(req.body);
+      return res.status(201).json(newProduct);
+    } catch (error) {
+      return res.status(400).json({ msg: error.message });
+    }
   }
 });
 
@@ -125,11 +164,25 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 //@desc     Update is_active as a toggle field of products
 //@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ where: { id: req.user.id } });
+
+  if (user.role !== 'admin') {
+    return res.status(401).json({ msg: 'Unauthorized' });
+  }
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
+  const warehouse_stock = product.warehouse_stock;
+  const fba_stock = product.FBA_available_inventory;
+  const reserved_quantity = product.reserved_quantity;
+  const inbound_to_fba = product.Inbound_to_FBA;
+
   if (!product) {
     return res.status(404).json({ msg: 'Product not found' });
+  }
+
+  if (warehouse_stock > 0 || fba_stock > 0 || reserved_quantity > 0 || inbound_to_fba > 0) {
+    return res.status(400).json({ msg: 'Product has stock' });
   }
 
   const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
@@ -142,9 +195,6 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
       trackedProduct.is_active = !trackedProduct.is_active;
       await trackedProduct.save();
     }
-
-
-    // await invalidateProductCache();
 
     res.status(200).json(product);
   } catch (error) {
@@ -426,3 +476,34 @@ exports.addUPC = asyncHandler(async (req, res) => {
     res.status(500).json({ msg: 'Error adding UPC to product' });
   }
 })
+
+const getImageForProduct = async (asin, accessToken) => {
+  const url = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${asin}?marketplaceIds=ATVPDKIKX0DER&includedData=images`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': accessToken,
+      },
+    });
+
+    const imagesData = response.data.images;
+    if (!imagesData || imagesData.length === 0) {
+      console.warn(`No images found for ASIN: ${asin}`);
+      return null;
+    }
+
+    const imageLinks = imagesData[0]?.images || [];
+    const image =
+      imageLinks.find((img) => img.width === 75 || img.height === 75) || imageLinks[0];
+    return image?.link || null;
+  } catch (error) {
+    console.error({
+      msg: error.message,
+      response: error.response?.data || 'No response body',
+      status: error.response?.status || 'No status code',
+    });
+    return null;
+  }
+}
