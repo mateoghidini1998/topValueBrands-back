@@ -9,33 +9,36 @@ const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculat
 exports.createPallet = asyncHandler(async (req, res) => {
   const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
+  if (!products || products.length === 0) {
+    return res.status(400).json({ msg: "No products provided to associate with the pallet." });
+  }
+
+  const [location, purchase_order, pallet] = await Promise.all([
+    WarehouseLocation.findOne({ where: { id: warehouse_location_id } }),
+    PurchaseOrder.findOne({ where: { id: purchase_order_id } }),
+    Pallet.findOne({ where: { pallet_number } }),
+  ]);
+
+  if (!location) {
+    return res.status(404).json({ msg: "Warehouse location not found" });
+  }
+
+  if (location.current_capacity <= 0) {
+    return res.status(400).json({ msg: `The location with id ${warehouse_location_id} has no space available` });
+  }
+
+  if (!purchase_order) {
+    return res.status(404).json({ msg: "Purchase order not found" });
+  }
+
+  if (pallet) {
+    return res.status(400).json({ msg: "Pallet Number already exists" });
+  }
+
   const transaction = await sequelize.transaction();
 
   try {
-    const location = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
-    const purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
-
-    let pallet = await Pallet.findOne({ where: { pallet_number } });
-
-    if (!location) {
-      return res.status(404).json({ msg: "Warehouse location not found" });
-    }
-
-    if (location.current_capacity <= 0) {
-      return res.status(400).json({
-        msg: `The location with id ${warehouse_location_id} has no space available`,
-      });
-    }
-
-    if (!purchase_order) {
-      return res.status(404).json({ msg: "Purchase order not found" });
-    }
-
-    if (pallet) {
-      return res.status(400).json({ msg: "Pallet Number already exists" });
-    }
-
-    pallet = await Pallet.create(
+    const newPallet = await Pallet.create(
       { pallet_number, warehouse_location_id, purchase_order_id },
       { transaction }
     );
@@ -43,45 +46,36 @@ exports.createPallet = asyncHandler(async (req, res) => {
     location.current_capacity -= 1;
     await location.save({ transaction });
 
-    if (products && products.length > 0) {
-      const productsToUpdate = new Set(); // Usaremos un Set para recalcular solo los productos afectados
+    const productsToUpdate = new Set();
 
-      for (const product of products) {
-        const { purchaseorderproduct_id, quantity } = product;
+    const palletProductsData = [];
 
-        // Crear la relación del pallet con el producto
-        await createPalletProduct({
-          purchaseorderproduct_id,
-          pallet_id: pallet.id,
-          quantity,
-          transaction,
-        });
+    for (const { purchaseorderproduct_id, quantity } of products) {
+      const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+        where: { id: purchaseorderproduct_id },
+        transaction,
+      });
 
-        // Obtener el producto asociado al purchaseorderproduct_id
-        const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
-          where: { id: purchaseorderproduct_id },
-          transaction,
-        });
-
-        if (!purchaseOrderProduct) {
-          throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
-        }
-
-        // Añadir el product_id al Set para recalcular warehouse_stock
-        productsToUpdate.add(purchaseOrderProduct.product_id);
+      if (!purchaseOrderProduct) {
+        throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
       }
 
-      // Recalcular warehouse_stock para cada producto afectado
-      for (const productId of productsToUpdate) {
-        await recalculateWarehouseStock(productId);
-      }
-    } else {
-      return res.status(400).json({ msg: "No products provided to associate with the pallet." });
+      productsToUpdate.add(purchaseOrderProduct.product_id);
+
+      palletProductsData.push({
+        purchaseorderproduct_id,
+        pallet_id: newPallet.id,
+        quantity,
+      });
     }
+
+    await PalletProduct.bulkCreate(palletProductsData, { transaction });
+
+    await Promise.all([...productsToUpdate].map(productId => recalculateWarehouseStock(productId)));
 
     await transaction.commit();
 
-    return res.status(201).json({ pallet });
+    return res.status(201).json({ pallet: newPallet });
   } catch (error) {
     await transaction.rollback();
     return res.status(500).json({
@@ -90,6 +84,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 //@route    GET api/v1/pallets
 //@desc     Get pallets
