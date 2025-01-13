@@ -9,8 +9,7 @@ const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculat
 exports.createPallet = asyncHandler(async (req, res) => {
   const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
-  const transaction = await sequelize.transaction();
-
+  const transaction = await sequelize.transaction({ timeout: 60000 * 3 }); // 2 minutos
   try {
     const location = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
     const purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
