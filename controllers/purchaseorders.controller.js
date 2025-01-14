@@ -437,7 +437,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
-        attributes: ["product_id", "quantity_purchased", "product_cost", "total_amount"],
+        attributes: ["product_id", "quantity_purchased", "product_cost", "total_amount", "id"],
       },
       {
         model: PurchaseOrderStatus,
@@ -498,14 +498,15 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     const orderProduct = purchaseOrder.purchaseOrderProducts.find(p => p.product_id === tp.product_id);
     const roi = product.product_cost ? ((tp.profit / product.product_cost) * 100) : 0;
     return {
-      id: tp.id,
+      id: product.id,
+      product_id: orderProduct.product_id,
       product_name: product.product_name,
       in_seller_account: product.in_seller_account,
       ASIN: product.ASIN,
       seller_sku: product.seller_sku,
       supplier_name: product.supplier.supplier_name,
       product_image: product.product_image,
-      product_cost: orderProduct.product_cost,
+      supplier_item_number: product.supplier_item_number,
       product_velocity: tp.product_velocity,
       units_sold: tp.units_sold,
       thirty_days_rank: tp.thirty_days_rank,
@@ -515,8 +516,9 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       profit: tp.profit,
       roi: roi.toFixed(2),
       updatedAt: tp.updatedAt,
-      supplier_item_number: product.supplier_item_number,
       sellable_quantity: tp.sellable_quantity,
+      product_cost: orderProduct.product_cost,
+      purchase_order_product_id: orderProduct.id,
       total_amount: parseFloat(orderProduct?.total_amount ?? "0"), // Obtener total_amount ya en el backend
       quantity_purchased: parseInt((orderProduct?.quantity_purchased ?? 0).toString()), // Obtener cantidad comprada ya en el backend
     };
