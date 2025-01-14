@@ -708,6 +708,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
                   "product_image",
                   "product_name",
                   "in_seller_account",
+                  'upc'
                 ],
               },
             ],
@@ -737,6 +738,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
           quantity: palletProduct.quantity,
           product_id: productData.id,
           ASIN: productData.ASIN,
+          upc: productData.upc,
           seller_sku: productData.seller_sku,
           product_image: productData.product_image,
           product_name: productData.product_name,
