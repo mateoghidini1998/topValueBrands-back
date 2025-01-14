@@ -696,6 +696,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
         include: [
           {
             model: PurchaseOrderProduct,
+            as: "purchaseOrderProduct",
             attributes: ["id", "product_id"],
             include: [
               {
@@ -730,7 +731,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
       pallet_id: pallet.id,
       purchase_order_id: pallet.purchase_order_id,
       products: pallet.PalletProducts.map((palletProduct) => {
-        const productData = palletProduct.PurchaseOrderProduct?.Product || {};
+        const productData = palletProduct.purchaseOrderProduct.Product || {};
         return {
           pallet_product_id: palletProduct.id,
           quantity: palletProduct.quantity,
