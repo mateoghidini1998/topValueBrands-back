@@ -325,6 +325,8 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
   try {
     const whereConditions = {
       is_active: true,
+
+      purchase_order_status_id: [1, 2, 3, 8],
     };
 
     if (keyword) {
@@ -425,6 +427,119 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
     });
   }
 });
+
+exports.getIncomingShipments = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+  const keyword = req.query.keyword || '';
+  const supplierId = req.query.supplier || null;
+
+  try {
+    const whereConditions = {
+      is_active: true,
+      purchase_order_status_id: [4, 5, 6, 7],
+    };
+
+    if (keyword) {
+      whereConditions.order_number = { [Op.like]: `%${keyword}%` };
+    }
+
+    if (supplierId) {
+      whereConditions.supplier_id = supplierId;
+    }
+
+    const { count, rows: purchaseOrders } = await PurchaseOrder.findAndCountAll({
+      where: whereConditions,
+      include: [
+        {
+          model: PurchaseOrderStatus,
+          as: "purchaseOrderStatus",
+        },
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
+          include: [{ model: Product }],
+        },
+      ],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    await Promise.all(
+      purchaseOrders.map(async (purchaseOrder) => {
+        const statusDescription = purchaseOrder.purchaseOrderStatus?.description;
+        purchaseOrder.setDataValue("status", statusDescription || "Unknown");
+
+        await Promise.all(
+          purchaseOrder.purchaseOrderProducts.map(async (purchaseOrderProduct) => {
+            const purchaseProduct = purchaseOrderProduct.Product;
+            purchaseOrderProduct.setDataValue("product_name", purchaseProduct?.product_name || "Unknown");
+            purchaseOrderProduct.setDataValue(
+              "quantity_missing",
+              purchaseOrderProduct.quantity_purchased - (purchaseOrderProduct.quantity_received || 0)
+            );
+          })
+        );
+
+        const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
+        const trackedProducts = await TrackedProduct.findAll({
+          where: { product_id: productIds },
+        });
+
+        const roiArr = trackedProducts.map((trackedProduct) => {
+          const product = purchaseOrder.purchaseOrderProducts.find(
+            (p) => p.product_id === trackedProduct.product_id
+          );
+          return product?.product_cost
+            ? (trackedProduct.profit / product.product_cost) * 100
+            : 0;
+        });
+
+        const averageRoi = roiArr.length ? roiArr.reduce((a, b) => a + b, 0) / roiArr.length : 0;
+        purchaseOrder.setDataValue("average_roi", averageRoi);
+
+        const supplierName = await Supplier.findByPk(purchaseOrder.supplier_id);
+        purchaseOrder.setDataValue('supplier_name', supplierName?.supplier_name || "Unknown");
+
+        const trackedProductDetails = await Promise.all(
+          trackedProducts.map(async (trackedProduct) => {
+            const product = await Product.findByPk(trackedProduct.product_id);
+            const supplier = await Supplier.findByPk(product?.supplier_id);
+            return {
+              ...trackedProduct.toJSON(),
+              product_name: product?.product_name || "Unknown",
+              ASIN: product?.ASIN || "Unknown",
+              seller_sku: product?.seller_sku || "Unknown",
+              supplier_name: supplier?.supplier_name || "Unknown",
+              product_image: product?.product_image || "Unknown",
+              product_cost: product?.product_cost || 0,
+            };
+          })
+        );
+        purchaseOrder.setDataValue("trackedProducts", trackedProductDetails);
+      })
+    );
+
+    const totalPages = Math.ceil(count / limit);
+
+    return res.status(200).json({
+      success: true,
+      total: count,
+      pages: totalPages,
+      currentPage: page,
+      data: purchaseOrders,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      msg: "Error fetching incoming shipments",
+      error: error.message,
+    });
+  }
+});
+
 
 exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
@@ -545,9 +660,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     },
   });
 });
-
-
-
 
 exports.updatePONumber = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;

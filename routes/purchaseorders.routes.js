@@ -18,11 +18,15 @@ const {
   deletePurchaseOrderProductFromAnOrder,
   updatePONumber,
   addProductToPurchaseOrder,
+  getIncomingShipments,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
 
 router.get('/', getPurchaseOrders);
+
+router.get('/incoming-shipments', getIncomingShipments);
+
 router.post('/', createPurchaseOrder);
 router.put('/:id', updatedPurchaseOrder);
 router.get('/:id', getPurchaseOrderById);
