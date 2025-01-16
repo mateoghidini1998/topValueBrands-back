@@ -210,13 +210,13 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
-  const { purchaseOrderProductsUpdates } = req.body;
+  const { incomingOrderProductUpdates } = req.body;
 
   const purchaseorderproducts = await getPurchaseOrderProducts(
     purchaseOrder.id
   );
 
-  for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
+  for (const purchaseOrderProductUpdate of incomingOrderProductUpdates) {
     const purchaseOrderProduct = purchaseorderproducts.find(
       (p) => p.id === purchaseOrderProductUpdate.purchase_order_product_id
     );
