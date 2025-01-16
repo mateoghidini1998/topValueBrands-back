@@ -20,6 +20,7 @@ const {
   addProductToPurchaseOrder,
   getIncomingShipments,
   addOrUpdateProductInPurchaseOrder,
+  updateIncomingOrderProducts
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
@@ -48,6 +49,8 @@ router.delete(
   '/purchaseorderproduct/:purchaseOrderProductId',
   deletePurchaseOrderProductFromAnOrder
 );
+
+router.patch('/update-incoming-order/:id', updateIncomingOrderProducts)
 
 // add products to existing purchase order
 router.post('/add-products/:id', addOrUpdateProductInPurchaseOrder);

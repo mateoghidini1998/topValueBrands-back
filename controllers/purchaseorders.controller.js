@@ -202,7 +202,82 @@ exports.addOrUpdateProductInPurchaseOrder = asyncHandler(async (req, res, next) 
   }
 });
 
+// update incoming order
+exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
 
+  if (!purchaseOrder) {
+    return res.status(404).json({ message: "Purchase Order not found" });
+  }
+
+  const { purchaseOrderProductsUpdates } = req.body;
+
+  const purchaseorderproducts = await getPurchaseOrderProducts(
+    purchaseOrder.id
+  );
+
+  for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
+    const purchaseOrderProduct = purchaseorderproducts.find(
+      (p) => p.id === purchaseOrderProductUpdate.purchase_order_product_id
+    );
+
+    if (purchaseOrderProduct) {
+
+      if (
+        purchaseOrderProduct.quantity_received !==
+        parseInt(purchaseOrderProductUpdate.quantity_received)
+      ) {
+        purchaseOrderProduct.quantity_received = parseInt(
+          purchaseOrderProductUpdate.quantity_received
+        );
+
+        // update quantity_missing
+
+        purchaseOrderProduct.quantity_missing =
+          purchaseOrderProduct.quantity_purchased -
+          parseInt(
+            purchaseOrderProductUpdate.quantity_received
+          );
+      }
+
+      // update reason_id, expire_date
+
+      if (purchaseOrderProduct.reason_id !== purchaseOrderProductUpdate.reason_id) {
+        purchaseOrderProduct.reason_id = purchaseOrderProductUpdate.reason_id;
+      }
+
+      if (purchaseOrderProduct.expire_date !== purchaseOrderProductUpdate.expire_date) {
+        purchaseOrderProduct.expire_date = purchaseOrderProductUpdate.expire_date;
+      }
+
+
+      const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
+
+      if (updatedPurchaseOrderProduct) {
+
+        const product = await Product.findByPk(purchaseOrderProduct.product_id);
+        if (product) {
+          const { upc } = purchaseOrderProductUpdate;
+          try {
+            await addUPC(product, upc);
+          } catch (error) {
+            console.error(
+              `Error updating UPC for product ${product.id}: ${error.message}`
+            );
+          }
+        }
+      }
+    } else {
+      return res.status(404).json({
+        message: `Purchase Order Product not found: ${purchaseOrderProductUpdate.purchaseOrderProductId}`,
+      });
+    }
+  }
+
+  res
+    .status(200)
+    .json({ message: "Incoming Order Products updated successfully" });
+});
 
 exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
@@ -560,7 +635,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
-        attributes: ["product_id", "quantity_purchased", "product_cost", "total_amount", "id"],
+        attributes: ["product_id", "quantity_purchased", "quantity_received", "quantity_missing", "quantity_available", "product_cost", "total_amount", "id", 'reason_id', "expire_date"],
       },
       {
         model: PurchaseOrderStatus,
@@ -598,7 +673,9 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
           "product_cost",
           "in_seller_account",
           "supplier_item_number",
-          "pack_type"
+          "pack_type",
+          "upc",
+
         ],
         include: [
           {
@@ -621,8 +698,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     const orderProduct = purchaseOrder.purchaseOrderProducts.find(p => p.product_id === tp.product_id);
     const roi = product.product_cost ? ((tp.profit / product.product_cost) * 100) : 0;
     return {
+      // product
       id: product.id,
-      product_id: orderProduct.product_id,
       product_name: product.product_name,
       in_seller_account: product.in_seller_account,
       ASIN: product.ASIN,
@@ -632,6 +709,9 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       pack_type: product.pack_type,
       product_image: product.product_image,
       supplier_item_number: product.supplier_item_number,
+      upc: product.upc,
+
+      // tracked product
       product_velocity: tp.product_velocity,
       units_sold: tp.units_sold,
       thirty_days_rank: tp.thirty_days_rank,
@@ -642,10 +722,18 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       roi: roi.toFixed(2),
       updatedAt: tp.updatedAt,
       sellable_quantity: tp.sellable_quantity,
+
+      // order product
+      product_id: orderProduct.product_id,
       product_cost: orderProduct.product_cost,
       purchase_order_product_id: orderProduct.id,
       total_amount: parseFloat(orderProduct?.total_amount ?? "0"), // Obtener total_amount ya en el backend
       quantity_purchased: parseInt((orderProduct?.quantity_purchased ?? 0).toString()), // Obtener cantidad comprada ya en el backend
+      quantity_received: orderProduct.quantity_received,
+      quantity_missing: orderProduct.quantity_missing,
+      quantity_available: orderProduct.quantity_available,
+      reason_id: orderProduct.reason_id,
+      expire_date: orderProduct.expire_date,
     };
   });
 
