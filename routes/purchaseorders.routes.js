@@ -19,6 +19,7 @@ const {
   updatePONumber,
   addProductToPurchaseOrder,
   getIncomingShipments,
+  addOrUpdateProductInPurchaseOrder,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
@@ -49,7 +50,7 @@ router.delete(
 );
 
 // add products to existing purchase order
-router.post('/add-products/:id', addProductToPurchaseOrder);
+router.post('/add-products/:id', addOrUpdateProductInPurchaseOrder);
 
 //update purchase order number
 

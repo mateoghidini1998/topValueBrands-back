@@ -112,89 +112,97 @@ exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.addProductToPurchaseOrder = asyncHandler(async (req, res, next) => {
+// Controlador para agregar o actualizar productos en una orden de compra
+exports.addOrUpdateProductInPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const { products } = req.body;
 
-  // check if the products are not already in the purchase order
-  const existingProducts = await PurchaseOrderProduct.findAll({
-    where: { purchase_order_id: id, is_active: true },
-  });
-
-  for (const product of products) {
-    const existingProduct = existingProducts.find(
-      (p) => p.product_id === product.product_id
-    );
-    if (existingProduct) {
-      return res.status(400).json({
-        message: `Product ${product.product_id} is already in the purchase order`,
-      });
-    }
-  }
-
-  const supplier_id = await PurchaseOrder.findByPk(id, {
-    attributes: ["supplier_id"],
-  });
-  if (!supplier_id) {
-    return res.status(404).json({ message: "Supplier not found" });
-  }
-
-  // check if the supplier product is the same as the one in the purchase order
-  for (const product of products) {
-    const supplierProduct = await Product.findByPk(product.product_id);
-    if (supplierProduct.supplier_id !== supplier_id.supplier_id) {
-      return res.status(400).json({
-        message: `Product ${product.product_id} does not belong to supplier ${supplier_id.values}`,
-      });
-    }
-  }
-
-  const transaction = await sequelize.transaction(); // Inicia la transacción
+  const transaction = await sequelize.transaction();
 
   try {
     const purchaseOrder = await PurchaseOrder.findByPk(id, { transaction });
+
     if (!purchaseOrder) {
       return res.status(404).json({ message: "Purchase Order not found" });
     }
 
-    // Creación de entradas de `PurchaseOrderProduct` y cálculo del total
-    let newAmount = 0;
-    if (products && products.length > 0) {
-      newAmount = await createPurchaseOrderProducts(purchaseOrder.id, products);
+    const supplier_id = purchaseOrder.supplier_id;
+
+    for (const product of products) {
+      const { product_id, product_cost, quantity, fees, lowest_fba_price } = product;
+      const parsedProductCost = parseFloat(product_cost);
+
+      if (isNaN(parsedProductCost)) {
+        throw new Error(`Invalid product cost: ${product_cost}`);
+      }
+
+      const supplierProduct = await Product.findByPk(product_id, { transaction });
+      if (!supplierProduct || supplierProduct.supplier_id !== supplier_id) {
+        return res.status(400).json({
+          message: `Product ${product_id} does not belong to supplier ${supplier_id}`,
+        });
+      }
+
+      const existingProduct = await PurchaseOrderProduct.findOne({
+        where: { purchase_order_id: id, product_id, is_active: true },
+        transaction,
+      });
+
+      if (existingProduct) {
+        const updatedFields = {};
+        if (existingProduct.product_cost !== parsedProductCost) {
+          updatedFields.product_cost = parsedProductCost;
+        }
+        if (existingProduct.quantity_purchased !== quantity) {
+          updatedFields.quantity_purchased = quantity;
+        }
+
+        if (Object.keys(updatedFields).length > 0) {
+          updatedFields.total_amount = parsedProductCost * quantity;
+          updatedFields.unit_price = parsedProductCost;
+          updatedFields.profit = lowest_fba_price - fees - parsedProductCost;
+
+          await existingProduct.update(updatedFields, { transaction });
+        }
+      } else {
+        await createPurchaseOrderProducts(purchaseOrder.id, [product], transaction);
+      }
     }
 
-    // Actualiza el precio total de la orden de compra en la misma transacción
-    await purchaseOrder.update(
-      { total_price: parseFloat(purchaseOrder.total_price) + newAmount },
-      { transaction }
-    );
+    const updatedProducts = await PurchaseOrderProduct.findAll({
+      where: { purchase_order_id: id, is_active: true },
+      transaction,
+    });
+    const newTotalPrice = products.reduce((sum, prod) => sum + parseFloat(prod.quantity * parseFloat(prod.product_cost)), 0);
 
-    // Commit de la transacción si todas las operaciones son exitosas
+    // Redondear el total_price a un número con dos decimales
+    const formattedTotalPrice = parseFloat(newTotalPrice.toFixed(2));
+
+    await purchaseOrder.update({ total_price: formattedTotalPrice }, { transaction });
+
     await transaction.commit();
 
-    // Consulta la orden de compra actualizada junto con sus productos
-    const updatedPurchaseOrder = await PurchaseOrder.findByPk(
-      purchaseOrder.id,
-      {
-        include: [
-          {
-            model: PurchaseOrderProduct,
-            as: "purchaseOrderProducts",
-          },
-        ],
-      }
-    );
+    const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
+        },
+      ],
+    });
 
     return res.status(201).json({
       success: true,
       data: updatedPurchaseOrder,
     });
   } catch (error) {
-    // Rollback de la transacción en caso de error
+    console.error('Error during transaction:', error);
     await transaction.rollback();
     return next(error);
   }
 });
+
+
 
 exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
@@ -620,6 +628,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       ASIN: product.ASIN,
       seller_sku: product.seller_sku,
       supplier_name: product.supplier.supplier_name,
+      supplier_id: product.supplier_id,
+      pack_type: product.pack_type,
       product_image: product.product_image,
       supplier_item_number: product.supplier_item_number,
       product_velocity: tp.product_velocity,
@@ -654,6 +664,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         updatedAt: purchaseOrder.updatedAt,
         updatedStatusAt: purchaseOrder.updatedStatusAt,
         supplier_name: purchaseOrder.suppliers.supplier_name,
+        supplier_id: purchaseOrder.supplier_id,
         notes: purchaseOrder.notes
       },
       purchaseOrderProducts: productsData,
