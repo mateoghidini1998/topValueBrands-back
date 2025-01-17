@@ -9,20 +9,33 @@ const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculat
 exports.createPallet = asyncHandler(async (req, res) => {
   const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
-  const transaction = await sequelize.transaction({ timeout: 60000 * 3 }); // 2 minutos
+  const transaction = await sequelize.transaction();
   try {
+    // 🔎 Buscar la ubicación del almacén
+    const location = await WarehouseLocation.findOne({
+      where: { id: warehouse_location_id },
+      transaction,
+      lock: transaction.LOCK.UPDATE, // 🔒 Evita conflictos de concurrencia
+    });
+
+    if (!location) {
+      throw new Error(`Warehouse location with ID ${warehouse_location_id} not found.`);
+    }
+
+    // 📦 Crear el pallet
     const newPallet = await Pallet.create(
       { pallet_number, warehouse_location_id, purchase_order_id },
       { transaction }
     );
 
+    // 📉 Actualizar la capacidad del almacén
     location.current_capacity -= 1;
     await location.save({ transaction });
 
     const productsToUpdate = new Set();
-
     const palletProductsData = [];
 
+    // 🔄 Procesar productos
     for (const { purchaseorderproduct_id, quantity } of products) {
       const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
         where: { id: purchaseorderproduct_id },
@@ -42,8 +55,10 @@ exports.createPallet = asyncHandler(async (req, res) => {
       });
     }
 
+    // 📦 Asociar productos al pallet
     await PalletProduct.bulkCreate(palletProductsData, { transaction });
 
+    // 🔄 Recalcular stock del almacén
     await Promise.all([...productsToUpdate].map(productId => recalculateWarehouseStock(productId)));
 
     await transaction.commit();
@@ -57,6 +72,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 
 //@route    GET api/v1/pallets
