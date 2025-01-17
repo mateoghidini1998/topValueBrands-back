@@ -234,7 +234,28 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 //@desc     Get all outgoing shipments
 //@access   Private
 exports.getShipments = asyncHandler(async (req, res) => {
-  const shipments = await OutgoingShipment.findAll({
+  const { page = 1, limit = 50, keyword = "", supplier = "", orderBy = "createdAt", orderWay = "DESC" } = req.query;
+
+  const offset = (page - 1) * limit;
+  const whereClause = {};
+
+  const validOrderFields = ["shipment_number", "status", "createdAt", "updatedAt"];
+  const validOrderBy = validOrderFields.includes(orderBy) ? orderBy : "createdAt";
+  const validOrderWay = ["ASC", "DESC"].includes(orderWay.toUpperCase()) ? orderWay.toUpperCase() : "DESC";
+
+  if (keyword) {
+    whereClause[Op.or] = [
+      { shipment_number: { [Op.like]: `%${keyword}%` } },
+      { status: { [Op.like]: `%${keyword}%` } },
+    ];
+  }
+
+  if (supplier) {
+    whereClause.supplier_id = supplier;
+  }
+
+  const shipments = await OutgoingShipment.findAndCountAll({
+    where: whereClause,
     include: [
       {
         model: PalletProduct,
@@ -250,12 +271,21 @@ exports.getShipments = asyncHandler(async (req, res) => {
         through: { attributes: ["quantity"] },
       },
     ],
+    limit: parseInt(limit),
+    offset: parseInt(offset),
+    order: [[validOrderBy, validOrderWay]],
   });
 
   return res.status(200).json({
-    shipments,
+    total: shipments.count,
+    pages: Math.ceil(shipments.count / limit),
+    currentPage: parseInt(page),
+    shipments: shipments.rows,
   });
 });
+
+
+
 
 //@route    GET api/v1/shipment/:id
 //@desc     Get outgoing shipment by id
