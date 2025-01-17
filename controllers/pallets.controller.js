@@ -223,7 +223,7 @@ exports.deletePallet = asyncHandler(async (req, res) => {
 
   await pallet.destroy();
 
-  return res.status(204).end();
+  return res.status(200).json({ msg: "Pallet deleted" });
 });
 
 //@route    PUT api/v1/pallets/:id
