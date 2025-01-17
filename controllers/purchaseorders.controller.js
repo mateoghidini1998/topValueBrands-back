@@ -238,6 +238,12 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
           parseInt(
             purchaseOrderProductUpdate.quantity_received
           );
+
+        // update quantity_available
+
+        purchaseOrderProduct.quantity_available =
+          parseInt(purchaseOrderProduct.quantity_received);
+
       }
 
       // update reason_id, expire_date
