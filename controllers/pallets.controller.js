@@ -79,8 +79,25 @@ exports.createPallet = asyncHandler(async (req, res) => {
 //@desc     Get pallets
 //@access   Private
 exports.getPallets = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+  const palletNumber = req.query.pallet_number || '';
+  const warehouseLocationId = req.query.warehouse_location_id || null;
+
   try {
-    const pallets = await Pallet.findAll({
+    const whereConditions = {};
+
+    if (palletNumber) {
+      whereConditions.pallet_number = { [Op.like]: `%${palletNumber}%` };
+    }
+
+    if (warehouseLocationId) {
+      whereConditions.warehouse_location_id = warehouseLocationId;
+    }
+
+    const { count, rows: pallets } = await Pallet.findAndCountAll({
+      where: whereConditions,
       include: [
         {
           model: PurchaseOrderProduct,
@@ -102,29 +119,36 @@ exports.getPallets = asyncHandler(async (req, res) => {
           attributes: ['id', 'order_number'],
         },
       ],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
     });
 
+    const totalPages = Math.ceil(count / limit);
+
     return res.status(200).json({
-      count: pallets.length,
-      pallets: pallets.map((pallet) => {
-        return {
-          id: pallet.id,
-          pallet_number: pallet.pallet_number,
-          warehouse_location_id: pallet.warehouse_location_id,
-          warehouse_location: pallet.warehouseLocation.location,
-          purchase_order_number: pallet.purchaseOrder.order_number,
-          purchase_order_id: pallet.purchase_order_id,
-          createdAt: pallet.createdAt,
-          updatedAt: pallet.updatedAt,
-          products: pallet.purchaseorderproducts,
-        };
-      }),
+      success: true,
+      total: count,
+      pages: totalPages,
+      currentPage: page,
+      data: pallets.map((pallet) => ({
+        id: pallet.id,
+        pallet_number: pallet.pallet_number,
+        warehouse_location_id: pallet.warehouse_location_id,
+        warehouse_location: pallet.warehouseLocation.location,
+        purchase_order_number: pallet.purchaseOrder.order_number,
+        purchase_order_id: pallet.purchase_order_id,
+        createdAt: pallet.createdAt,
+        updatedAt: pallet.updatedAt,
+        products: pallet.purchaseorderproducts,
+      })),
     });
   } catch (error) {
     console.error('Error fetching pallets:', error);
-    return res.status(500).json({ message: 'Error fetching pallets' });
+    return res.status(500).json({ success: false, message: 'Error fetching pallets', error: error.message });
   }
 });
+
 
 //@route    GET api/v1/pallets/:id
 //@desc     Get pallet by id

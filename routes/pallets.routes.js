@@ -13,7 +13,7 @@ const { getPalletProductByPurchaseOrderProductId, getAllPalletProducts, getPalle
 
 
 router.post('/', createPallet)
-router.get('/', protect, getPallets)
+router.get('/', getPallets)
 router.get('/:id', getPallet)
 router.delete('/:id', protect, deletePallet)
 router.put('/:id', protect, updatePallet)
