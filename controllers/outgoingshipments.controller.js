@@ -234,7 +234,7 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 //@desc     Get all outgoing shipments
 //@access   Private
 exports.getShipments = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 50, keyword = "", supplier = "", orderBy = "createdAt", orderWay = "DESC" } = req.query;
+  const { page = 1, limit = 50, keyword = "", status = "", orderBy = "createdAt", orderWay = "DESC" } = req.query;
 
   const offset = (page - 1) * limit;
   const whereClause = {};
@@ -250,8 +250,8 @@ exports.getShipments = asyncHandler(async (req, res) => {
     ];
   }
 
-  if (supplier) {
-    whereClause.supplier_id = supplier;
+  if (status) {
+    whereClause.status = status;
   }
 
   const shipments = await OutgoingShipment.findAndCountAll({
