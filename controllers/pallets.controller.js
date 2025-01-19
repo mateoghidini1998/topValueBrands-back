@@ -6,64 +6,83 @@ const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculat
 //@route    POST api/v1/pallets
 //@desc     Create a pallet
 //@access   Private
+
 exports.createPallet = asyncHandler(async (req, res) => {
   const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
 
   const transaction = await sequelize.transaction();
+
   try {
-    // 🔎 Buscar la ubicación del almacén
-    const location = await WarehouseLocation.findOne({
-      where: { id: warehouse_location_id },
-      transaction,
-      lock: transaction.LOCK.UPDATE, // 🔒 Evita conflictos de concurrencia
-    });
+    const location = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
+    const purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
+
+    let pallet = await Pallet.findOne({ where: { pallet_number } });
 
     if (!location) {
-      throw new Error(`Warehouse location with ID ${warehouse_location_id} not found.`);
+      return res.status(404).json({ msg: "Warehouse location not found" });
     }
 
-    // 📦 Crear el pallet
-    const newPallet = await Pallet.create(
+    if (location.current_capacity <= 0) {
+      return res.status(400).json({
+        msg: `The location with id ${warehouse_location_id} has no space available`,
+      });
+    }
+
+    if (!purchase_order) {
+      return res.status(404).json({ msg: "Purchase order not found" });
+    }
+
+    if (pallet) {
+      return res.status(400).json({ msg: "Pallet Number already exists" });
+    }
+
+    pallet = await Pallet.create(
       { pallet_number, warehouse_location_id, purchase_order_id },
       { transaction }
     );
 
-    // 📉 Actualizar la capacidad del almacén
     location.current_capacity -= 1;
     await location.save({ transaction });
 
-    const productsToUpdate = new Set();
-    const palletProductsData = [];
+    if (products && products.length > 0) {
+      const productsToUpdate = new Set(); // Usaremos un Set para recalcular solo los productos afectados
 
-    // 🔄 Procesar productos
-    for (const { purchaseorderproduct_id, quantity } of products) {
-      const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
-        where: { id: purchaseorderproduct_id },
-        transaction,
-      });
+      for (const product of products) {
+        const { purchaseorderproduct_id, quantity } = product;
 
-      if (!purchaseOrderProduct) {
-        throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
+        // Crear la relación del pallet con el producto
+        await createPalletProduct({
+          purchaseorderproduct_id,
+          pallet_id: pallet.id,
+          quantity,
+          transaction,
+        });
+
+        // Obtener el producto asociado al purchaseorderproduct_id
+        const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+          where: { id: purchaseorderproduct_id },
+          transaction,
+        });
+
+        if (!purchaseOrderProduct) {
+          throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
+        }
+
+        // Añadir el product_id al Set para recalcular warehouse_stock
+        productsToUpdate.add(purchaseOrderProduct.product_id);
       }
 
-      productsToUpdate.add(purchaseOrderProduct.product_id);
-
-      palletProductsData.push({
-        purchaseorderproduct_id,
-        pallet_id: newPallet.id,
-        quantity,
-      });
+      // Recalcular warehouse_stock para cada producto afectado
+      for (const productId of productsToUpdate) {
+        await recalculateWarehouseStock(productId);
+      }
+    } else {
+      return res.status(400).json({ msg: "No products provided to associate with the pallet." });
     }
-
-    // 📦 Asociar productos al pallet
-    await PalletProduct.bulkCreate(palletProductsData, { transaction });
-
-    // 🔄 Recalcular stock del almacén
-    await Promise.all([...productsToUpdate].map(productId => recalculateWarehouseStock(productId)));
 
     await transaction.commit();
 
-    return res.status(201).json({ pallet: newPallet });
+    return res.status(201).json({ pallet });
   } catch (error) {
     await transaction.rollback();
     return res.status(500).json({
