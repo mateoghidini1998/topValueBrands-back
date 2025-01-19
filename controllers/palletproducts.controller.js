@@ -1,4 +1,4 @@
-const { PurchaseOrderProduct, Pallet, PalletProduct, WarehouseLocation, Product } = require('../models');
+const { PurchaseOrderProduct, Pallet, PalletProduct, WarehouseLocation, Product, PurchaseOrder } = require('../models');
 const asyncHandler = require("../middlewares/async");
 const { Op } = require('sequelize');
 const { Sequelize } = require('sequelize');
@@ -115,48 +115,79 @@ exports.getPalletProductByPurchaseOrderProductId = asyncHandler(async (req, res)
 
 
 exports.getAllPalletProducts = asyncHandler(async (req, res) => {
-  const palletProducts = await PalletProduct.findAll({
-    attributes: ['id', 'purchaseorderproduct_id', 'pallet_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt'],
+  // Obtener todos los Pallets junto con su información relacionada
+  const pallets = await Pallet.findAll({
+    attributes: ['id', 'pallet_number', 'warehouse_location_id', 'purchase_order_id'],
     include: [
       {
-        model: PurchaseOrderProduct,
-        include: [
-          {
-            model: Product,
-            attributes: ['product_name', 'product_image', 'seller_sku', 'ASIN', 'in_seller_account'],
-          },
-        ],
+        model: WarehouseLocation,
+        as: 'warehouseLocation',
+        attributes: ['id', 'location'],
       },
       {
-        model: Pallet,
-        attributes: ['pallet_number', 'warehouse_location_id'],
+        model: PurchaseOrder,
+        as: 'purchaseOrder',
+        attributes: ['id', 'order_number'], // Ajusta según tu modelo
+      },
+      {
+        model: PalletProduct,
+        attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt'],
         include: [
           {
-            model: WarehouseLocation,
-            as: 'warehouseLocation',
-            attributes: ['location'],
+            model: PurchaseOrderProduct,
+            as: 'purchaseOrderProduct',
+            attributes: ['id'],
+            include: [
+              {
+                model: Product,
+                attributes: ['product_name', 'product_image', 'seller_sku', 'ASIN', 'in_seller_account', 'upc'],
+              },
+            ],
           },
         ],
       },
     ],
   });
 
-  // Mapeo de datos para estructurar la respuesta como se requiere
-  const response = palletProducts.map((palletProduct) => ({
-    id: palletProduct.id,
-    purchaseorderproduct_id: palletProduct.purchaseorderproduct_id,
-    pallet_id: palletProduct.pallet_id,
-    quantity: palletProduct.quantity,
-    available_quantity: palletProduct.available_quantity,
-    product: palletProduct.PurchaseOrderProduct?.Product || null,
-    pallet_number: palletProduct.Pallet.pallet_number || null,
-    warehouse_location: palletProduct.Pallet.warehouseLocation.location || null,
-    createdAt: palletProduct.createdAt,
-    updatedAt: palletProduct.updatedAt,
-  }));
+  // Reorganizar datos agrupados por PurchaseOrder
+  const groupedByPurchaseOrder = pallets.reduce((acc, pallet) => {
+    const purchaseOrder = pallet.purchaseOrder;
+    const purchaseOrderId = purchaseOrder?.id;
+
+    if (!acc[purchaseOrderId]) {
+      acc[purchaseOrderId] = {
+        id: purchaseOrder.id,
+        order_number: purchaseOrder.order_number,
+        pallets: [],
+      };
+    }
+
+    // Agregar el Pallet al PurchaseOrder
+    acc[purchaseOrderId].pallets.push({
+      id: pallet.id,
+      pallet_number: pallet.pallet_number,
+      warehouse_location: pallet.warehouseLocation?.location || null,
+      palletProducts: pallet.PalletProducts.map(palletProduct => ({
+        id: palletProduct.id,
+        purchaseorderproduct_id: palletProduct.purchaseorderproduct_id,
+        quantity: palletProduct.quantity,
+        available_quantity: palletProduct.available_quantity,
+        createdAt: palletProduct.createdAt,
+        updatedAt: palletProduct.updatedAt,
+        product: palletProduct.purchaseOrderProduct?.Product || null,
+      })),
+    });
+
+    return acc;
+  }, {});
+
+  // Convertir el objeto agrupado en un array
+  const response = Object.values(groupedByPurchaseOrder);
 
   return res.status(200).json(response);
 });
+
+
 
 exports.getPalletProducts = asyncHandler(async (req, res) => {
   const palletProducts = await PalletProduct.findAll({
