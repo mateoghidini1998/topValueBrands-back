@@ -16,7 +16,7 @@ const {
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
-router.post('/', protect, createShipment)
+router.post('/', createShipment)
 router.post('/po/:id', protect, createShipmentByPurchaseOrder)
 router.get('/', getShipments)
 router.get('/:id', getShipment)
