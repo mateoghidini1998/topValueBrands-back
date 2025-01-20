@@ -795,22 +795,16 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
   const marketPlace = process.env.MARKETPLACE_US_ID;
   const lastUpdatedAfter = getLastMonthDate();
   const shipmentStatuses = SHIPMENT_STATUSES.join(",");
-  let accessToken = await fetchNewTokenForFees();
-  console.log(accessToken);
-  logger.info("Access token:", accessToken);
+  const accessToken = req.headers["x-amz-access-token"]; 
 
   try {
     if (!accessToken) {
-      console.log("fetching new token for sync db with amazon...");
-      logger.info("fetching new token for sync db with amazon...");
-      accessToken = await fetchNewTokenForFees();
-    } else {
-      console.log("Token is still valid...");
-      logger.info("Token is still valid...");
+      throw new Error("Access token is missing");
     }
+    console.log("Access token en controller:", accessToken);
 
-    let url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
-    console.log("URL:", url)
+    const url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
+
     const response = await axios.get(url, {
       headers: {
         "Content-Type": "application/json",
@@ -819,7 +813,7 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
     });
 
     const amazonShipments = response.data.payload.ShipmentData;
-    console.log(amazonShipments)
+
     for (const amazonShipment of amazonShipments) {
       const { ShipmentId, ShipmentName, ShipmentStatus } = amazonShipment;
 
@@ -831,21 +825,17 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
         await updateShipmentId(shipment, ShipmentId);
         await updateShipmentStatus(shipment, ShipmentStatus);
       } else {
-        console.warn(`Shipment no encontrado: ${ShipmentName}`);
+        console.warn(`Shipment not found: ${ShipmentName}`);
       }
     }
 
-    return res
-      .status(200)
-      .json({ msg: "Shipments tracked and updated successfully." });
+    return res.status(200).json({ msg: "Shipments tracked and updated successfully." });
   } catch (error) {
-    console.error(
-      "Error fetching shipment data:",
-      error.response?.data || error.message
-    );
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch shipments", details: error.message });
+    logger.error("Error fetching shipment data:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: "Failed to fetch shipments",
+      details: error.message,
+    });
   }
 });
 
