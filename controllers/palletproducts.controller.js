@@ -132,6 +132,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt'],
+        where: { available_quantity: { [Op.gt]: 0 } },
         include: [
           {
             model: PurchaseOrderProduct,
