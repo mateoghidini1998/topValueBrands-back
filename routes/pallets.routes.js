@@ -15,7 +15,7 @@ const { getPalletProductByPurchaseOrderProductId, getAllPalletProducts, getPalle
 router.post('/', createPallet)
 router.get('/', getPallets)
 router.get('/:id', getPallet)
-router.delete('/:id', protect, deletePallet)
+router.delete('/:id', deletePallet)
 router.put('/:id', protect, updatePallet)
 router.get('/:purchaseorderproduct_id/palletproduct', getPalletProductByPurchaseOrderProductId)
 router.get('/products/all', getAllPalletProducts)
