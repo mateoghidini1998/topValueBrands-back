@@ -25,14 +25,16 @@ const {
 //@desc     Create an outgoing shipment
 //@access   Private
 exports.createShipment = asyncHandler(async (req, res) => {
-  console.log('Request body:', req.body);
+  console.log("Request body:", req.body);
 
   const existingShipment = await OutgoingShipment.findOne({
     where: { shipment_number: req.body.shipment_number },
   });
 
   if (existingShipment) {
-    console.warn(`Shipment already exists with shipment_number: ${req.body.shipment_number}`);
+    console.warn(
+      `Shipment already exists with shipment_number: ${req.body.shipment_number}`
+    );
     return res.status(400).json({ msg: "Shipment already exists" });
   }
 
@@ -45,7 +47,9 @@ exports.createShipment = asyncHandler(async (req, res) => {
     });
 
     if (!palletProduct) {
-      console.error(`PalletProduct with id ${item.pallet_product_id} not found`);
+      console.error(
+        `PalletProduct with id ${item.pallet_product_id} not found`
+      );
       return res.status(404).json({
         msg: `PalletProduct with id ${item.pallet_product_id} not found`,
       });
@@ -63,7 +67,9 @@ exports.createShipment = asyncHandler(async (req, res) => {
     }
   }
 
-  console.log(`Creating new shipment with shipment_number: ${req.body.shipment_number}`);
+  console.log(
+    `Creating new shipment with shipment_number: ${req.body.shipment_number}`
+  );
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
     status: "WORKING",
@@ -79,7 +85,9 @@ exports.createShipment = asyncHandler(async (req, res) => {
       where: { id: item.pallet_product_id },
     });
 
-    console.log(`Updating available_quantity for pallet_product_id: ${item.pallet_product_id}`);
+    console.log(
+      `Updating available_quantity for pallet_product_id: ${item.pallet_product_id}`
+    );
     const newAvailableQuantity =
       palletProduct.available_quantity - item.quantity;
 
@@ -88,14 +96,18 @@ exports.createShipment = asyncHandler(async (req, res) => {
       available_quantity: newAvailableQuantity,
     });
 
-    console.log(`Creating OutgoingShipmentProduct for shipment_id: ${newShipment.id}`);
+    console.log(
+      `Creating OutgoingShipmentProduct for shipment_id: ${newShipment.id}`
+    );
     await OutgoingShipmentProduct.create({
       outgoing_shipment_id: newShipment.id,
       pallet_product_id: item.pallet_product_id,
       quantity: item.quantity,
     });
 
-    console.log(`Fetching PurchaseOrderProduct for pallet_product_id: ${item.pallet_product_id}`);
+    console.log(
+      `Fetching PurchaseOrderProduct for pallet_product_id: ${item.pallet_product_id}`
+    );
     const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
       palletProduct.purchaseorderproduct_id
     );
@@ -110,13 +122,17 @@ exports.createShipment = asyncHandler(async (req, res) => {
     }
   }
 
-  console.log(`Recalculating warehouse stock for affected products:`, [...affectedProducts]);
+  console.log(`Recalculating warehouse stock for affected products:`, [
+    ...affectedProducts,
+  ]);
   for (const productId of affectedProducts) {
     console.log(`Recalculating warehouse stock for product_id: ${productId}`);
     await recalculateWarehouseStock(productId);
   }
 
-  console.log(`Fetching shipment with products for shipment_id: ${newShipment.id}`);
+  console.log(
+    `Fetching shipment with products for shipment_id: ${newShipment.id}`
+  );
   const shipmentWithProducts = await OutgoingShipment.findOne({
     where: { id: newShipment.id },
     include: [
@@ -295,7 +311,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
             ],
           },
           {
-            model: Pallet,  // 🔥 Incluimos el modelo Pallet
+            model: Pallet, // 🔥 Incluimos el modelo Pallet
             attributes: ["id", "pallet_number"],
           },
         ],
@@ -316,7 +332,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
 
       return {
         ...palletProduct,
-        pallet_number: palletProduct.Pallet?.pallet_number || null,  // 🔥 Obtenemos el pallet_number directamente
+        pallet_number: palletProduct.Pallet?.pallet_number || null, // 🔥 Obtenemos el pallet_number directamente
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
         seller_sku: product?.seller_sku || null,
@@ -328,8 +344,6 @@ exports.getShipment = asyncHandler(async (req, res) => {
 
   return res.status(200).json(formattedShipment);
 });
-
-
 
 //@route    GET api/v1/shipment/:shipment_number
 //@desc     Get outgoing shipment by shipment number
@@ -442,7 +456,29 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
       return res.status(404).json({ msg: "Shipment not found" });
     }
 
-    await revertWarehouseStockForShipment(shipment);
+    for (const palletProduct of shipment.PalletProducts) {
+      if (!palletProduct.OutgoingShipmentProduct) {
+        console.error(
+          `Missing OutgoingShipmentProduct for PalletProduct ID: ${palletProduct.id}`
+        );
+        await transaction.rollback();
+        return res
+          .status(400)
+          .json({
+            msg: "Invalid shipment data: missing OutgoingShipmentProduct",
+          });
+      }
+      const palletProductId = palletProduct.id;
+      const { quantity } = palletProduct.OutgoingShipmentProduct;
+
+      // Incrementar available_quantity en PalletProduct
+      await PalletProduct.increment(
+        { available_quantity: quantity },
+        { where: { id: palletProductId }, transaction }
+      );
+
+      await recalculateWarehouseStock(palletProduct.purchaseorderproduct_id);
+    }
 
     await shipment.destroy({ transaction });
 
@@ -708,7 +744,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
                   "product_image",
                   "product_name",
                   "in_seller_account",
-                  'upc'
+                  "upc",
                 ],
               },
             ],
@@ -795,7 +831,7 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
   const marketPlace = process.env.MARKETPLACE_US_ID;
   const lastUpdatedAfter = getLastMonthDate();
   const shipmentStatuses = SHIPMENT_STATUSES.join(",");
-  const accessToken = req.headers["x-amz-access-token"]; 
+  const accessToken = req.headers["x-amz-access-token"];
 
   try {
     if (!accessToken) {
@@ -829,9 +865,14 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
       }
     }
 
-    return res.status(200).json({ msg: "Shipments tracked and updated successfully." });
+    return res
+      .status(200)
+      .json({ msg: "Shipments tracked and updated successfully." });
   } catch (error) {
-    logger.error("Error fetching shipment data:", error.response?.data || error.message);
+    logger.error(
+      "Error fetching shipment data:",
+      error.response?.data || error.message
+    );
     return res.status(500).json({
       error: "Failed to fetch shipments",
       details: error.message,
@@ -862,7 +903,10 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
     console.log(`Estado actual en la base de datos: ${shipment.status}`);
     console.log(`Nuevo estado desde Amazon: ${shipmentStatus}`);
 
-    if ((shipment.status === 'WORKING' || shipment.status === 'PENDING') && shipment.status !== shipmentStatus) {
+    if (
+      (shipment.status === "WORKING" || shipment.status === "PENDING") &&
+      shipment.status !== shipmentStatus
+    ) {
       const shipmentProducts = await sequelize.query(
         `
         SELECT osp.*, 
@@ -879,7 +923,10 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
         }
       );
 
-      console.log('Productos asociados al shipment:', JSON.stringify(shipmentProducts, null, 2));
+      console.log(
+        "Productos asociados al shipment:",
+        JSON.stringify(shipmentProducts, null, 2)
+      );
 
       const productIds = shipmentProducts
         .map((sp) => sp.palletProduct?.purchaseOrderProduct?.product_id)
@@ -908,7 +955,6 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
   }
 };
 
-
 const getLastMonthDate = () => {
   const now = new Date();
   const lastMonth = new Date(
@@ -936,11 +982,11 @@ const revertWarehouseStockForShipment = async (shipment) => {
       include: [
         {
           model: PurchaseOrderProduct,
-          as: 'purchaseOrderProduct',
+          as: "purchaseOrderProduct",
           include: [
             {
               model: Product,
-              as: 'product',
+              as: "product",
             },
           ],
         },
@@ -975,4 +1021,3 @@ const revertWarehouseStockForShipment = async (shipment) => {
     );
   }
 };
-
