@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const cron = require('node-cron');
 const { Op } = require('sequelize');
 const logger = require('./logger/logger');
+const { clerkMiddleware, clerkClient, requireAuth, getAuth } = require('@clerk/express');
 
 // Controllers
 const { getShipmentTracking } = require('./controllers/outgoingshipments.controller');
@@ -38,6 +39,7 @@ app.options('*', cors(corsOptions));
 
 // Cookie Parser
 app.use(cookieParser());
+app.use(clerkMiddleware());
 
 // Route files
 const auth = require('./routes/auth.routes');
@@ -62,8 +64,11 @@ app.use('/api/v1/purchaseorders', purchaseorders);
 app.use('/api/v1/shipments', outgoingshipment);
 app.use('/api/v1/pallets', pallets);
 
+// app.use();
+
 // Server setup
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log('DATABASE_URL_LOCAL:', process.env.DATABASE_URL_LOCAL);

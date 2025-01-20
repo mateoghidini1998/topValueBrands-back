@@ -12,6 +12,7 @@ const {
   createProduct,
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
+const { requireAuth } = require('@clerk/express');
 
 router.post('/add', addAccessTokenHeader, createProduct);
 
@@ -102,7 +103,7 @@ router.post('/add', addAccessTokenHeader, createProduct);
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/', getProducts);
+router.get('/', requireAuth(), getProducts);
 
 // get product by seller_sku
 router.get('/:seller_sku', getProductBySellerSku);

@@ -6,7 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
-const req = require('express/lib/request');
+
+const { clerkClient, getAuth } = require('@clerk/express');
 
 dotenv.config({
   path: './.env',
@@ -206,6 +207,13 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@desc     Get products
 //@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
+
+  const { userId } = getAuth(req)
+
+  // Use Clerk's JavaScript Backend SDK to get the user's User object
+  const user = await clerkClient.users.getUser(userId)
+
+  if (user.locked) return res.status(401).json({ msg: 'Unauthorized' });
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
