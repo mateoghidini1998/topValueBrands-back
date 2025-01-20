@@ -131,7 +131,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       },
       {
         model: PalletProduct,
-        attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt'],
+        attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt', 'pallet_id'],
         where: { available_quantity: { [Op.gt]: 0 } },
         include: [
           {
@@ -169,6 +169,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       pallet_number: pallet.pallet_number,
       warehouse_location: pallet.warehouseLocation?.location || null,
       palletProducts: pallet.PalletProducts.map(palletProduct => ({
+        pallet_id: palletProduct.pallet_id,
         id: palletProduct.id,
         purchaseorderproduct_id: palletProduct.purchaseorderproduct_id,
         quantity: palletProduct.quantity,
