@@ -271,6 +271,7 @@ exports.getShipments = asyncHandler(async (req, res) => {
         through: { attributes: ["quantity"] },
       },
     ],
+    distinct: true, // -> elimina los duplicados
     limit: parseInt(limit),
     offset: parseInt(offset),
     order: [[validOrderBy, validOrderWay]],

@@ -439,6 +439,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
           include: [{ model: Product }],
         },
       ],
+      distinct: true, // -> elimina los duplicados
       limit,
       offset,
       order: [['createdAt', 'DESC']],
@@ -551,6 +552,7 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
           include: [{ model: Product }],
         },
       ],
+      distinct: true, // -> elimina los duplicados
       limit,
       offset,
       order: [['createdAt', 'DESC']],

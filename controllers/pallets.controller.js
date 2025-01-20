@@ -138,10 +138,12 @@ exports.getPallets = asyncHandler(async (req, res) => {
           attributes: ['id', 'order_number'],
         },
       ],
+      distinct: true,  // <- Agregado para evitar conteo incorrecto
       limit,
       offset,
       order: [['createdAt', 'DESC']],
     });
+
 
     const totalPages = Math.ceil(count / limit);
 
