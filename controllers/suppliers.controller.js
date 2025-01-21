@@ -78,6 +78,8 @@ exports.deleteSupplier = asyncHandler(async (req, res, next) => {
     await supplier.destroy();
     return res.status(200).json({
         success: true,
-        data: {}
+        data: {
+            msg: 'Supplier deleted successfully'
+        }
     })
 })
