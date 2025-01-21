@@ -18,7 +18,7 @@ router.post('/', createShipment)
 router.post('/po/:id', protect, createShipmentByPurchaseOrder)
 router.get('/', getShipments)
 router.get('/:id', getShipment)
-router.delete('/:id', protect, deleteShipment)
+router.delete('/:id', deleteShipment)
 router.put('/:id', protect, updateShipment)
 router.get('/:id/download', protect, download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
