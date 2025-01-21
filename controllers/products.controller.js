@@ -208,12 +208,12 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
 
-  const { userId } = getAuth(req)
+  // const { userId } = getAuth(req)
 
-  // Use Clerk's JavaScript Backend SDK to get the user's User object
-  const user = await clerkClient.users.getUser(userId)
+  // // Use Clerk's JavaScript Backend SDK to get the user's User object
+  // const user = await clerkClient.users.getUser(userId)
 
-  if (user.locked) return res.status(401).json({ msg: 'Unauthorized' });
+  // if (user.locked) return res.status(401).json({ msg: 'Unauthorized' });
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;

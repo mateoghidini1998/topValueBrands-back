@@ -1,5 +1,4 @@
 const express = require('express');
-const router = express.Router();
 const { authorize, protect } = require('../middlewares/auth');
 
 const {
@@ -13,6 +12,12 @@ const {
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const { requireAuth } = require('@clerk/express');
+const { authMiddleware } = require('../middlewares/authMiddleware');
+const { roleMiddleware } = require('../middlewares/roleMiddleware');
+
+const router = express.Router();
+// Aplicar autenticación a todas las rutas dentro de este router
+router.use(authMiddleware);
 
 router.post('/add', addAccessTokenHeader, createProduct);
 
@@ -103,12 +108,12 @@ router.post('/add', addAccessTokenHeader, createProduct);
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/', requireAuth(), getProducts);
+router.get('/', roleMiddleware(['admin', 'manager']), getProducts);
 
 // get product by seller_sku
-router.get('/:seller_sku', getProductBySellerSku);
+router.get('/:seller_sku', roleMiddleware(['admin', 'manager']), getProductBySellerSku);
 
-router.post('/', createProduct);
+router.post('/', roleMiddleware(['admin', 'manager']), createProduct);
 
 /**
  * @openapi
@@ -216,7 +221,7 @@ router.post('/', createProduct);
  */
 router.patch(
   '/addExtraInfoToProduct',
-
+  roleMiddleware(['admin', 'manager']),
 
   addExtraInfoToProduct
 );
@@ -307,12 +312,12 @@ router.patch(
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.patch('/disable', toggleShowProduct);
+router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
 
-router.patch('/addImage', addAccessTokenHeader, addImageToAllProducts);
+router.patch('/addImage', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, addImageToAllProducts);
 
 router.patch(
-  '/syncImages',
+  '/syncImages', roleMiddleware(['admin', 'manager']),
 
 
   addAccessTokenHeader,
