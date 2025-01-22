@@ -6,6 +6,7 @@ const {
   Product,
   Pallet,
   PurchaseOrder,
+  WarehouseLocation,
 } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
@@ -20,6 +21,7 @@ const logger = require("../logger/logger");
 const {
   recalculateWarehouseStock,
 } = require("../utils/warehouse_stock_calculator");
+
 
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
@@ -301,9 +303,6 @@ exports.getShipments = asyncHandler(async (req, res) => {
   });
 });
 
-
-
-
 //@route    GET api/v1/shipment/:id
 //@desc     Get outgoing shipment by id
 //@access   Private
@@ -342,8 +341,15 @@ exports.getShipment = asyncHandler(async (req, res) => {
             ],
           },
           {
-            model: Pallet, // 🔥 Incluimos el modelo Pallet
+            model: Pallet,
             attributes: ["id", "pallet_number"],
+            include: [
+              {
+                model: WarehouseLocation,  // 🔥 Asegúrate de usar el modelo correcto
+                as: "warehouseLocation",  // 🔥 Usar el alias definido en el modelo
+                attributes: ["id", "location"],
+              },
+            ],
           },
         ],
       },
@@ -363,18 +369,20 @@ exports.getShipment = asyncHandler(async (req, res) => {
 
       return {
         ...palletProduct,
-        pallet_number: palletProduct.Pallet?.pallet_number || null, // 🔥 Obtenemos el pallet_number directamente
+        warehouse_location: palletProduct.Pallet?.warehouseLocation?.location || null, // 🔥 Obtención correcta
+        pallet_number: palletProduct.Pallet?.pallet_number || null,
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
         seller_sku: product?.seller_sku || null,
         in_seller_account: product?.in_seller_account || null,
-        purchaseOrderProduct: undefined,
+        purchaseOrderProduct: undefined, // Eliminamos datos anidados innecesarios
       };
     }),
   };
 
   return res.status(200).json(formattedShipment);
 });
+
 
 //@route    GET api/v1/shipment/:shipment_number
 //@desc     Get outgoing shipment by shipment number
