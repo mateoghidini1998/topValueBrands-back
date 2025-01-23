@@ -1,7 +1,8 @@
 const { PurchaseOrderProduct, Pallet, PalletProduct, WarehouseLocation, Product, PurchaseOrder } = require('../models');
 const asyncHandler = require("../middlewares/async");
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const { Sequelize } = require('sequelize');
+const { is } = require('express/lib/request');
 
 exports.createPalletProduct = asyncHandler(async ({ purchaseorderproduct_id, pallet_id, quantity, transaction }) => {
   const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
@@ -127,17 +128,20 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       {
         model: PurchaseOrder,
         as: 'purchaseOrder',
-        attributes: ['id', 'order_number'], // Ajusta según tu modelo
+        attributes: ['id', 'order_number', 'updatedAt'], // Ajusta según tu modelo
+        order: [['updatedAt', 'DESC']],
+        where: { is_active: true }, // Ajusta según tu modelo
       },
       {
         model: PalletProduct,
         attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt', 'pallet_id'],
-        where: { available_quantity: { [Op.gt]: 0 } },
+        where: { available_quantity: { [Op.gt]: 0 } }, // Ajusta según tu modelo
         include: [
           {
             model: PurchaseOrderProduct,
             as: 'purchaseOrderProduct',
             attributes: ['id'],
+            where: { is_active: true }, // Ajusta según tu modelo
             include: [
               {
                 model: Product,
@@ -159,6 +163,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       acc[purchaseOrderId] = {
         id: purchaseOrder.id,
         order_number: purchaseOrder.order_number,
+        updatedAt: purchaseOrder.updatedAt,
         pallets: [],
       };
     }
@@ -184,7 +189,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
   }, {});
 
   // Convertir el objeto agrupado en un array
-  const response = Object.values(groupedByPurchaseOrder);
+  const response = Object.values(groupedByPurchaseOrder).sort((a, b) => b.updatedAt - a.updatedAt);
 
   return res.status(200).json(response);
 });
