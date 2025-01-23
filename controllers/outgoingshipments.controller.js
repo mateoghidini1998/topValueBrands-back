@@ -661,7 +661,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
           {
             model: PurchaseOrderProduct,
             as: "purchaseOrderProduct",
-            attributes: ["product_id"],
+            attributes: ["product_id", "expire_date"],
             include: [
               {
                 model: Product,
@@ -702,8 +702,11 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   shipment.PalletProducts.forEach((product) => {
     const sellerSku =
-      product.PurchaseOrderProduct?.Product?.seller_sku || "N/A";
+      product.purchaseOrderProduct?.Product?.seller_sku || "N/A";
     const quantity = product.OutgoingShipmentProduct?.quantity || 0;
+
+    const expireDate = new Date(product.purchaseOrderProduct?.expire_date).toISOString().split('T')[0] || "N/A";
+    console.log(expireDate)
 
     if (aggregatedProducts[sellerSku]) {
       aggregatedProducts[sellerSku].quantity += quantity;
@@ -712,6 +715,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
         sellerSku,
         quantity,
         unitsPerCase: 1, // Valor constante para UNITS_PER_CASE
+        expireDate: expireDate
       };
     }
   });
@@ -723,6 +727,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
     row.getCell(1).value = product.sellerSku; // Columna SKU
     row.getCell(2).value = product.quantity; // Columna QTY
     row.getCell(3).value = product.unitsPerCase; // Columna UNITS_PER_CASE
+    row.getCell(6).value = product.expireDate
     row.commit();
     rowIndex++;
   });
