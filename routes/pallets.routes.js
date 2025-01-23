@@ -7,7 +7,8 @@ const {
     getPallets,
     getPallet,
     deletePallet,
-    updatePallet
+    updatePallet,
+    getAvailableLocations
 } = require('../controllers/pallets.controller')
 const { getPalletProductByPurchaseOrderProductId, getAllPalletProducts, getPalletProducts } = require('../controllers/palletproducts.controller')
 
@@ -20,5 +21,7 @@ router.put('/:id', protect, updatePallet)
 router.get('/:purchaseorderproduct_id/palletproduct', getPalletProductByPurchaseOrderProductId)
 router.get('/products/all', getAllPalletProducts)
 router.get('/products/:id', getPalletProducts)
+
+router.get('/warehouse/locations/:available?', getAvailableLocations)
 
 module.exports = router;
