@@ -2,6 +2,7 @@ const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, Purcha
 const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
 const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculator');
+const { Op } = require("sequelize");
 
 //@route    POST api/v1/pallets
 //@desc     Create a pallet
@@ -315,3 +316,31 @@ exports.updatePallet = asyncHandler(async (req, res) => {
 });
 
 
+exports.getAvailableLocations = asyncHandler(async (req, res) => {
+  try {
+    // Leer el parámetro desde la query string
+    const showAvailable = req.query.available === 'true';
+
+    // Buscar las ubicaciones en la base de datos
+    const locations = await WarehouseLocation.findAll({
+      attributes: ['id', 'location', 'capacity', 'current_capacity'],
+      where: showAvailable ? { current_capacity: { [Op.gt]: 0 } } : {},
+      order: [['current_capacity', 'DESC']],
+    });
+
+    // Responder con los datos encontrados
+    return res.status(200).json({
+      success: true,
+      msg: "Locations retrieved successfully",
+      data: locations,
+    });
+  } catch (error) {
+    console.error(error);
+
+    // Manejar errores
+    return res.status(500).json({
+      success: false,
+      msg: "An error occurred while retrieving locations",
+    });
+  }
+});
