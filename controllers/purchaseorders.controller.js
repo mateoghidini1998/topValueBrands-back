@@ -93,24 +93,103 @@ exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.updatedPurchaseOrder = asyncHandler(async (req, res, next) => {
-  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id);
-
-  const { notes } = req.body;
+exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
+  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
+    include: [
+      {
+        model: PurchaseOrderProduct,
+        as: "purchaseOrderProducts",
+      },
+    ],
+  });
 
   if (!purchaseOrder) {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
-  const updatedPurchaseOrder = await purchaseOrder.update({ notes: notes });
+  const {
+    notes,
+    purchase_order_status_id,
+    products, // Array of updated products
+  } = req.body;
+
+  let totalPrice = 0;
+
+  if (notes) purchaseOrder.notes = notes;
+  if (purchase_order_status_id) purchaseOrder.purchase_order_status_id = purchase_order_status_id;
+
+  if (products && products.length > 0) {
+    const updatedProductIds = products.map((p) => p.product_id);
+
+    const existingProductIds = purchaseOrder.purchaseOrderProducts.map(
+      (p) => p.product_id
+    );
+
+    const productsToAdd = products.filter(
+      (p) => !existingProductIds.includes(p.product_id)
+    );
+    const productsToRemove = existingProductIds.filter(
+      (id) => !updatedProductIds.includes(id)
+    );
+
+    for (const productId of productsToRemove) {
+      await PurchaseOrderProduct.destroy({
+        where: {
+          purchase_order_id: purchaseOrder.id,
+          product_id: productId,
+        },
+      });
+    }
+
+    for (const product of products) {
+      const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+        where: {
+          purchase_order_id: purchaseOrder.id,
+          product_id: product.product_id,
+        },
+      });
+
+      if (purchaseOrderProduct) {
+        await purchaseOrderProduct.update({
+          quantity_purchased: product.quantity,
+          product_cost: product.product_cost,
+          total_amount: product.quantity * product.product_cost,
+        });
+      }
+    }
+
+    if (productsToAdd.length > 0) {
+      await createPurchaseOrderProducts(purchaseOrder.id, productsToAdd);
+    }
+  }
+
+
+  await purchaseOrder.save();
+
+  const updatedProducts = await PurchaseOrderProduct.findAll({
+    where: { purchase_order_id: purchaseOrder.id },
+  });
+
+  totalPrice = updatedProducts.reduce((sum, prod) => sum + parseFloat(prod.quantity_purchased * parseFloat(prod.product_cost)), 0);
+
+  await purchaseOrder.update({ total_price: totalPrice });
+
+  const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
+    include: [
+      {
+        model: PurchaseOrderProduct,
+        as: "purchaseOrderProducts",
+      },
+    ],
+  });
+
   return res.status(200).json({
     success: true,
-    data: {
-      notes: updatedPurchaseOrder.notes,
-      message: "Notes updated successfully",
-    },
+    data: updatedPurchaseOrder,
   });
 });
+
+
 
 // Controlador para agregar o actualizar productos en una orden de compra
 exports.addOrUpdateProductInPurchaseOrder = asyncHandler(async (req, res, next) => {

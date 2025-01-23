@@ -20,7 +20,7 @@ router.get('/', getShipments)
 router.get('/:id', getShipment)
 router.delete('/:id', deleteShipment)
 router.put('/:id', protect, updateShipment)
-router.get('/:id/download', protect, download2DWorkflowTemplate);
+router.get('/:id/download', download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
 module.exports = router;

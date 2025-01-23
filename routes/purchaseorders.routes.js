@@ -3,7 +3,7 @@ const router = express.Router();
 
 const {
   createPurchaseOrder,
-  updatedPurchaseOrder,
+  updatePurchaseOrder,
   getPurchaseOrderById,
   getPurchaseOrders,
   downloadPurchaseOrder,
@@ -30,7 +30,7 @@ router.get('/', getPurchaseOrders);
 router.get('/incoming-shipments', getIncomingShipments);
 
 router.post('/', createPurchaseOrder);
-router.put('/:id', updatedPurchaseOrder);
+router.put('/:id', updatePurchaseOrder);
 router.get('/:id', getPurchaseOrderById);
 
 // change purchase order status

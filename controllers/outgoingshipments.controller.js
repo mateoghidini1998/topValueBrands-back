@@ -658,6 +658,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
         include: [
           {
             model: PurchaseOrderProduct,
+            as: "purchaseOrderProduct",
             attributes: ["product_id"],
             include: [
               {
