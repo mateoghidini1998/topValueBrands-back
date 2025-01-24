@@ -66,7 +66,7 @@ const {
  *                         type: string
  *                         example: User not found
  */
-router.post('/login', login);
+// router.post('/login', login);
 
 /**
  * @openapi
@@ -209,6 +209,6 @@ router.post('/register', register);
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/me', protect, getMe);
+// router.get('/me', protect, getMe);
 
 module.exports = router;

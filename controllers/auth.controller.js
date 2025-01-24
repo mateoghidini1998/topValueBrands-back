@@ -1,105 +1,60 @@
-const express = require('express');
-const { User } = require('../models')
-const asyncHandler = require('../middlewares/async')
+const { clerkClient } = require('@clerk/express');
+const asyncHandler = require("../middlewares/async")
 
-//@route    POST api/auth/register
-//@desc     Register a user
-//@access   Private
-
-// Create role options
-const userRoleOptions = ['admin', 'user'];
+const userRoleOptions = ["admin", "user"]
 
 exports.register = asyncHandler(async (req, res, next) => {
-  const { firstName, lastName, email, password, confirmPassword, role } = req.body;
+  const { firstName, lastName, email, username, password, confirmPassword, role } = req.body
 
-  // if (req.user.role !== 'admin') {
-  //   return res.status(401).json({ errors: [{ msg: `User ${req.user.firstName} ${req.user.lastName} has no clearance to create a new user` }] });
-  // }
-
-  let user = await User.findOne({ where: { email } });
-
-  //Check if user exists
-  if (user) {
-    return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
+  // Validate role
+  if (!userRoleOptions.includes(role)) {
+    return res.status(400).json({ success: false, errors: [{ msg: "User role must be admin or user" }] })
   }
 
-  // if (!userRoleOptions.includes(role)) {
-  //   return res.status(400).json({ errors: [{ msg: 'User role must be admin or user' }] });
-  // }
-
+  // Validate password match
   if (password !== confirmPassword) {
-    return res.status(400).json({ errors: [{ msg: 'Passwords do not match' }] });
+    return res.status(400).json({ success: false, errors: [{ msg: "Passwords do not match" }] })
   }
 
-  //Create user
-  user = await User.create({ firstName, lastName, email, password, role })
+  try {
+    // Create user in Clerk
+    const user = await clerkClient.users.createUser({
+      firstName,
+      lastName,
+      emailAddress: [email],
+      password,
+      username,
+      publicMetadata: { role },
+    })
 
-  return res.status(201).json({
-    success: true,
-    user
-  })
-});
+    return res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.emailAddresses[0].emailAddress,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        role: user.publicMetadata.role,
+      },
+    })
+  } catch (error) {
+    console.error("Error registering user with Clerk:", error)
 
-//@route   POST api/auth
-//@desc    Authenticate user & get token
-//@access  public
-exports.login = asyncHandler(async (req, res, next) => {
-  const { email, password } = req.body;
+    // Check for specific Clerk errors
+    if (error.errors && error.errors.length > 0) {
+      const clerkErrors = error.errors.map((err) => ({
+        msg: err.message,
+        code: err.code,
+        longMessage: err.long_message,
+      }))
+      return res.status(400).json({ success: false, errors: clerkErrors })
+    }
 
-  if (!email || !password) {
-    return res.status(400).json({ errors: [{ msg: 'Please enter all fields' }] });
+    return res.status(500).json({
+      success: false,
+      errors: [{ msg: "Error registering user in Clerk", details: error.message }],
+    })
   }
-
-  //Check if user exists
-  let user = await User.findOne({ where: { email: email } });
-
-  if (!user) {
-    return res.status(404).json({ errors: [{ msg: 'User not found' }] });
-  }
-
-  const isMatch = await user.matchPassword(password);
-  if (!isMatch) {
-    return res.status(401).json({ errors: [{ msg: 'Invalid credentials' }] })
-  }
-
-  this.sendTokenResponse(user, 200, res);
 })
 
-// @desc   Get current logged in user
-// @route  POST /api/v1/auth/me
-// @access Private
-
-exports.getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findByPk(req.user.id, {
-    attributes: { exclude: ['password'] }
-  });
-  res.status(200).json({
-    success: true,
-    data: user
-  });
-});
-
-//Get Token from model, create a cookie and send response
-exports.sendTokenResponse = (user, statusCode, res) => {
-  // Create token
-  const token = user.getSignedJwtToken();
-
-  const options = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
-  }
-
-  res
-    .status(statusCode)
-    .cookie('token', token, options)
-    .json({
-      success: true,
-      token
-    });
-};
