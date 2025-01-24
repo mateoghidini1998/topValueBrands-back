@@ -19,10 +19,9 @@ dotenv.config({ path: "./.env" });
 // CORS configuration
 const corsOptions = {
   origin: [
-    "https://top-value-brands-front.vercel.app",
+    "https://top-value-brands-front-v2.vercel.app",
     "https://www.thepopro.com",
     "https://thepopro.com",
-    "http://localhost:3000",
   ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: [
