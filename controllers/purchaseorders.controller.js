@@ -291,6 +291,8 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
 
   const { incomingOrderProductUpdates } = req.body;
 
+  console.log(incomingOrderProductUpdates);
+
   const purchaseorderproducts = await getPurchaseOrderProducts(
     purchaseOrder.id
   );
@@ -301,6 +303,10 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     );
 
     if (purchaseOrderProduct) {
+
+      // update quantity_available
+
+      purchaseOrderProduct.quantity_available = purchaseOrderProductUpdate.quantity_received - ((purchaseOrderProduct.quantity_received || 0) - (purchaseOrderProduct.quantity_available || 0));
 
       if (
         purchaseOrderProduct.quantity_received !==
@@ -318,10 +324,6 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
             purchaseOrderProductUpdate.quantity_received
           );
 
-        // update quantity_available
-
-        purchaseOrderProduct.quantity_available =
-          parseInt(purchaseOrderProduct.quantity_received);
 
       }
 
