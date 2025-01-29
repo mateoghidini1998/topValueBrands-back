@@ -104,6 +104,8 @@ exports.getPallets = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit;
   const palletNumber = req.query.pallet_number || '';
   const warehouseLocationId = req.query.warehouse_location_id || null;
+  const orderBy = req.query.orderBy || 'updatedAt';
+  const orderWay = req.query.orderWay || 'DESC';
 
   try {
     const whereConditions = {};
@@ -142,7 +144,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
       distinct: true,  // <- Agregado para evitar conteo incorrecto
       limit,
       offset,
-      order: [['createdAt', 'DESC']],
+      order: [[orderBy, orderWay]],
     });
 
 
@@ -325,7 +327,7 @@ exports.getAvailableLocations = asyncHandler(async (req, res) => {
     const locations = await WarehouseLocation.findAll({
       attributes: ['id', 'location', 'capacity', 'current_capacity'],
       where: showAvailable ? { current_capacity: { [Op.gt]: 0 } } : {},
-      order: [['current_capacity', 'DESC']],
+      order: [['location', 'ASC']],
     });
 
     // Responder con los datos encontrados
