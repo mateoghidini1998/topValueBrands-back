@@ -130,7 +130,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
         as: 'purchaseOrder',
         attributes: ['id', 'order_number', 'updatedAt'], // Ajusta según tu modelo
         order: [['updatedAt', 'DESC']],
-        where: { is_active: true }, // Ajusta según tu modelo
+        // where: { is_active: true }, // Ajusta según tu modelo
       },
       {
         model: PalletProduct,
