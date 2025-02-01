@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.addColumn('PurchaseOrderProducts', 'is_active', {
       type: Sequelize.BOOLEAN,
-      allowNull: true, // o false si es obligatorio
+      allowNull: true, 
       defaultValue: true
     });
   },
