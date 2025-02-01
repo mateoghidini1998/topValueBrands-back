@@ -1,6 +1,8 @@
-const { Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
+const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
 const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
+const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculator');
+const { Op } = require("sequelize");
 
 //@route    POST api/v1/pallets
 //@desc     Create a pallet
@@ -44,15 +46,36 @@ exports.createPallet = asyncHandler(async (req, res) => {
     await location.save({ transaction });
 
     if (products && products.length > 0) {
+      const productsToUpdate = new Set(); // Usaremos un Set para recalcular solo los productos afectados
+
       for (const product of products) {
         const { purchaseorderproduct_id, quantity } = product;
 
+        // Crear la relación del pallet con el producto
         await createPalletProduct({
           purchaseorderproduct_id,
           pallet_id: pallet.id,
           quantity,
-          transaction, 
+          transaction,
         });
+
+        // Obtener el producto asociado al purchaseorderproduct_id
+        const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+          where: { id: purchaseorderproduct_id },
+          transaction,
+        });
+
+        if (!purchaseOrderProduct) {
+          throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
+        }
+
+        // Añadir el product_id al Set para recalcular warehouse_stock
+        productsToUpdate.add(purchaseOrderProduct.product_id);
+      }
+
+      // Recalcular warehouse_stock para cada producto afectado
+      for (const productId of productsToUpdate) {
+        await recalculateWarehouseStock(productId);
       }
     } else {
       return res.status(400).json({ msg: "No products provided to associate with the pallet." });
@@ -61,11 +84,12 @@ exports.createPallet = asyncHandler(async (req, res) => {
     await transaction.commit();
 
     return res.status(201).json({ pallet });
-
   } catch (error) {
-    
     await transaction.rollback();
-    return res.status(500).json({ msg: "Error creating pallet and products", error: error.message });
+    return res.status(500).json({
+      msg: "Error creating pallet and updating warehouse stock",
+      error: error.message,
+    });
   }
 });
 
@@ -73,56 +97,138 @@ exports.createPallet = asyncHandler(async (req, res) => {
 //@desc     Get pallets
 //@access   Private
 exports.getPallets = asyncHandler(async (req, res) => {
-  const pallets = await Pallet.findAll({
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: 'purchaseorderproducts',
-        through: {
-          model: PalletProduct,
-          attributes: ['quantity', 'available_quantity'],
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+  const palletNumber = req.query.pallet_number || '';
+  const warehouseLocationId = req.query.warehouse_location_id || null;
+  const orderBy = req.query.orderBy || 'updatedAt';
+  const orderWay = req.query.orderWay || 'DESC';
+
+  try {
+    const whereConditions = {is_active: true};
+
+    if (palletNumber) {
+      whereConditions.pallet_number = { [Op.like]: `%${palletNumber}%` };
+    }
+
+    if (warehouseLocationId) {
+      whereConditions.warehouse_location_id = warehouseLocationId;
+    }
+
+    const { count, rows: pallets } = await Pallet.findAndCountAll({
+      where: whereConditions,
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: 'purchaseorderproducts',
+          through: {
+            model: PalletProduct,
+            attributes: ['quantity', 'available_quantity'],
+          },
+          attributes: ['id'],
         },
-        attributes: ['id'],
-      },
-    ],
-  });
+        {
+          model: WarehouseLocation,
+          as: 'warehouseLocation',
+          attributes: ['id', 'location'],
+        },
+        {
+          model: PurchaseOrder,
+          as: 'purchaseOrder',
+          attributes: ['id', 'order_number'],
+        },
+      ],
+      distinct: true,  // <- Agregado para evitar conteo incorrecto
+      limit,
+      offset,
+      order: [[orderBy, orderWay]],
+    });
 
-  return res.status(200).json({
-    count: pallets.length,
-    pallets,
-  });
+
+    const totalPages = Math.ceil(count / limit);
+
+    return res.status(200).json({
+      success: true,
+      total: count,
+      pages: totalPages,
+      currentPage: page,
+      data: pallets.map((pallet) => ({
+        id: pallet.id,
+        pallet_number: pallet.pallet_number,
+        warehouse_location_id: pallet.warehouse_location_id,
+        warehouse_location: pallet.warehouseLocation.location,
+        purchase_order_number: pallet.purchaseOrder.order_number,
+        purchase_order_id: pallet.purchase_order_id,
+        createdAt: pallet.createdAt,
+        updatedAt: pallet.updatedAt,
+        products: pallet.purchaseorderproducts,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching pallets:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching pallets', error: error.message });
+  }
 });
-
-
-
 
 //@route    GET api/v1/pallets/:id
 //@desc     Get pallet by id
 //@access   Private
 exports.getPallet = asyncHandler(async (req, res) => {
   const pallet = await Pallet.findOne({
-      where: { id: req.params.id },
-      include: [
+    where: { id: req.params.id },
+    include: [
+      {
+        model: PalletProduct,
+        include: [
           {
-              model: PalletProduct,
-              include: [
-                  {
-                      model: PurchaseOrderProduct,
-                      attributes: ['id', 'product_name']
-                  }
-              ],
-              attributes: ['id', 'quantity', 'available_quantity']
-          }
-      ]
+            model: PurchaseOrderProduct,
+            as: 'purchaseOrderProduct',
+            attributes: [
+              'id',
+            ],
+            include: [
+              {
+                model: Product,
+                attributes: ['product_name', 'product_image', 'seller_sku', "in_seller_account"],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: WarehouseLocation,
+        as: 'warehouseLocation',
+        attributes: ['id', 'location'],
+      },
+      {
+        model: PurchaseOrder,
+        as: 'purchaseOrder',
+        attributes: ['id', 'order_number'],
+      },
+    ],
   });
 
   if (!pallet) {
-      return res.status(404).json({ msg: "Pallet not found" });
+    return res.status(404).json({ msg: "Pallet not found" });
   }
 
-  return res.status(200).json({ 
-      pallet 
-  });
+  // Convierte a un objeto plano para manipulación
+  const palletData = pallet.toJSON();
+
+  // Procesa los datos para incluir los campos de Product directamente en PalletProducts
+  const formattedPallet = {
+    ...palletData,
+    PalletProducts: palletData.PalletProducts.map((palletProduct) => {
+      // const product =
+      //   palletProduct.PurchaseOrderProduct?.Product || {};
+      return {
+        ...palletProduct,
+      };
+    }),
+  };
+
+  return res.status(200).json(formattedPallet);
 });
 
 //@route    DELETE api/v1/pallets/:id
@@ -146,9 +252,8 @@ exports.deletePallet = asyncHandler(async (req, res) => {
 
   await pallet.destroy();
 
-  return res.status(204).end();
+  return res.status(200).json({ msg: "Pallet deleted" });
 });
-
 
 //@route    PUT api/v1/pallets/:id
 //@desc     update pallet by id
@@ -209,4 +314,31 @@ exports.updatePallet = asyncHandler(async (req, res) => {
   return res.status(200).json({ msg: "Pallet updated successfully", pallet });
 });
 
+exports.getAvailableLocations = asyncHandler(async (req, res) => {
+  try {
+    // Leer el parámetro desde la query string
+    const showAvailable = req.query.available === 'true';
 
+    // Buscar las ubicaciones en la base de datos
+    const locations = await WarehouseLocation.findAll({
+      attributes: ['id', 'location', 'capacity', 'current_capacity'],
+      where: showAvailable ? { current_capacity: { [Op.gt]: 0 } } : {},
+      order: [['location', 'ASC']],
+    });
+
+    // Responder con los datos encontrados
+    return res.status(200).json({
+      success: true,
+      msg: "Locations retrieved successfully",
+      data: locations,
+    });
+  } catch (error) {
+    console.error(error);
+
+    // Manejar errores
+    return res.status(500).json({
+      success: false,
+      msg: "An error occurred while retrieving locations",
+    });
+  }
+});

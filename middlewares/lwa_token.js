@@ -36,7 +36,6 @@ async function fetchNewToken() {
     return accessToken;
 };
 
-
 exports.addAccessTokenHeader = asyncHandler(async (req, res, next) => {
     try {
         const now = new Date();

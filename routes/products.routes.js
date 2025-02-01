@@ -1,19 +1,23 @@
 const express = require('express');
-const router = express.Router();
 const { authorize, protect } = require('../middlewares/auth');
 
 const {
   addExtraInfoToProduct,
   toggleShowProduct,
   getProducts,
-  getProductBySellerSku,
-  addImageToAllProducts,
   addImageToNewProducts,
   createProduct,
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
+const { requireAuth } = require('@clerk/express');
+const { authMiddleware } = require('../middlewares/authMiddleware');
+const { roleMiddleware } = require('../middlewares/roleMiddleware');
 
-router.post('/add', protect, addAccessTokenHeader, authorize("admin"), createProduct);
+const router = express.Router();
+// Aplicar autenticación a todas las rutas dentro de este router
+/* router.use(authMiddleware); */
+
+router.post('/add', addAccessTokenHeader, createProduct);
 
 /**
  * @openapi
@@ -102,12 +106,10 @@ router.post('/add', protect, addAccessTokenHeader, authorize("admin"), createPro
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/', protect, authorize('admin'), getProducts);
-
-// get product by seller_sku
-router.get('/:seller_sku', getProductBySellerSku);
-
-router.post('/', createProduct);
+router.get('/', getProducts);
+/* router.get('/', roleMiddleware(['admin', 'manager']), getProducts);
+ */
+router.post('/', roleMiddleware(['admin', 'manager']), createProduct);
 
 /**
  * @openapi
@@ -215,8 +217,8 @@ router.post('/', createProduct);
  */
 router.patch(
   '/addExtraInfoToProduct',
-  protect,
-  authorize('admin'),
+  roleMiddleware(['admin', 'manager']),
+
   addExtraInfoToProduct
 );
 
@@ -306,16 +308,16 @@ router.patch(
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.patch('/disable', protect, authorize('admin'), toggleShowProduct);
+router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
 
-router.patch('/addImage', addAccessTokenHeader, addImageToAllProducts);
 
 router.patch(
-  '/syncImages',
-  protect,
-  authorize('admin'),
+  '/syncImages', roleMiddleware(['admin', 'manager']),
+
+
   addAccessTokenHeader,
   addImageToNewProducts
 );
+
 
 module.exports = router;

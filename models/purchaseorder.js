@@ -21,7 +21,8 @@ module.exports = (sequelize, DataTypes) => {
     purchase_order_status_id: DataTypes.INTEGER,
     total_price: DataTypes.DECIMAL,
     notes: DataTypes.STRING,
-    is_active: DataTypes.BOOLEAN
+    is_active: DataTypes.BOOLEAN,
+    updatedStatusAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'PurchaseOrder',

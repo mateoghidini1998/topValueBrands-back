@@ -3,10 +3,10 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class OutgoingShipment extends Model {
     static associate(models) {
-      OutgoingShipment.belongsToMany(models.PurchaseOrderProduct, {
+      OutgoingShipment.belongsToMany(models.PalletProduct, {
         through: models.OutgoingShipmentProduct,
         foreignKey: 'outgoing_shipment_id',
-        otherKey: 'purchase_order_product_id',
+        otherKey: 'pallet_product_id',
       });
     }
 
@@ -18,6 +18,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      status: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'PENDING'
+      },
+      fba_shipment_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      }
     },
     {
       sequelize,

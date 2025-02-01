@@ -25,11 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       product_image: DataTypes.STRING,
       product_name: DataTypes.STRING,
       seller_sku: DataTypes.STRING.BINARY,
+      warehouse_stock: DataTypes.INTEGER,
       FBA_available_inventory: DataTypes.INTEGER,
       reserved_quantity: DataTypes.INTEGER,
       Inbound_to_FBA: DataTypes.INTEGER,
       supplier_id: DataTypes.INTEGER,
       supplier_item_number: DataTypes.STRING,
+      upc: DataTypes.STRING,
       product_cost: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,

@@ -18,20 +18,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'reason_id',
       });
 
-      PurchaseOrderProduct.belongsToMany(models.OutgoingShipment, {
-        through: models.OutgoingShipmentProduct,
-        foreignKey: 'purchase_order_product_id',
-        otherKey: 'outgoing_shipment_id',
-      });
-      
       PurchaseOrderProduct.belongsToMany(models.Pallet, {
         through: models.PalletProduct,
         foreignKey: 'purchaseorderproduct_id',
         otherKey: 'pallet_id',
         as: 'pallets'
       });
-      
-      
     }
 
   }
@@ -40,12 +32,17 @@ module.exports = (sequelize, DataTypes) => {
       purchase_order_id: DataTypes.INTEGER,
       product_id: DataTypes.INTEGER,
       unit_price: DataTypes.DECIMAL,
+      product_cost: DataTypes.DECIMAL(10, 2),
       total_amount: DataTypes.DECIMAL,
+      profit: DataTypes.DECIMAL,
       quantity_purchased: DataTypes.INTEGER,
       quantity_received: DataTypes.INTEGER,
       quantity_missing: DataTypes.INTEGER,
       quantity_available: DataTypes.INTEGER,
       reason_id: DataTypes.INTEGER,
+      notes: DataTypes.STRING,
+      expire_date: DataTypes.DATE,
+      is_active: DataTypes.BOOLEAN
     },
     {
       sequelize,

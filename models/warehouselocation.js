@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   WarehouseLocation.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
     location: DataTypes.STRING,
     capacity: DataTypes.INTEGER,
     current_capacity: DataTypes.INTEGER

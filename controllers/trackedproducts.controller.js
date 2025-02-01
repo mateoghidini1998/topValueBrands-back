@@ -45,10 +45,10 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   // }
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 50;
+  const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
-  const supplier_id = req.query.supplier_id || null;
+  const supplier_id = req.query.supplier || null;
   const orderBy = req.query.orderBy || 'updatedAt';
   const orderWay = req.query.orderWay || 'ASC';
 
@@ -62,7 +62,12 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'product_cost',
       'product_image',
       'supplier_id',
-      'in_seller_account'
+      'in_seller_account',
+      'FBA_available_inventory',
+      'reserved_quantity',
+      'Inbound_to_FBA',
+      'supplier_item_number',
+      'warehouse_stock',
     ],
     include: [
       {
@@ -74,7 +79,9 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     where: {},
   };
 
-  const whereConditions = {};
+  const whereConditions = {
+    is_active: true,
+  };
 
   if (keyword) {
     includeProduct.where[Op.or] = [
@@ -109,6 +116,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         ...trackedProductData,
         ...productData,
         supplier_name: supplier ? supplier.supplier_name : null,
+        roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
       };
     });
 
@@ -167,7 +175,8 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
       seller_sku: product.seller_sku,
       supplier_name: supplier.supplier_name,
       product_image: product.product_image,
-      product_cost: product.product_cost
+      product_cost: product.product_cost,
+      in_seller_account: product.in_seller_account
     };
 
   }));
@@ -436,12 +445,13 @@ const saveOrders = async (req, res, next, products) => {
   const jsonData = await generateOrderReport(req, res, next);
 
   if (!jsonData) {
+    logger.error('Generating order report failed');
     throw new Error('Failed to retrieve orders');
   }
 
   const filteredOrders = jsonData.filter(
     (item) =>
-      item['order-status'] === 'Shipped' &&
+      (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
       new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000
   );
 
@@ -455,11 +465,6 @@ const saveOrders = async (req, res, next, products) => {
     }
     return acc;
   }, {});
-
-  // const asinToProductId = products.reduce((acc, product) => {
-  //   acc[product.ASIN] = product.id;
-  //   return acc;
-  // }, {});
 
   const asinToProductId = products.reduce((acc, product) => {
     if (!acc[product.ASIN]) {

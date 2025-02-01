@@ -52,7 +52,6 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
     const imageSyncResult = await addImageToNewProducts(accessToken);
 
-
     res.json({ newSync, imageSyncResult });
     return { newSync, imageSyncResult };
   } catch (error) {

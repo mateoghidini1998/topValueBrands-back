@@ -58,6 +58,15 @@ const createReport = asyncHandler(async (req, reportType) => {
       'x-amz-access-token': req.headers['x-amz-access-token'],
     },
   });
+
+  if (!response.data) {
+    logger.error('Error creating report');
+    console.log('Error creating report');
+    throw new Error('Error creating report');
+  } else {
+    logger.info('Report created successfully');
+  }
+
   console.log(response.data);
   return response.data.reportId;
 });
@@ -119,6 +128,7 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
   );
 
   if (!reportData) {
+    logger.error("Error getting report by id");
     throw new Error('Report data is invalid or missing reportDocumentId');
   }
 
@@ -135,6 +145,7 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
   );
 
   if (!response.data || !response.data.url) {
+    logger.error(`Error getting the report with documentId: ${documentId}`);
     throw new Error('Failed to retrieve document URL from response');
   }
 
