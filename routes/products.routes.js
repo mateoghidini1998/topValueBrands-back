@@ -5,8 +5,6 @@ const {
   addExtraInfoToProduct,
   toggleShowProduct,
   getProducts,
-  getProductBySellerSku,
-  addImageToAllProducts,
   addImageToNewProducts,
   createProduct,
 } = require('../controllers/products.controller');
@@ -17,7 +15,7 @@ const { roleMiddleware } = require('../middlewares/roleMiddleware');
 
 const router = express.Router();
 // Aplicar autenticación a todas las rutas dentro de este router
-router.use(authMiddleware);
+/* router.use(authMiddleware); */
 
 router.post('/add', addAccessTokenHeader, createProduct);
 
@@ -108,11 +106,9 @@ router.post('/add', addAccessTokenHeader, createProduct);
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.get('/', roleMiddleware(['admin', 'manager']), getProducts);
-
-// get product by seller_sku
-router.get('/:seller_sku', roleMiddleware(['admin', 'manager']), getProductBySellerSku);
-
+router.get('/', getProducts);
+/* router.get('/', roleMiddleware(['admin', 'manager']), getProducts);
+ */
 router.post('/', roleMiddleware(['admin', 'manager']), createProduct);
 
 /**
@@ -314,7 +310,6 @@ router.patch(
  */
 router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
 
-router.patch('/addImage', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, addImageToAllProducts);
 
 router.patch(
   '/syncImages', roleMiddleware(['admin', 'manager']),
