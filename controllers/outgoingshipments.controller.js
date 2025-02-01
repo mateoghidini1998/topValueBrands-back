@@ -307,7 +307,9 @@ exports.getShipment = asyncHandler(async (req, res) => {
           "createdAt",
           "updatedAt",
         ],
-        through: { attributes: ["quantity"] },
+        through: {
+          attributes: ["quantity", "id", "is_checked"]
+        },
         include: [
           {
             model: PurchaseOrderProduct,
@@ -1066,7 +1068,7 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
   const warehouse_location = await WarehouseLocation.findByPk(
     pallet.warehouse_location_id
   );
-  
+
   if (activePalletProducts === 0) {
     if (pallet) {
       pallet.is_active = false;
