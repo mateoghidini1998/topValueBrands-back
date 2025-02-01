@@ -93,8 +93,6 @@ exports.createPallet = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 //@route    GET api/v1/pallets
 //@desc     Get pallets
 //@access   Private
@@ -108,7 +106,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
   const orderWay = req.query.orderWay || 'DESC';
 
   try {
-    const whereConditions = {};
+    const whereConditions = {is_active: true};
 
     if (palletNumber) {
       whereConditions.pallet_number = { [Op.like]: `%${palletNumber}%` };
@@ -172,7 +170,6 @@ exports.getPallets = asyncHandler(async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error fetching pallets', error: error.message });
   }
 });
-
 
 //@route    GET api/v1/pallets/:id
 //@desc     Get pallet by id
@@ -316,7 +313,6 @@ exports.updatePallet = asyncHandler(async (req, res) => {
 
   return res.status(200).json({ msg: "Pallet updated successfully", pallet });
 });
-
 
 exports.getAvailableLocations = asyncHandler(async (req, res) => {
   try {

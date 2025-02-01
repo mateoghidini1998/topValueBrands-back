@@ -114,7 +114,6 @@ exports.getPalletProductByPurchaseOrderProductId = asyncHandler(async (req, res)
   res.status(200).json(totalQuantity[0]);
 });
 
-
 exports.getAllPalletProducts = asyncHandler(async (req, res) => {
   // Obtener todos los Pallets junto con su información relacionada
   const pallets = await Pallet.findAll({
@@ -135,7 +134,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt', 'pallet_id'],
-        where: { available_quantity: { [Op.gt]: 0 } }, // Ajusta según tu modelo
+        where: { available_quantity: { [Op.gt]: 0 }, is_active:true }, // Ajusta según tu modelo
         include: [
           {
             model: PurchaseOrderProduct,
@@ -193,8 +192,6 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
 
   return res.status(200).json(response);
 });
-
-
 
 exports.getPalletProducts = asyncHandler(async (req, res) => {
   const palletProducts = await PalletProduct.findAll({

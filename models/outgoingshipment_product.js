@@ -18,6 +18,12 @@ module.exports = (sequelize, DataTypes) => {
 
   OutgoingShipmentProduct.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true
+      },      
       outgoing_shipment_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -30,6 +36,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 1,
+      },
+      is_checked: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
     },
     {

@@ -22,13 +22,10 @@ const {
   recalculateWarehouseStock,
 } = require("../utils/warehouse_stock_calculator");
 
-
 //@route    POST api/v1/shipments
 //@desc     Create an outgoing shipment
 //@access   Private
 exports.createShipment = asyncHandler(async (req, res) => {
-  console.log("Request body:", req.body);
-
   const existingShipment = await OutgoingShipment.findOne({
     where: { shipment_number: req.body.shipment_number },
   });
@@ -43,73 +40,47 @@ exports.createShipment = asyncHandler(async (req, res) => {
   const palletProducts = req.body.palletproducts;
 
   for (let item of palletProducts) {
-    console.log(`Processing pallet_product_id: ${item.pallet_product_id}`);
     const palletProduct = await PalletProduct.findOne({
       where: { id: item.pallet_product_id },
     });
 
     if (!palletProduct) {
-      console.error(
-        `PalletProduct with id ${item.pallet_product_id} not found`
-      );
       return res.status(404).json({
         msg: `PalletProduct with id ${item.pallet_product_id} not found`,
       });
     }
 
-    console.log(`PalletProduct found:`, palletProduct);
-
     if (item.quantity > palletProduct.available_quantity) {
-      console.error(
-        `Quantity of ${item.quantity} exceeds available quantity of ${palletProduct.available_quantity} for pallet_product_id ${item.pallet_product_id}`
-      );
       return res.status(400).json({
         msg: `Quantity of ${item.quantity} exceeds the available quantity of ${palletProduct.available_quantity} for product ID ${item.pallet_product_id}`,
       });
     }
   }
-
-  console.log(
-    `Creating new shipment with shipment_number: ${req.body.shipment_number}`
-  );
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
     status: "WORKING",
   });
 
-  console.log(`New shipment created:`, newShipment);
-
-  const affectedProducts = new Set(); // Productos afectados para recalcular el stock
+  const affectedProducts = new Set();
 
   for (let item of palletProducts) {
-    console.log(`Processing pallet_product_id: ${item.pallet_product_id}`);
     const palletProduct = await PalletProduct.findOne({
       where: { id: item.pallet_product_id },
     });
 
-    console.log(
-      `Updating available_quantity for pallet_product_id: ${item.pallet_product_id}`
-    );
     const newAvailableQuantity =
       palletProduct.available_quantity - item.quantity;
 
-    console.log(`New available_quantity: ${newAvailableQuantity}`);
     await palletProduct.update({
       available_quantity: newAvailableQuantity,
     });
 
-    console.log(
-      `Creating OutgoingShipmentProduct for shipment_id: ${newShipment.id}`
-    );
     await OutgoingShipmentProduct.create({
       outgoing_shipment_id: newShipment.id,
       pallet_product_id: item.pallet_product_id,
       quantity: item.quantity,
     });
 
-    console.log(
-      `Fetching PurchaseOrderProduct for pallet_product_id: ${item.pallet_product_id}`
-    );
     const purchaseOrderProduct = await PurchaseOrderProduct.findByPk(
       palletProduct.purchaseorderproduct_id
     );
@@ -119,7 +90,6 @@ exports.createShipment = asyncHandler(async (req, res) => {
         `No PurchaseOrderProduct found for pallet_product_id: ${item.pallet_product_id}`
       );
     } else {
-      console.log(`PurchaseOrderProduct found:`, purchaseOrderProduct);
       affectedProducts.add(purchaseOrderProduct.product_id);
     }
   }
@@ -252,14 +222,30 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 //@desc     Get all outgoing shipments
 //@access   Private
 exports.getShipments = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 50, keyword = "", status = "", orderBy = "createdAt", orderWay = "DESC" } = req.query;
+  const {
+    page = 1,
+    limit = 50,
+    keyword = "",
+    status = "",
+    orderBy = "createdAt",
+    orderWay = "DESC",
+  } = req.query;
 
   const offset = (page - 1) * limit;
   const whereClause = {};
 
-  const validOrderFields = ["shipment_number", "status", "createdAt", "updatedAt"];
-  const validOrderBy = validOrderFields.includes(orderBy) ? orderBy : "createdAt";
-  const validOrderWay = ["ASC", "DESC"].includes(orderWay.toUpperCase()) ? orderWay.toUpperCase() : "DESC";
+  const validOrderFields = [
+    "shipment_number",
+    "status",
+    "createdAt",
+    "updatedAt",
+  ];
+  const validOrderBy = validOrderFields.includes(orderBy)
+    ? orderBy
+    : "createdAt";
+  const validOrderWay = ["ASC", "DESC"].includes(orderWay.toUpperCase())
+    ? orderWay.toUpperCase()
+    : "DESC";
 
   if (keyword) {
     whereClause[Op.or] = [
@@ -336,7 +322,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "product_image",
                   "seller_sku",
                   "in_seller_account",
-                  "upc"
+                  "upc",
                 ],
               },
             ],
@@ -346,8 +332,8 @@ exports.getShipment = asyncHandler(async (req, res) => {
             attributes: ["id", "pallet_number"],
             include: [
               {
-                model: WarehouseLocation,  // 🔥 Asegúrate de usar el modelo correcto
-                as: "warehouseLocation",  // 🔥 Usar el alias definido en el modelo
+                model: WarehouseLocation, // 🔥 Asegúrate de usar el modelo correcto
+                as: "warehouseLocation", // 🔥 Usar el alias definido en el modelo
                 attributes: ["id", "location"],
               },
             ],
@@ -370,7 +356,8 @@ exports.getShipment = asyncHandler(async (req, res) => {
 
       return {
         ...palletProduct,
-        warehouse_location: palletProduct.Pallet?.warehouseLocation?.location || null, // 🔥 Obtención correcta
+        warehouse_location:
+          palletProduct.Pallet?.warehouseLocation?.location || null, // 🔥 Obtención correcta
         pallet_number: palletProduct.Pallet?.pallet_number || null,
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
@@ -384,7 +371,6 @@ exports.getShipment = asyncHandler(async (req, res) => {
 
   return res.status(200).json(formattedShipment);
 });
-
 
 //@route    GET api/v1/shipment/:shipment_number
 //@desc     Get outgoing shipment by shipment number
@@ -503,11 +489,9 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
           `Missing OutgoingShipmentProduct for PalletProduct ID: ${palletProduct.id}`
         );
         await transaction.rollback();
-        return res
-          .status(400)
-          .json({
-            msg: "Invalid shipment data: missing OutgoingShipmentProduct",
-          });
+        return res.status(400).json({
+          msg: "Invalid shipment data: missing OutgoingShipmentProduct",
+        });
       }
       const palletProductId = palletProduct.id;
       const { quantity } = palletProduct.OutgoingShipmentProduct;
@@ -705,8 +689,11 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
       product.purchaseOrderProduct?.Product?.seller_sku || "N/A";
     const quantity = product.OutgoingShipmentProduct?.quantity || 0;
 
-    const expireDate = new Date(product.purchaseOrderProduct?.expire_date).toISOString().split('T')[0] || "N/A";
-    console.log(expireDate)
+    const expireDate =
+      new Date(product.purchaseOrderProduct?.expire_date)
+        .toISOString()
+        .split("T")[0] || "N/A";
+    console.log(expireDate);
 
     if (aggregatedProducts[sellerSku]) {
       aggregatedProducts[sellerSku].quantity += quantity;
@@ -715,7 +702,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
         sellerSku,
         quantity,
         unitsPerCase: 1, // Valor constante para UNITS_PER_CASE
-        expireDate: expireDate
+        expireDate: expireDate,
       };
     }
   });
@@ -727,7 +714,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
     row.getCell(1).value = product.sellerSku; // Columna SKU
     row.getCell(2).value = product.quantity; // Columna QTY
     row.getCell(3).value = product.unitsPerCase; // Columna UNITS_PER_CASE
-    row.getCell(6).value = product.expireDate
+    row.getCell(6).value = product.expireDate;
     row.commit();
     rowIndex++;
   });
@@ -1022,49 +1009,103 @@ const SHIPMENT_STATUSES = [
   "CHECKED_IN",
 ];
 
-const revertWarehouseStockForShipment = async (shipment) => {
-  try {
-    const shipmentProducts = await OutgoingShipmentProduct.findAll({
-      where: { outgoing_shipment_id: shipment.id },
-      include: [
-        {
-          model: PurchaseOrderProduct,
-          as: "purchaseOrderProduct",
-          include: [
-            {
-              model: Product,
-              as: "product",
-            },
-          ],
-        },
-      ],
-    });
+exports.toggleProductChecked = asyncHandler(async (req, res) => {
+  const { outgoingShipmentProductId } = req.params;
 
-    for (let shipmentProduct of shipmentProducts) {
-      const purchaseOrderProduct = shipmentProduct.purchaseOrderProduct;
-      const product = purchaseOrderProduct?.product;
+  const outgoingShipmentProduct = await OutgoingShipmentProduct.findByPk(
+    outgoingShipmentProductId
+  );
 
-      if (!product) {
-        console.warn(
-          `Producto no encontrado para shipment_product_id: ${shipmentProduct.id}`
-        );
-        continue;
-      }
-
-      const restoredStock = product.warehouse_stock + shipmentProduct.quantity;
-
-      await product.update({
-        warehouse_stock: restoredStock,
-      });
-
-      console.log(
-        `Stock restaurado para producto ${product.id}. Nuevo stock: ${restoredStock}`
-      );
-    }
-  } catch (error) {
-    console.error(
-      `Error restaurando warehouse_stock para shipment_number: ${shipment.shipment_number}`,
-      error.message
-    );
+  if (!outgoingShipmentProduct) {
+    return res
+      .status(404)
+      .json({ message: "OutgoingShipmentProduct no encontrado" });
   }
+
+  outgoingShipmentProduct.is_checked = !outgoingShipmentProduct.is_checked;
+  await outgoingShipmentProduct.save();
+
+  if (!outgoingShipmentProduct.pallet_product_id) {
+    return res.status(500).json({
+      message:
+        "Error: pallet_product_id es undefined en OutgoingShipmentProduct",
+    });
+  }
+
+  const palletProduct = await PalletProduct.findByPk(
+    outgoingShipmentProduct.pallet_product_id
+  );
+
+  if (!palletProduct) {
+    return res.status(404).json({ message: "PalletProduct no encontrado" });
+  }
+
+  const remainingUnchecked = await OutgoingShipmentProduct.count({
+    where: {
+      pallet_product_id: palletProduct.id,
+      is_checked: false,
+    },
+  });
+
+  if (remainingUnchecked === 0) {
+    palletProduct.is_active = false;
+    await palletProduct.save();
+  } else {
+    palletProduct.is_active = true;
+    await palletProduct.save();
+  }
+
+  const activePalletProducts = await PalletProduct.count({
+    where: {
+      pallet_id: palletProduct.pallet_id,
+      is_active: true,
+    },
+  });
+
+  const pallet = await Pallet.findByPk(palletProduct.pallet_id);
+  const warehouse_location = await WarehouseLocation.findByPk(
+    pallet.warehouse_location_id
+  );
+  
+  if (activePalletProducts === 0) {
+    if (pallet) {
+      pallet.is_active = false;
+      await pallet.save();
+      const pallets_quantity = await recalculateWarehouseLocation(
+        warehouse_location.id
+      );
+      const new_current_capacity =
+        warehouse_location.capacity - pallets_quantity;
+      await warehouse_location.update({
+        current_capacity: new_current_capacity,
+      });
+    }
+  } else {
+    const pallet = await Pallet.findByPk(palletProduct.pallet_id);
+    if (pallet) {
+      pallet.is_active = true;
+      pallet.warehouse_location_id = palletProduct.warehouse_location_id;
+      await pallet.save();
+      const pallets_quantity = await recalculateWarehouseLocation(
+        warehouse_location.id
+      );
+      const new_current_capacity =
+        warehouse_location.capacity - pallets_quantity;
+      await warehouse_location.update({
+        current_capacity: new_current_capacity,
+      });
+    }
+  }
+
+  return res.json({
+    message: "Estado actualizado correctamente",
+    is_checked: outgoingShipmentProduct.is_checked,
+  });
+});
+
+const recalculateWarehouseLocation = async (warehouseLocationId) => {
+  const pallets = await Pallet.count({
+    where: { warehouse_location_id: warehouseLocationId, is_active: true },
+  });
+  return pallets;
 };
