@@ -1049,6 +1049,15 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
     },
   });
 
+
+  const prevActivePalletProducts = await PalletProduct.count({
+    where: {
+      pallet_id: palletProduct.pallet_id,
+      is_active: true,
+    },
+  });
+
+
   if (remainingUnchecked === 0) {
     palletProduct.is_active = false;
     await palletProduct.save();
@@ -1082,7 +1091,8 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
         current_capacity: new_current_capacity,
       });
     }
-  } else {
+  } else if (activePalletProducts > 0 && prevActivePalletProducts === 0) {
+
     const pallet = await Pallet.findByPk(palletProduct.pallet_id);
     if (pallet) {
 
@@ -1117,53 +1127,20 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
           current_capacity: new_current_capacity,
         });
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      // pallet.is_active = true;
-      // pallet.warehouse_location_id = palletProduct.warehouse_location_id;
-      // await pallet.save();
-      // const pallets_quantity = await recalculateWarehouseLocation(
-      //   warehouse_location.id
-      // );
-      // if (warehouse_location.current_capacity === 0) {
-      //   warehouse_location = await WarehouseLocation.findOne({
-      //     where: sequelize.where(
-      //       sequelize.fn("LOWER", sequelize.col("location")),
-      //       "floor"
-      //     ),
-      //   });
-
-      //   const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
-      //   const new_current_capacity = warehouse_location.capacity - pallets_quantity;
-      //   await warehouse_location.update({
-      //     current_capacity: new_current_capacity,
-      //   });
-      // } else {
-      //   const new_current_capacity =
-      //     warehouse_location.capacity - pallets_quantity;
-
-      //   await warehouse_location.update({
-      //     current_capacity: new_current_capacity,
-      //   });
-      // }
     }
+  } else {
+    await pallet.update({
+      warehouse_location_id: warehouse_location.id,
+      is_active: true,
+    });
+    const pallets_quantity = await recalculateWarehouseLocation(
+      warehouse_location.id
+    );
+    const new_current_capacity =
+      warehouse_location.capacity - pallets_quantity;
+    await warehouse_location.update({
+      current_capacity: new_current_capacity,
+    });
   }
 
   return res.json({
