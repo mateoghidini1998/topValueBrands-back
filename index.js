@@ -22,6 +22,7 @@ const corsOptions = {
     "https://top-value-brands-front-v2.vercel.app",
     "https://www.thepopro.com",
     "https://thepopro.com",
+    "http://localhost:3000",
   ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: [

@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { where, Op } = require('sequelize');
+const productService = require('../services/products.service');
 
 const { clerkClient, getAuth } = require('@clerk/express');
 
@@ -17,94 +18,15 @@ dotenv.config({
 //@desc     Create a product
 //@access   Private
 exports.createProduct = asyncHandler(async (req, res) => {
-
-
-  const product = await Product.findOne({
-    where: { ASIN: req.body.ASIN },
-  });
-
-  if (product) {
-    if (!product.is_active) {
-      const accessToken = req.headers['x-amz-access-token'];
-
-      const productName = await getProductNameByASIN(req.body.ASIN, accessToken);
-      req.body.product_name = productName;
-
-      const productImage = await getImageForProduct(req.body.ASIN, accessToken);
-      req.body.product_image = productImage || null;
-
-      const requiredFields = [
-        'product_cost',
-        'ASIN',
-        'supplier_item_number',
-        'supplier_id',
-      ];
-
-      for (const field of requiredFields) {
-        if (!req.body[field]) {
-          return res.status(400).json({ msg: `Missing required field: ${field}` });
-        }
-      }
-
-      try {
-        await product.update({
-          ...req.body,
-          is_active: true,
-        });
-        return res.status(200).json({
-          msg: 'Product reactivated and updated successfully',
-          product,
-        });
-      } catch (error) {
-        return res.status(400).json({ msg: error.message });
-      }
-    } else {
-      return res.status(400).json({ msg: 'Product already exists' });
-    }
-  } else {
+  try {
     const accessToken = req.headers['x-amz-access-token'];
+    const productData = req.body;
 
-    const productName = await getProductNameByASIN(req.body.ASIN, accessToken);
-    req.body.product_name = productName;
+    const newProduct = await productService.createProduct(productData, accessToken);
 
-    const productImage = await getImageForProduct(req.body.ASIN, accessToken);
-    req.body.product_image = productImage || null;
-
-    const requiredFields = [
-      'product_cost',
-      'ASIN',
-      'supplier_item_number',
-      'supplier_id',
-    ];
-
-    for (const field of requiredFields) {
-      if (!req.body[field]) {
-        return res.status(400).json({ msg: `Missing required field: ${field}` });
-      }
-    }
-
-    const supplier = await Supplier.findByPk(req.body.supplier_id);
-
-    if (!supplier) {
-      let newSupplier = await Supplier.findOne({
-        where: { supplier_name: 'Unknown' },
-      });
-
-      if (!newSupplier) {
-        newSupplier = await Supplier.create({
-          supplier_name: 'Unknown',
-        });
-      }
-      req.body.supplier_id = newSupplier.id;
-      req.body.in_seller_account = false;
-    }
-
-    try {
-      const newProduct = await Product.create(req.body);
-      return res.status(201).json(newProduct);
-    } catch (error) {
-      return res.status(400).json({ msg: error.message });
-    }
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(400).json({ msg: error.message });
   }
 });
 
@@ -112,8 +34,6 @@ exports.createProduct = asyncHandler(async (req, res) => {
 //@desc     Update product
 //@access   Private
 exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
-
-
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
@@ -149,11 +69,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     product.reserved_quantity = req.body.reserved_quantity;
     product.Inbound_to_FBA = req.body.Inbound_to_FBA;
 
-
-    // save the product
     await product.save();
-
-    // await invalidateProductCache();
 
     res.status(200).json(product);
   } catch (error) {
@@ -206,59 +122,23 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@route    GET api/products/
 //@desc     Get products
 //@access   Private
+//@route    GET api/products/
+//@desc     Get products
+//@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
-
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 50;
-  const offset = (page - 1) * limit;
-  const keyword = req.query.keyword || '';
-  const supplier = req.query.supplier || null;
-  const orderBy = req.query.orderBy || 'updatedAt';
-  const orderWay = req.query.orderWay || 'DESC';
-
-  const includeSupplier = {
-    model: Supplier,
-    as: 'supplier',
-    attributes: ['supplier_name'],
-  };
-
-  const whereConditions = {
-    is_active: true,
-  };
-
-  if (keyword) {
-    whereConditions[Op.or] = [
-      { supplier_item_number: { [Op.like]: `${keyword}%` } },
-      { '$supplier.supplier_name$': { [Op.like]: `${keyword}%` } },
-      { pack_type: { [Op.like]: `%${keyword}%` } },
-      { product_cost: { [Op.like]: `${keyword}%` } },
-      { seller_sku: { [Op.like]: `${keyword}%` } },
-      { ASIN: { [Op.like]: `${keyword}%` } },
-      { product_name: { [Op.like]: `${keyword}%` } },
-    ];
-  }
-
-  if (supplier) {
-    whereConditions.supplier_id = supplier;
-  }
-
   try {
-    const products = await Product.findAndCountAll({
-      offset,
-      limit,
-      order: [[orderBy, orderWay]],
-      where: whereConditions,
-      include: [includeSupplier],
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const keyword = req.query.keyword || '';
+    const supplier = req.query.supplier || null;
+    const orderBy = req.query.orderBy || 'updatedAt';
+    const orderWay = req.query.orderWay || 'DESC';
 
-    const totalPages = Math.ceil(products.count / limit);
+    const products = await productService.findAllProducts({ page, limit, keyword, supplier, orderBy, orderWay });
 
     return res.status(200).json({
       success: true,
-      total: products.count,
-      pages: totalPages,
-      currentPage: page,
-      data: products.rows,
+      ...products,
     });
   } catch (error) {
     return res.status(500).json({
@@ -267,67 +147,6 @@ exports.getProducts = asyncHandler(async (req, res) => {
       error: error.message,
     });
   }
-});
-
-// Get a product by seller_sku
-// @route GET api/products/:sellerSku
-// @access Public
-exports.getProductBySellerSku = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({
-    where: { seller_sku: req.params.seller_sku },
-  });
-  if (!product) {
-    return res.status(404).json({ msg: 'Product not found' });
-  }
-  res.status(200).json(product);
-});
-
-exports.addImageToAllProducts = asyncHandler(async (req, res) => {
-  const products = await Product.findAll();
-  const delay = 2000;
-  const maxRequests = 5;
-  let index = 1000;
-  const accessToken = req.headers['x-amz-access-token'];
-
-  const fetchProductImage = async () => {
-    const remainingProducts = products.slice(index, index + maxRequests);
-    for (const product of remainingProducts) {
-      const { ASIN } = product;
-      const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=ATVPDKIKX0DER&includedData=images`;
-
-      try {
-        const response = await axios.get(urlImage, {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-amz-access-token': accessToken,
-          },
-        });
-        const imageLink = response.data.images[0].images[0].link;
-        const imageLinks = response.data.images[0].images;
-
-        const image =
-          imageLinks.find(
-            (image) => image.width === 75 || image.height === 75
-          ) || imageLinks[0];
-
-        Product.update(
-          { product_image: image.link },
-          { where: { ASIN: ASIN } }
-        );
-      } catch (error) {
-        console.error({ msg: error.message });
-      }
-      index++;
-    }
-
-    if (index < products.length) {
-      setTimeout(fetchProductImage, delay);
-    } else {
-      res.json(products);
-    }
-  };
-
-  fetchProductImage();
 });
 
 const addImageToProducts = async (products, accessToken) => {
@@ -416,32 +235,6 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   return result;
 });
 
-const getProductNameByASIN = asyncHandler(async (req, accessToken) => {
-  console.log('ASIN: ' + req);
-  console.log(accessToken);
-
-  const ASIN = req;
-
-  const url = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=ATVPDKIKX0DER`;
-
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': accessToken,
-      },
-    });
-    const productName = response.data.summaries[0].itemName;
-    console.log(productName);
-    // validate the product name
-    return productName;
-  } catch (error) {
-    console.error({ msg: error.message });
-    const productName = 'Product name not found';
-    return productName;
-  }
-
-})
 
 exports.addUPCToPOProduct = async (product, upc) => {
 
@@ -459,7 +252,6 @@ exports.addUPCToPOProduct = async (product, upc) => {
 }
 
 exports.addUPC = asyncHandler(async (req, res) => {
-
   const { upc } = req.body;
   const { id } = req.params;
 
@@ -478,33 +270,3 @@ exports.addUPC = asyncHandler(async (req, res) => {
   }
 })
 
-const getImageForProduct = async (asin, accessToken) => {
-  const url = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${asin}?marketplaceIds=ATVPDKIKX0DER&includedData=images`;
-
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': accessToken,
-      },
-    });
-
-    const imagesData = response.data.images;
-    if (!imagesData || imagesData.length === 0) {
-      console.warn(`No images found for ASIN: ${asin}`);
-      return null;
-    }
-
-    const imageLinks = imagesData[0]?.images || [];
-    const image =
-      imageLinks.find((img) => img.width === 75 || img.height === 75) || imageLinks[0];
-    return image?.link || null;
-  } catch (error) {
-    console.error({
-      msg: error.message,
-      response: error.response?.data || 'No response body',
-      status: error.response?.status || 'No status code',
-    });
-    return null;
-  }
-}

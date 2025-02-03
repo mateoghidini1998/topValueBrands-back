@@ -4,7 +4,7 @@ const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
 const dotenv = require('dotenv');
 const logger = require('../logger/logger');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
@@ -37,13 +37,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   console.log('Executing getTrackedProducts...');
   logger.info('Executing getTrackedProducts...');
 
-  // Obtener el rol del usuario para restringir el acceso
-  // const user = await User.findOne({ where: { id: req.user.id } });
-
-  // if (user.role !== 'admin') {
-  //   return res.status(401).json({ msg: 'Unauthorized' });
-  // }
-
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
@@ -68,6 +61,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       'Inbound_to_FBA',
       'supplier_item_number',
       'warehouse_stock',
+      'pack_type'
     ],
     include: [
       {
@@ -98,11 +92,19 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     };
   }
 
+  // Verificar si el campo de ordenación pertenece a la tabla Product
+  const isProductField = ['product_cost', 'product_name', 'ASIN', 'seller_sku'].includes(orderBy);
+
+  // Construir la ordenación dinámicamente
+  const order = isProductField
+    ? [[literal(`product.${orderBy}`), orderWay]] // Sequelize.literal permite usar alias en ORDER BY
+    : [[orderBy, orderWay]];
+
   try {
     const trackedProducts = await TrackedProduct.findAndCountAll({
       offset,
       limit,
-      order: [[orderBy, orderWay]],
+      order,
       where: whereConditions,
       include: [includeProduct],
     });

@@ -25,7 +25,7 @@ exports.createPallet = asyncHandler(async (req, res) => {
 
     if (location.current_capacity <= 0) {
       return res.status(400).json({
-        msg: `The location with id ${warehouse_location_id} has no space available`,
+        msg: `The location ${location} has no space available`,
       });
     }
 
@@ -93,8 +93,6 @@ exports.createPallet = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 //@route    GET api/v1/pallets
 //@desc     Get pallets
 //@access   Private
@@ -108,7 +106,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
   const orderWay = req.query.orderWay || 'DESC';
 
   try {
-    const whereConditions = {};
+    const whereConditions = { is_active: true };
 
     if (palletNumber) {
       whereConditions.pallet_number = { [Op.like]: `%${palletNumber}%` };
@@ -173,7 +171,6 @@ exports.getPallets = asyncHandler(async (req, res) => {
   }
 });
 
-
 //@route    GET api/v1/pallets/:id
 //@desc     Get pallet by id
 //@access   Private
@@ -183,6 +180,7 @@ exports.getPallet = asyncHandler(async (req, res) => {
     include: [
       {
         model: PalletProduct,
+        where: { is_active: true },
         include: [
           {
             model: PurchaseOrderProduct,
@@ -316,7 +314,6 @@ exports.updatePallet = asyncHandler(async (req, res) => {
 
   return res.status(200).json({ msg: "Pallet updated successfully", pallet });
 });
-
 
 exports.getAvailableLocations = asyncHandler(async (req, res) => {
   try {

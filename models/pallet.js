@@ -36,7 +36,12 @@ module.exports = (sequelize, DataTypes) => {
   Pallet.init({
     pallet_number: DataTypes.STRING,
     warehouse_location_id: DataTypes.INTEGER,
-    purchase_order_id: DataTypes.INTEGER
+    purchase_order_id: DataTypes.INTEGER,
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    }
   }, {
     sequelize,
     modelName: 'Pallet',

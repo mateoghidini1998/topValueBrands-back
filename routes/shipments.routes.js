@@ -12,6 +12,7 @@ const {
     download2DWorkflowTemplate,
     getPalletsByPurchaseOrder,
     getPurchaseOrdersWithPallets,
+    toggleProductChecked
 } = require('../controllers/outgoingshipments.controller');
 
 router.post('/', createShipment)
@@ -23,4 +24,5 @@ router.put('/:id', protect, updateShipment)
 router.get('/:id/download', download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
+router.put('/checked/:outgoingShipmentProductId', toggleProductChecked);
 module.exports = router;
