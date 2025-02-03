@@ -106,7 +106,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
   const orderWay = req.query.orderWay || 'DESC';
 
   try {
-    const whereConditions = {is_active: true};
+    const whereConditions = { is_active: true };
 
     if (palletNumber) {
       whereConditions.pallet_number = { [Op.like]: `%${palletNumber}%` };
@@ -180,6 +180,7 @@ exports.getPallet = asyncHandler(async (req, res) => {
     include: [
       {
         model: PalletProduct,
+        where: { is_active: true },
         include: [
           {
             model: PurchaseOrderProduct,

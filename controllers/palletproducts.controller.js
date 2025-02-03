@@ -134,7 +134,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       {
         model: PalletProduct,
         attributes: ['id', 'purchaseorderproduct_id', 'quantity', 'available_quantity', 'createdAt', 'updatedAt', 'pallet_id'],
-        where: { available_quantity: { [Op.gt]: 0 }, is_active:true }, // Ajusta según tu modelo
+        where: { available_quantity: { [Op.gt]: 0 }, is_active: true }, // Ajusta según tu modelo
         include: [
           {
             model: PurchaseOrderProduct,
@@ -195,10 +195,11 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
 
 exports.getPalletProducts = asyncHandler(async (req, res) => {
   const palletProducts = await PalletProduct.findAll({
-    where: { pallet_id: req.params.id },
+    where: { pallet_id: req.params.id, is_active: true },
     include: [
       {
         model: PurchaseOrderProduct,
+        as: 'purchaseOrderProduct',
         include: [
           {
             model: Product,

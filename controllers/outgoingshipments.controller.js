@@ -1065,7 +1065,7 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
   });
 
   const pallet = await Pallet.findByPk(palletProduct.pallet_id);
-  const warehouse_location = await WarehouseLocation.findByPk(
+  let warehouse_location = await WarehouseLocation.findByPk(
     pallet.warehouse_location_id
   );
 
@@ -1085,17 +1085,84 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
   } else {
     const pallet = await Pallet.findByPk(palletProduct.pallet_id);
     if (pallet) {
-      pallet.is_active = true;
-      pallet.warehouse_location_id = palletProduct.warehouse_location_id;
-      await pallet.save();
-      const pallets_quantity = await recalculateWarehouseLocation(
-        warehouse_location.id
-      );
-      const new_current_capacity =
-        warehouse_location.capacity - pallets_quantity;
-      await warehouse_location.update({
-        current_capacity: new_current_capacity,
-      });
+
+      if (warehouse_location.current_capacity === 0) {
+        warehouse_location = await WarehouseLocation.findOne({
+          where: sequelize.where(
+            sequelize.fn("LOWER", sequelize.col("location")),
+            "floor"
+          ),
+        });
+        await pallet.update({
+          warehouse_location_id: warehouse_location.id,
+          is_active: true,
+        });
+
+        const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+        const new_current_capacity = warehouse_location.capacity - pallets_quantity;
+        await warehouse_location.update({
+          current_capacity: new_current_capacity,
+        });
+      } else {
+        await pallet.update({
+          warehouse_location_id: warehouse_location.id,
+          is_active: true,
+        });
+        const pallets_quantity = await recalculateWarehouseLocation(
+          warehouse_location.id
+        );
+        const new_current_capacity =
+          warehouse_location.capacity - pallets_quantity;
+        await warehouse_location.update({
+          current_capacity: new_current_capacity,
+        });
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      // pallet.is_active = true;
+      // pallet.warehouse_location_id = palletProduct.warehouse_location_id;
+      // await pallet.save();
+      // const pallets_quantity = await recalculateWarehouseLocation(
+      //   warehouse_location.id
+      // );
+      // if (warehouse_location.current_capacity === 0) {
+      //   warehouse_location = await WarehouseLocation.findOne({
+      //     where: sequelize.where(
+      //       sequelize.fn("LOWER", sequelize.col("location")),
+      //       "floor"
+      //     ),
+      //   });
+
+      //   const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+      //   const new_current_capacity = warehouse_location.capacity - pallets_quantity;
+      //   await warehouse_location.update({
+      //     current_capacity: new_current_capacity,
+      //   });
+      // } else {
+      //   const new_current_capacity =
+      //     warehouse_location.capacity - pallets_quantity;
+
+      //   await warehouse_location.update({
+      //     current_capacity: new_current_capacity,
+      //   });
+      // }
     }
   }
 
