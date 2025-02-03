@@ -291,8 +291,6 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
 
   const { incomingOrderProductUpdates } = req.body;
 
-  console.log(incomingOrderProductUpdates);
-
   const purchaseorderproducts = await getPurchaseOrderProducts(
     purchaseOrder.id
   );
@@ -361,9 +359,24 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     }
   }
 
+  // Verificar si todos los productos tienen quantity_purchased === quantity_received
+  const allReceived = purchaseorderproducts.every(
+    (p) => p.quantity_purchased === p.quantity_received
+  );
+
+  if (allReceived) {
+    await PurchaseOrder.update(
+      { purchase_order_status_id: PURCHASE_ORDER_STATUSES.CLOSED },
+      { where: { id: purchaseOrder.id } }
+    );
+  }
+
   res
     .status(200)
-    .json({ message: "Incoming Order Products updated successfully" });
+    .json({
+      message: "Incoming Order Products updated successfully",
+      closed: allReceived,
+    });
 });
 
 exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
