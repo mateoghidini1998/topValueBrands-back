@@ -81,11 +81,6 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 //@desc     Update is_active as a toggle field of products
 //@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ where: { id: req.user.id } });
-
-  if (user.role !== 'admin') {
-    return res.status(401).json({ msg: 'Unauthorized' });
-  }
   const product = await Product.findOne({
     where: { id: req.body.id },
   });

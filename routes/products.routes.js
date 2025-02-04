@@ -1,5 +1,4 @@
 const express = require('express');
-const { authorize, protect } = require('../middlewares/auth');
 
 const {
   addExtraInfoToProduct,
@@ -9,107 +8,17 @@ const {
   createProduct,
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
-const { requireAuth } = require('@clerk/express');
 const { authMiddleware } = require('../middlewares/authMiddleware');
 const { roleMiddleware } = require('../middlewares/roleMiddleware');
 
 const router = express.Router();
 // Aplicar autenticación a todas las rutas dentro de este router
-/* router.use(authMiddleware); */
+router.use(authMiddleware);
 
 router.post('/add', addAccessTokenHeader, createProduct);
+router.get('/', roleMiddleware(['admin', 'warehouse']), getProducts);
 
-/**
- * @openapi
- * /api/v1/products:
- *   get:
- *     summary: Get all products
- *     description: Retrieve a list of all products. Requires admin authentication.
- *     tags:
- *       - Products
- *     security:
- *       - bearerAuth: []   # Esquema de autenticación utilizando un token JWT
- *     responses:
- *       '200':
- *         description: Successfully retrieved list of products.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 total:
- *                   type: integer
- *                   example: 1859
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                         example: 1
- *                       ASIN:
- *                         type: string
- *                         example: "B000HHM9WI"
- *                       product_image:
- *                         type: string
- *                         nullable: true
- *                       product_name:
- *                         type: string
- *                         example: "ANIMED Pure MSM 5lb"
- *                       seller_sku:
- *                         type: string
- *                         example: "00-WTH3-LMPN"
- *                       FBA_available_inventory:
- *                         type: integer
- *                         example: 0
- *                       reserved_quantity:
- *                         type: integer
- *                         example: 0
- *                       Inbound_to_FBA:
- *                         type: integer
- *                         example: 0
- *                       supplier_name:
- *                         type: string
- *                         example: "Florida Hardware"
- *                       supplier_item_number:
- *                         type: string
- *                         example: "053-90059"
- *                       product_cost:
- *                         type: number
- *                         example: 17.67
- *                       pack_type:
- *                         type: string
- *                         nullable: true
- *                       is_active:
- *                         type: boolean
- *                         example: true
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-04-29T21:11:02.000Z"
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-04-29T21:14:49.000Z"
- *       '401':
- *         description: Unauthorized error due to missing or invalid token.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 msg:
- *                   type: string
- *                   example: Not authorized to access this route
- */
-router.get('/', getProducts);
-/* router.get('/', roleMiddleware(['admin', 'manager']), getProducts);
- */
-router.post('/', roleMiddleware(['admin', 'manager']), createProduct);
+router.post('/', roleMiddleware(['admin', 'warehouse']), createProduct);
 
 /**
  * @openapi
@@ -217,7 +126,7 @@ router.post('/', roleMiddleware(['admin', 'manager']), createProduct);
  */
 router.patch(
   '/addExtraInfoToProduct',
-  roleMiddleware(['admin', 'manager']),
+  roleMiddleware(['admin', 'warehouse']),
 
   addExtraInfoToProduct
 );
@@ -308,11 +217,11 @@ router.patch(
  *                   type: string
  *                   example: Not authorized to access this route
  */
-router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
+router.patch('/disable', roleMiddleware(['admin', 'warehouse']), toggleShowProduct);
 
 
 router.patch(
-  '/syncImages', roleMiddleware(['admin', 'manager']),
+  '/syncImages', roleMiddleware(['admin', 'warehouse']),
 
 
   addAccessTokenHeader,

@@ -1,14 +1,14 @@
 const { clerkClient } = require('@clerk/express');
 const asyncHandler = require("../middlewares/async")
 
-const userRoleOptions = ["admin", "user"]
+const userRoleOptions = ["admin", "warehouse"]
 
 exports.register = asyncHandler(async (req, res, next) => {
   const { firstName, lastName, email, username, password, confirmPassword, role } = req.body
 
   // Validate role
   if (!userRoleOptions.includes(role)) {
-    return res.status(400).json({ success: false, errors: [{ msg: "User role must be admin or user" }] })
+    return res.status(400).json({ success: false, errors: [{ msg: "User role must be admin or warehouse" }] })
   }
 
   // Validate password match
