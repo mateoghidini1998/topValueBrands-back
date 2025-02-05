@@ -12,7 +12,7 @@ const createProduct = async (productData, accessToken) => {
       productData.product_name = productName;
       productData.product_image = imageUrl || null;
 
-      const requiredFields = ['product_cost', 'ASIN', 'supplier_item_number', 'supplier_id'];
+      const requiredFields = ['product_cost', 'ASIN', 'supplier_item_number', 'supplier_id', 'seller_sku'];
       for (const field of requiredFields) {
         if (!productData[field]) {
           throw new Error(`Missing required field: ${field}`);
@@ -31,7 +31,7 @@ const createProduct = async (productData, accessToken) => {
     productData.product_name = productName;
     productData.product_image = imageUrl || null;
 
-    const requiredFields = ['product_cost', 'ASIN', 'supplier_item_number', 'supplier_id'];
+    const requiredFields = ['product_cost', 'ASIN', 'supplier_item_number', 'supplier_id', 'seller_sku'];
     for (const field of requiredFields) {
       if (!productData[field]) {
         throw new Error(`Missing required field: ${field}`);
@@ -51,7 +51,7 @@ const createProduct = async (productData, accessToken) => {
 const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, orderBy = 'updatedAt', orderWay = 'DESC' }) => {
   const offset = (page - 1) * limit;
 
-  const allowedOrderBy = ['updatedAt', 'product_name', 'product_cost', 'supplier_item_number', 'pack_type', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA', 'warehouse_stock']; ;
+  const allowedOrderBy = ['updatedAt', 'product_name', 'product_cost', 'supplier_item_number', 'pack_type', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA', 'warehouse_stock'];
   if (!allowedOrderBy.includes(orderBy)) orderBy = 'updatedAt';
 
   const allowedOrderWay = ['ASC', 'DESC'];
