@@ -1200,9 +1200,16 @@ exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
+// const asyncHandler = require("express-async-handler");
+// const PDFDocument = require("pdfkit");
+// const path = require("path");
+// const { PurchaseOrder, PurchaseOrderProduct, Product, Supplier } = require("../models");
+
 // Método para descargar la orden de compra
-exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
-  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
+exports.downloadPurchaseOrder = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const purchaseOrder = await PurchaseOrder.findByPk(id, {
     include: [
       {
         model: PurchaseOrderProduct,
@@ -1211,115 +1218,91 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res, next) => {
       },
     ],
   });
+
   if (!purchaseOrder) {
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
   const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
-
-  // console.log(purchaseOrderProducts[0].dataValues);
-  //log every purchaseOrderProduct from the purchaseOrderProducts array
-
-  let totalQuantity = 0;
-
-  for (const product of purchaseOrderProducts) {
-    // console.log(product.dataValues);
-    totalQuantity += parseInt(product.dataValues.quantity_purchased);
-  }
-
-  const totalPrice = purchaseOrder.total_price;
-  // const totalQuantity = purchaseOrderProducts.reduce(
-  //   (total, product) => parseInt(total) + parseInt(product.quantity),
-  //   0
-  // );
-  const totalAmount = purchaseOrderProducts.reduce(
-    (total, product) => Number(total) + Number(product.total_amount),
+  let totalQuantity = purchaseOrderProducts.reduce(
+    (total, product) => total + Number(product.quantity_purchased),
     0
   );
 
-  // Obtener los nombres de los productos de forma asíncrona
-  const products = await Promise.all(
-    purchaseOrderProducts.map(async (product, i) => {
-      const productData = await Product.findOne({
-        where: { id: product.product_id },
-      });
-      if (!productData) {
-        return null;
-      }
-
-      console.log(product);
-
-      const unit_price = parseInt(productData.dataValues.pack_type)
-        ? product.dataValues.unit_price /
-        parseInt(productData.dataValues.pack_type)
-        : product.dataValues.unit_price;
-      const quantity_purchased = parseInt(productData.dataValues.pack_type)
-        ? product.quantity_purchased *
-        parseInt(productData.dataValues.pack_type)
-        : product.quantity_purchased;
-      const total_amount = unit_price * quantity_purchased;
-
-      return {
-        ASIN: productData.dataValues.ASIN,
-        product_id: product.product_id,
-        product_cost: unit_price,
-        quantity_purchased: quantity_purchased,
-        total_amount: total_amount,
-        pack_type: parseInt(productData.dataValues.pack_type),
-        supplier_item_number: productData.dataValues.supplier_item_number,
-      };
-    })
+  let totalAmount = purchaseOrderProducts.reduce(
+    (total, product) => total + parseFloat(product.total_amount),
+    0
   );
 
-  // Filtrar productos nulos (en caso de que no se encuentren algunos productos)
-  const filteredProducts = products.filter((product) => product !== null);
-
-  const supplierName = await Supplier.findOne({
-    where: { id: purchaseOrder.supplier_id },
+  // Obtener información de los productos en una sola consulta
+  const productIds = purchaseOrderProducts.map((p) => p.product_id);
+  const productsData = await Product.findAll({
+    where: { id: productIds },
   });
-  if (!supplierName) {
+
+  // Crear un mapa de productos para acceder más rápido
+  const productMap = new Map(productsData.map((p) => [p.id, p]));
+
+  const products = purchaseOrderProducts.map((product) => {
+    const productData = productMap.get(product.product_id);
+    if (!productData) return null;
+
+    const packType = Number(productData.pack_type) || 1;
+    const product_cost = product.dataValues.product_cost / packType;
+    const quantity_purchased = product.dataValues.quantity_purchased * packType;
+    const total_amount = product_cost * quantity_purchased;
+    console.log({
+      product_cost,
+      quantity_purchased,
+      total_amount,
+      testing: product_cost * quantity_purchased,
+    })
+    return {
+      ASIN: productData.ASIN,
+      product_id: product.dataValues.product_id,
+      product_cost: product_cost.toFixed(2),
+      quantity_purchased,
+      total_amount: total_amount,
+      pack_type: packType,
+      supplier_item_number: productData.supplier_item_number,
+    };
+  }).filter((p) => p !== null);
+
+  // Obtener el nombre del proveedor
+  const supplier = await Supplier.findByPk(purchaseOrder.supplier_id);
+  if (!supplier) {
     return res.status(404).json({ message: "Supplier not found" });
   }
-  const supplierNameValue = supplierName.supplier_name;
 
   const pdfData = {
     purchaseOrder: {
       id: purchaseOrder.id,
       order_number: purchaseOrder.order_number,
-      supplier_name: supplierNameValue,
+      supplier_name: supplier.supplier_name,
       status: purchaseOrder.purchase_order_status_id,
-      total_price: totalPrice,
+      total_price: Number(purchaseOrder.total_price).toFixed(2),
       total_quantity: totalQuantity,
-      total_amount: totalAmount,
-      notes: purchaseOrder.notes,
+      total_amount: parseFloat(totalAmount).toFixed(2),
+      notes: purchaseOrder.notes || "",
     },
-    products: filteredProducts,
+    products,
   };
 
-  // console.log(pdfData);
-
+  // Generar PDF
   const pdfBuffer = await generatePDF(pdfData);
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=purchase-order.pdf"
-  );
+  res.setHeader("Content-Disposition", "attachment; filename=purchase-order.pdf");
   res.send(pdfBuffer);
 });
 
 const generatePDF = (data) => {
-  // console.log(data);
-
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument();
-    let buffers = [];
+    const buffers = [];
 
     doc.on("data", buffers.push.bind(buffers));
-    doc.on("end", () => {
-      let pdfData = Buffer.concat(buffers);
-      resolve(pdfData);
-    });
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
 
     const logoPath = path.join(__dirname, "../data/top_values_brand_logo.jpg");
 
@@ -1341,61 +1324,39 @@ const generatePDF = (data) => {
     const itemDistanceY = 20;
 
     // Table Headers
-    doc
-      .fillColor("blue")
-      .fontSize(12)
-      .text("ITEM NO.", TABLE_LEFT, TABLE_TOP, { extraBold: true });
-    // doc.text('ASIN', TABLE_LEFT + 70, TABLE_TOP, { bold: true });
+    doc.fillColor("blue").fontSize(12);
+    doc.text("ITEM NO.", TABLE_LEFT, TABLE_TOP, { bold: true });
     doc.text("UNIT PRICE", TABLE_LEFT + 180, TABLE_TOP, { bold: true });
     doc.text("QUANTITY", TABLE_LEFT + 300, TABLE_TOP, { bold: true });
     doc.text("TOTAL", TABLE_LEFT + 400, TABLE_TOP, { bold: true });
 
     let position = TABLE_TOP + itemDistanceY;
     data.products.forEach((product, index) => {
-      // Background color for each row
+      console.log(product)
       if (index % 2 === 0) {
-        doc
-          .rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY)
-          .fill("#f2f2f2")
-          .stroke();
+        doc.rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY).fill("#f2f2f2").stroke();
       }
       doc.fillColor("black");
       doc.text(product.supplier_item_number, TABLE_LEFT, position);
-      // doc.text(product.ASIN, TABLE_LEFT + 70, position);
-      doc.text(
-        "$" + Number(product.product_cost).toFixed(2),
-        TABLE_LEFT + 180,
-        position
-      );
+      doc.text(`$${product.product_cost}`, TABLE_LEFT + 180, position);
       doc.text(product.quantity_purchased, TABLE_LEFT + 300, position);
-      doc.text(
-        "$" + Number(product.total_amount).toFixed(2),
-        TABLE_LEFT + 400,
-        position
-      );
+      doc.text(`$${product.total_amount}`, TABLE_LEFT + 400, position);
       position += itemDistanceY;
     });
 
-    // Subtotal and Total
+    // Subtotal y Total
     doc.moveDown(3);
-    doc
-      .fillColor("black")
-      .text(
-        `SUBTOTAL:   $ ${Number(data.purchaseOrder.total_amount).toFixed(2)}`,
-        TABLE_LEFT
-      );
+    doc.fillColor("black").text(`SUBTOTAL: $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
 
-    // Order Notes
-    doc.moveDown(2);
-    doc.text("ORDER NOTES:", TABLE_LEFT);
-    doc.moveDown();
-    doc.text(data.purchaseOrder.notes);
+    // Notas de la orden
+    if (data.purchaseOrder.notes) {
+      doc.moveDown(2);
+      doc.text("ORDER NOTES:", TABLE_LEFT);
+      doc.moveDown();
+      doc.text(data.purchaseOrder.notes);
+    }
 
-    doc.text(
-      "Thank you for your business!",
-      { bold: true, align: "center" },
-      doc.page.height - 150
-    );
+    doc.text("Thank you for your business!", { bold: true, align: "center" });
     doc.text("www.topvaluebrands.com", { bold: true, align: "center" });
 
     doc.end();

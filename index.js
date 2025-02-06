@@ -124,7 +124,7 @@ app.listen(PORT, () => {
   //   }
   // );
 
-  // // Cron job to delete old shipments
+  // Cron job to delete old shipments
   // cron.schedule(
   //   "0 6 * * *",
   //   async () => {

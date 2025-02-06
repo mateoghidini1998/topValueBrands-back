@@ -52,6 +52,7 @@ exports.addAccessTokenHeader = asyncHandler(async (req, res, next) => {
         next();
     } catch (error) {
         console.error('Error fetching access token:', error);
-        next(error);
+        // next(error);
+        res.status(500).json({ msg: 'Error fetching access token. Check Amazon credentials.' });
     }
 });

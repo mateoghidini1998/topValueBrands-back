@@ -691,11 +691,16 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
       product.purchaseOrderProduct?.Product?.seller_sku || "N/A";
     const quantity = product.OutgoingShipmentProduct?.quantity || 0;
 
-    const expireDate =
-      new Date(product.purchaseOrderProduct?.expire_date)
-        .toISOString()
-        .split("T")[0] || "N/A";
-    console.log(expireDate);
+    // MM/DD/YYYY
+    const expireDate = product.purchaseOrderProduct?.expire_date
+      ? (() => {
+        const date = new Date(product.purchaseOrderProduct.expire_date);
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Mes (0-based)
+        const day = String(date.getDate()).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${month}-${day}-${year}`;
+      })()
+      : "N/A";
 
     if (aggregatedProducts[sellerSku]) {
       aggregatedProducts[sellerSku].quantity += quantity;
