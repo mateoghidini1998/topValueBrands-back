@@ -945,9 +945,7 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
     ) {
       const shipmentProducts = await sequelize.query(
         `
-        SELECT osp.*, 
-               pp.*, 
-               pop.product_id
+        SELECT osp.product_id
         FROM outgoingshipmentproducts osp
         LEFT JOIN palletproducts pp ON osp.pallet_product_id = pp.id
         LEFT JOIN purchaseorderproducts pop ON pp.purchaseorderproduct_id = pop.id
@@ -964,12 +962,9 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
         JSON.stringify(shipmentProducts, null, 2)
       );
 
-      const productIds = shipmentProducts
-        .map((sp) => sp.palletProduct?.purchaseOrderProduct?.product_id)
-        .filter((id) => id);
+      const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
 
-      const uniqueProductIds = [...new Set(productIds)];
-      for (const productId of uniqueProductIds) {
+      for (const productId of productIds) {
         await recalculateWarehouseStock(productId);
       }
     }
@@ -990,6 +985,7 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
     );
   }
 };
+
 
 const getLastMonthDate = () => {
   const now = new Date();
