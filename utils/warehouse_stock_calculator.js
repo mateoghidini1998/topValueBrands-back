@@ -1,4 +1,4 @@
-const { sequelize, PurchaseOrderProduct, PalletProduct, OutgoingShipmentProduct, OutgoingShipment, Product } = require('../models');
+const { sequelize, Product } = require('../models');
 
 exports.recalculateWarehouseStock = async (productId) => {
   const result = await sequelize.query(
@@ -29,8 +29,8 @@ exports.recalculateWarehouseStock = async (productId) => {
         pop.product_id
     `,
     {
-      replacements: { productId }, // Pasar el productId como parámetro
-      type: sequelize.QueryTypes.SELECT, // Query para obtener datos
+      replacements: { productId },
+      type: sequelize.QueryTypes.SELECT, 
     }
   );
 
