@@ -46,6 +46,4 @@ exports.recalculateWarehouseStock = async (productId) => {
     { warehouse_stock },
     { where: { id: productId } }
   );
-
-  console.log(`Warehouse stock actualizado para product_id=${productId}: ${warehouse_stock}`);
 };
