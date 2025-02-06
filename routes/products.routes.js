@@ -14,10 +14,9 @@ const router = express.Router();
 // Aplicar autenticación a todas las rutas dentro de este router
 router.use(authMiddleware);
 
-router.post('/add', addAccessTokenHeader, createProduct);
 router.get('/', roleMiddleware(['admin', 'warehouse']), getProducts);
 
-router.post('/', roleMiddleware(['admin', 'warehouse']), createProduct);
+router.post('/', roleMiddleware(['admin', 'warehouse']), addAccessTokenHeader, createProduct);
 
 router.patch(
   '/addExtraInfoToProduct',

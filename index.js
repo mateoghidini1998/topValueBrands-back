@@ -6,7 +6,7 @@ const cron = require('node-cron');
 const { Op } = require('sequelize');
 const logger = require('./logger/logger');
 const { clerkMiddleware, clerkClient, requireAuth, getAuth } = require('@clerk/express');
-const runWorker = require("./utils/workerHandler");
+const runWorker = require("./workers/workerHandler");
 const { fetchNewTokenForFees } = require("./middlewares/lwa_token");
 
 // Initialize app
