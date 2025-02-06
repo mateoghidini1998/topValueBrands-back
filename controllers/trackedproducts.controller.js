@@ -1,4 +1,5 @@
-const { Product, TrackedProduct, Supplier, User, PurchaseOrderProduct } = require('../models');
+const { LIMIT_PRODUCTS, OFFSET_PRODUCTS, ASINS_PER_GROUP, BATCH_SIZE_FEES, MS_DELAY_FEES, MAX_RETRIES } = require('../config/config');
+const { Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport } = require('../utils/utils');
@@ -8,21 +9,6 @@ const { Op, literal } = require('sequelize');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
 
 dotenv.config({ path: './.env' });
-
-// Convertir las variables de entorno a números o usar valores por defecto si no son válidas
-const LIMIT_PRODUCTS = parseInt(process.env.LIMIT_PRODUCTS, 10) || 20000;
-const OFFSET_PRODUCTS = parseInt(process.env.OFFSET_PRODUCTS, 10) || 0;
-const BATCH_SIZE_FEES = parseInt(process.env.BATCH_SIZE_FEES, 10) || 50;
-const MS_DELAY_FEES = parseInt(process.env.MS_DELAY_FEES, 10) || 2000;
-const ASINS_PER_GROUP = parseInt(process.env.ASINS_PER_GROUP, 10) || 70;
-const MAX_RETRIES = parseInt(process.env.MAX_RETRIES, 10) || 3;
-
-// const LIMIT_PRODUCTS = 20000;
-// const OFFSET_PRODUCTS = 0;
-// const BATCH_SIZE_FEES = 50;
-// const MS_DELAY_FEES = 2000; // Tiempo de delay en milisegundos
-// const ASINS_PER_GROUP = 70;
-// const MAX_RETRIES = 3;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -34,7 +20,6 @@ const fetchProducts = async ({ limit = LIMIT_PRODUCTS, offset = OFFSET_PRODUCTS 
 //@desc  Get all tracked products
 //@access Private
 exports.getTrackedProducts = asyncHandler(async (req, res) => {
-  console.log('Executing getTrackedProducts...');
   logger.info('Executing getTrackedProducts...');
 
   const page = parseInt(req.query.page) || 1;
@@ -122,8 +107,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       };
     });
 
-
-
     res.status(200).json({
       success: true,
       total: trackedProducts.count,
@@ -143,7 +126,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 });
 
 exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
-
   // 1. get the purchaseorderproducts by purchase_order_id
   const products = await PurchaseOrderProduct.findAll({ where: { purchase_order_id: req.params.id } });
   if (!products) {

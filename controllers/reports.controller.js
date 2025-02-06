@@ -18,21 +18,16 @@ const logger = require('../logger/logger');
 //@access  private
 exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
-  console.log('--------------------------------------')
-  console.log('fetching new token for sync db with amazon...');
   logger.info('fetching new token for sync db with amazon...');
   let accessToken = await fetchNewTokenForFees();
   console.log(accessToken);
-  console.log('--------------------------------------')
 
   try {
 
     if (!accessToken) {
-      console.log('fetching new token for sync db with amazon...');
       logger.info('fetching new token for sync db with amazon...');
       accessToken = await fetchNewTokenForFees();
     } else {
-      console.log('Token is still valid...');
       logger.info('Token is still valid...');
     }
 
@@ -55,7 +50,6 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
     res.json({ newSync, imageSyncResult });
     return { newSync, imageSyncResult };
   } catch (error) {
-    // Handle any errors
     next(error);
   }
 });

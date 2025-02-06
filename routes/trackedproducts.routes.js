@@ -14,7 +14,6 @@ router.get('/velocity', addAccessTokenHeader, addProductVelocityAndUnitsSold);
 
 
 router.get('/', getTrackedProducts);
-// router.get('/fees', addAccessTokenHeader, getEstimateFees)
 
 router.get('/ranks-test', getProductsTrackedData);
 
