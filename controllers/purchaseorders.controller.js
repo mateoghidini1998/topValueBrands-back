@@ -783,7 +783,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
           "supplier_item_number",
           "pack_type",
           "upc",
-
+          "warehouse_stock",
         ],
         include: [
           {
@@ -818,6 +818,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       product_image: product.product_image,
       supplier_item_number: product.supplier_item_number,
       upc: product.upc,
+      warehouse_stock: product.warehouse_stock,
 
       // tracked product
       product_velocity: tp.product_velocity,
