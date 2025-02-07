@@ -295,6 +295,15 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     purchaseOrder.id
   );
 
+  // Update to PO Status to ARRIVED if the previous status was IN_TRANSIT and every incoming order product has quantity_received === null && at least one incoming order product has quantity_received !== null
+  if (purchaseOrder.purchase_order_status_id === PURCHASE_ORDER_STATUSES.IN_TRANSIT && purchaseorderproducts.every(p => p.quantity_received < 1) && incomingOrderProductUpdates.some(p => p.quantity_received !== null)) {
+    await PurchaseOrder.update(
+      { purchase_order_status_id: PURCHASE_ORDER_STATUSES.ARRIVED },
+      { where: { id: purchaseOrder.id } }
+    );
+  }
+
+
   for (const purchaseOrderProductUpdate of incomingOrderProductUpdates) {
     const purchaseOrderProduct = purchaseorderproducts.find(
       (p) => p.id === purchaseOrderProductUpdate.purchase_order_product_id
