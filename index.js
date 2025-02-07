@@ -103,6 +103,7 @@ app.listen(PORT, () => {
   cron.schedule(
     "0 * * * *",
     async () => {
+      console.log("Starting shipment tracking cron job...");
       logger.info("Starting shipment tracking cron job...");
       try {
         logger.info("Fetching new token...");
@@ -119,7 +120,7 @@ app.listen(PORT, () => {
       }
     },
     {
-      timezone: "America/New_York",
+      timezone: "America/Argentina/Buenos_Aires",
       scheduled: true,
     }
   );

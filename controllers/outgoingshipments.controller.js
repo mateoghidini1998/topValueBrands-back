@@ -866,7 +866,6 @@ exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
 //@desc    Track shipments from amazon
 //@access  Private
 exports.getShipmentTracking = asyncHandler(async (req, res) => {
-  console.log("Tracking shipments...");
   const baseUrl = `https://sellingpartnerapi-na.amazon.com/fba/inbound/v0/shipments`;
 
   const marketPlace = process.env.MARKETPLACE_US_ID;
@@ -878,7 +877,6 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
     if (!accessToken) {
       throw new Error("Access token is missing");
     }
-    console.log("Access token en controller:", accessToken);
 
     const url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
 
@@ -901,8 +899,6 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
       if (shipment) {
         await updateShipmentId(shipment, ShipmentId);
         await updateShipmentStatus(shipment, ShipmentStatus);
-      } else {
-        console.warn(`Shipment not found: ${ShipmentName}`);
       }
     }
 
@@ -926,12 +922,9 @@ const updateShipmentId = async (shipment, shipmentId) => {
     if (shipment.fba_shipment_id !== shipmentId) {
       shipment.fba_shipment_id = shipmentId;
       await shipment.save();
-      console.log(
-        `FBA Shipment ID actualizado para shipment_number: ${shipment.shipment_number}`
-      );
     }
   } catch (error) {
-    console.error(
+    logger.error(
       `Error actualizando fba_shipment_id para shipment_number: ${shipment.shipment_number}`,
       error.message
     );
@@ -940,52 +933,42 @@ const updateShipmentId = async (shipment, shipmentId) => {
 
 const updateShipmentStatus = async (shipment, shipmentStatus) => {
   try {
+    console.log(`we are talking about our shipment with id: ${shipment.id}`);
     console.log(`Shipment number: ${shipment.shipment_number}`);
-    console.log(`Estado actual en la base de datos: ${shipment.status}`);
-    console.log(`Nuevo estado desde Amazon: ${shipmentStatus}`);
+    console.log(`Current status in database: ${shipment.status}`);
+    console.log(`New status from Amazon: ${shipmentStatus}`);
+    console.log("Shipment status:", shipment.status);
+    console.log("New shipment status:", shipmentStatus);
 
-    if (
-      (shipment.status === "WORKING" || shipment.status === "PENDING") &&
-      shipment.status !== shipmentStatus
-    ) {
+    if (shipment.status !== shipmentStatus) {
       const shipmentProducts = await sequelize.query(
         `
-        SELECT osp.product_id
-        FROM outgoingshipmentproducts osp
-        LEFT JOIN palletproducts pp ON osp.pallet_product_id = pp.id
-        LEFT JOIN purchaseorderproducts pop ON pp.purchaseorderproduct_id = pop.id
-        WHERE osp.outgoing_shipment_id = :shipmentId
+          SELECT osp.*, 
+          pp.*, 
+          pop.product_id
+          FROM outgoingshipmentproducts osp
+          LEFT JOIN palletproducts pp ON osp.pallet_product_id = pp.id
+          LEFT JOIN purchaseorderproducts pop ON pp.purchaseorderproduct_id = pop.id
+          WHERE osp.outgoing_shipment_id = :shipmentId
         `,
         {
           type: sequelize.QueryTypes.SELECT,
           replacements: { shipmentId: shipment.id },
         }
       );
-
-      console.log(
-        "Productos asociados al shipment:",
-        JSON.stringify(shipmentProducts, null, 2)
-      );
+      shipment.status = shipmentStatus;
+      await shipment.save();
 
       const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
 
       for (const productId of productIds) {
+        console.log(`we are talking about our product with id: ${productId}`);
         await recalculateWarehouseStock(productId);
       }
     }
-
-    if (shipment.status !== shipmentStatus) {
-      const previousStatus = shipment.status;
-      shipment.status = shipmentStatus;
-      await shipment.save();
-
-      console.log(
-        `Estado del shipment actualizado: ${shipment.shipment_number}, Anterior: ${previousStatus}, Nuevo: ${shipmentStatus}`
-      );
-    }
   } catch (error) {
-    console.error(
-      `Error actualizando status para shipment_number: ${shipment.shipment_number}`,
+    logger.error(
+      `Error updating status for shipment_number: ${shipment.shipment_number}`,
       error.message
     );
   }

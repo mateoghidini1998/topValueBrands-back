@@ -8,3 +8,4 @@ node_modules/
 /logger/debug.log
 /logger/logs
 *.xlsx
+*.csv
