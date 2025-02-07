@@ -186,12 +186,12 @@ exports.getPallet = asyncHandler(async (req, res) => {
             model: PurchaseOrderProduct,
             as: 'purchaseOrderProduct',
             attributes: [
-              'id',
+              'id', 'expire_date'
             ],
             include: [
               {
                 model: Product,
-                attributes: ['product_name', 'product_image', 'seller_sku', "in_seller_account"],
+                attributes: ['product_name', 'product_image', 'seller_sku', "in_seller_account", "upc", "pack_type"],
               },
             ],
           },
