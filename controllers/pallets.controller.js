@@ -343,3 +343,38 @@ exports.getAvailableLocations = asyncHandler(async (req, res) => {
     });
   }
 });
+
+exports.updatePalletLocation = asyncHandler(async (req, res) => {
+  const { warehouse_location_id } = req.body;
+  const { palletId } = req.params;
+
+  const pallet = await Pallet.findByPk(palletId);
+
+  if (!pallet) {
+    return res.status(404).json({ msg: "Pallet not found" });
+  }
+
+  let oldLocation = await WarehouseLocation.findOne({ where: { id: pallet.warehouse_location_id } });
+  let newLocation = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
+
+  if (!oldLocation) {
+    return res.status(404).json({ msg: "Old location not found" });
+  }
+
+  if (!newLocation || newLocation.current_capacity <= 0) {
+    return res.status(404).json({ msg: "New location is not available" });
+  }
+
+  await pallet.update({
+    warehouse_location_id: warehouse_location_id,
+  });
+
+  oldLocation.current_capacity += 1;
+  await oldLocation.save();
+
+  newLocation.current_capacity -= 1;
+  await newLocation.save();
+
+
+  return res.status(200).json({ msg: "Pallet location updated successfully" });
+});
