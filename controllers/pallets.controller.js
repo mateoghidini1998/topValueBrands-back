@@ -1,4 +1,4 @@
-const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, sequelize } = require("../models");
+const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, OutgoingShipmentProduct, sequelize } = require("../models");
 const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
 const asyncHandler = require("../middlewares/async");
 const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculator');
@@ -241,6 +241,42 @@ exports.deletePallet = asyncHandler(async (req, res) => {
   if (!pallet) {
     return res.status(404).json({ msg: "Pallet not found" });
   }
+
+  const purchaseOrder = await PurchaseOrder.findOne({ where: { id: pallet.purchase_order_id } });
+
+  if (!purchaseOrder) {
+    return res.status(404).json({ msg: "Purchase Order not found" });
+  }
+
+  const palletProducts = await PalletProduct.findAll({ where: { pallet_id: pallet.id } });
+
+  // Verify that pallet products are not associated with any outgoingshipmentproduct
+  for (const palletProduct of palletProducts) {
+    const outgoingShipmentProduct = await OutgoingShipmentProduct.findOne({
+      where: { pallet_product_id: palletProduct.id },
+    });
+
+    if (outgoingShipmentProduct) {
+      return res.status(400).json({ msg: "Pallet is associated with an outgoing shipment" });
+    }
+  }
+
+  // Restore purchaseorderproducts quantity_avaialable with the corresponding palletproduct quantity
+  for (const palletProduct of palletProducts) {
+    const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+      where: { id: palletProduct.purchaseorderproduct_id },
+    });
+
+    if (!purchaseOrderProduct) {
+      return res.status(404).json({ msg: "Purchase Order Product not found" });
+    }
+
+    await purchaseOrderProduct.update({
+      quantity_available: purchaseOrderProduct.quantity_available + palletProduct.quantity,
+    });
+
+  }
+
 
   let location = await WarehouseLocation.findOne({ where: { id: pallet.warehouse_location_id } });
 
