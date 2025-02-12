@@ -509,10 +509,11 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
   const orderWay = req.query.orderWay || 'DESC';
 
   try {
+    const possibleStatuses = [1, 2, 3, 8];
     const whereConditions = {
       is_active: true,
 
-      purchase_order_status_id: parseInt(statusId) || [1, 2, 3, 8],
+      purchase_order_status_id: possibleStatuses.find(id => id === parseInt(statusId)) || possibleStatuses,
     };
 
     if (keyword) {
@@ -599,9 +600,6 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
 
     const totalPages = Math.ceil(count / limit);
 
-    console.log(whereConditions)
-    console.log(req.query)
-    console.log(statusId)
     return res.status(200).json({
       success: true,
       total: count,
@@ -624,11 +622,15 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
   const supplierId = req.query.supplier || null;
+  const statusId = req.query.status || null;
+  const orderBy = req.query.orderBy || 'updatedAt';
+  const orderWay = req.query.orderWay || 'DESC';
 
   try {
+    const possibleStatuses = [4, 5, 6, 7];
     const whereConditions = {
       is_active: true,
-      purchase_order_status_id: [4, 5, 6, 7],
+      purchase_order_status_id: possibleStatuses.find(id => id === parseInt(statusId)) || possibleStatuses,
     };
 
     if (keyword) {
@@ -655,7 +657,7 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
       distinct: true, // -> elimina los duplicados
       limit,
       offset,
-      order: [['createdAt', 'DESC']],
+      order: [[orderBy, orderWay]],
     });
 
     await Promise.all(
