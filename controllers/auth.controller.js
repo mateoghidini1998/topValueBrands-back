@@ -186,3 +186,64 @@ exports.updateUserRole = asyncHandler(async (req, res, next) => {
     })
   }
 })
+
+exports.changeUserPassword = asyncHandler(async (req, res, next) => {
+  const { userId } = req.params
+  const { currentPassword, newPassword } = req.body
+
+  // Validate input
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      error: "Missing required fields",
+      message: "Current password and new password are required",
+    })
+  }
+
+  try {
+    // Fetch the user from Clerk
+    const user = await clerkClient.users.getUser(userId)
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+        message: `No user found with id: ${userId}`,
+      })
+    }
+
+    // Change the user's password in Clerk
+    await clerkClient.users.updateUser(userId, {
+      password: newPassword,
+    })
+
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+      data: {
+        id: user.id,
+        email: user.emailAddresses[0]?.emailAddress,
+        updatedAt: new Date().toISOString(),
+      },
+    })
+  } catch (error) {
+    console.error("Error changing user password in Clerk:", error)
+
+    // Check for specific Clerk errors
+    if (error.errors && error.errors.length > 0) {
+      const clerkErrors = error.errors.map((err) => ({
+        msg: err.message,
+        code: err.code,
+        longMessage: err.long_message,
+      }))
+      return res.status(400).json({ success: false, errors: clerkErrors })
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: "Error changing user password in Clerk",
+      message: error.message,
+    })
+  }
+})
