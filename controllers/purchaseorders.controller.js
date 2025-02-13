@@ -189,8 +189,6 @@ exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
-
-
 // Controlador para agregar o actualizar productos en una orden de compra
 exports.addOrUpdateProductInPurchaseOrder = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
@@ -364,11 +362,28 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     (p) => p.quantity_purchased === p.quantity_received
   );
 
+  const atLeastOneReceived = purchaseorderproducts.some(
+    (p) => p.quantity_received > 0
+  );
+
+  console.log("allReceived", allReceived);
+  console.log("atLeastOneReceived", atLeastOneReceived);
+
+  console.log(`Acutal status of the order: ${purchaseOrder.purchase_order_status_id}`);
+
   if (allReceived) {
     await PurchaseOrder.update(
       { purchase_order_status_id: PURCHASE_ORDER_STATUSES.CLOSED },
       { where: { id: purchaseOrder.id } }
     );
+  } else {
+    if (atLeastOneReceived && purchaseOrder.purchase_order_status_id === PURCHASE_ORDER_STATUSES.IN_TRANSIT) {
+      console.log(`Updating status from ${purchaseOrder.purchase_order_status_id} to ${PURCHASE_ORDER_STATUSES.ARRIVED} (ARRIVED).`);
+      await PurchaseOrder.update(
+        { purchase_order_status_id: PURCHASE_ORDER_STATUSES.ARRIVED },
+        { where: { id: purchaseOrder.id } }
+      );
+    }
   }
 
   res
@@ -623,6 +638,7 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
   const keyword = req.query.keyword || '';
   const supplierId = req.query.supplier || null;
   const statusId = req.query.status || null;
+  const excludeStatus = req.query.excludeStatus || null;
   const orderBy = req.query.orderBy || 'updatedAt';
   const orderWay = req.query.orderWay || 'DESC';
 
@@ -630,8 +646,37 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
     const possibleStatuses = [4, 5, 6, 7];
     const whereConditions = {
       is_active: true,
-      purchase_order_status_id: possibleStatuses.find(id => id === parseInt(statusId)) || possibleStatuses,
     };
+
+    if (statusId) {
+      // If a specific status is provided, filter by that status
+      whereConditions.purchase_order_status_id = parseInt(statusId);
+    } else {
+      // If no specific status is provided, use the possible statuses
+      whereConditions.purchase_order_status_id = { [Op.in]: possibleStatuses };
+    }
+
+    if (excludeStatus) {
+      // If exclude status is provided, add it to the where conditions
+      const statusesToExclude = excludeStatus.split(",").map(Number);
+      if (statusId) {
+        // If a specific status is provided, make sure it's not in the excluded list
+        if (statusesToExclude.includes(parseInt(statusId))) {
+          return res.status(400).json({
+            success: false,
+            msg: "The specified status cannot be both included and excluded",
+          });
+        }
+      } else {
+        // If no specific status is provided, exclude the specified statuses from the possible statuses
+        whereConditions.purchase_order_status_id = {
+          [Op.and]: [
+            { [Op.in]: possibleStatuses },
+            { [Op.notIn]: statusesToExclude },
+          ],
+        };
+      }
+    }
 
     if (keyword) {
       whereConditions.order_number = { [Op.like]: `%${keyword}%` };
@@ -654,7 +699,7 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
           include: [{ model: Product }],
         },
       ],
-      distinct: true, // -> elimina los duplicados
+      distinct: true,
       limit,
       offset,
       order: [[orderBy, orderWay]],
