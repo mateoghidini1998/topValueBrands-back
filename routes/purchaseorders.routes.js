@@ -20,7 +20,8 @@ const {
   addProductToPurchaseOrder,
   getIncomingShipments,
   addOrUpdateProductInPurchaseOrder,
-  updateIncomingOrderProducts
+  updateIncomingOrderProducts,
+  updateIncomingOrderNotes
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
@@ -32,6 +33,8 @@ router.get('/incoming-shipments', getIncomingShipments);
 router.post('/', createPurchaseOrder);
 router.put('/:id', updatePurchaseOrder);
 router.get('/:id', getPurchaseOrderById);
+
+router.patch('/incoming-order-notes/:orderId', updateIncomingOrderNotes)
 
 // change purchase order status
 router.patch('/:id/status', updatePurchaseOrderStatus);

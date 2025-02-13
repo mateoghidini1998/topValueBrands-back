@@ -909,7 +909,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         updatedStatusAt: purchaseOrder.updatedStatusAt,
         supplier_name: purchaseOrder.suppliers.supplier_name,
         supplier_id: purchaseOrder.supplier_id,
-        notes: purchaseOrder.notes
+        notes: purchaseOrder.notes,
+        incoming_order_notes: purchaseOrder.incoming_order_notes,
       },
       purchaseOrderProducts: productsData,
     },
@@ -940,6 +941,22 @@ exports.updatePONumber = asyncHandler(async (req, res, next) => {
     data: purchaseOrder,
   });
 });
+
+
+exports.updateIncomingOrderNotes = asyncHandler(async (req, res, next) => {
+  const orderId = req.params.orderId;
+  const { incoming_order_notes } = req.body;
+  const order = await PurchaseOrder.findByPk(orderId);
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+  await order.update({ incoming_order_notes });
+  return res.status(200).json({
+    success: true,
+    data: order,
+  });
+})
+
 
 exports.deletePurchaseOrderProductFromAnOrder = asyncHandler(
   async (req, res, next) => {
