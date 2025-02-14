@@ -1,4 +1,4 @@
-const { LIMIT_PRODUCTS, OFFSET_PRODUCTS, ASINS_PER_GROUP, BATCH_SIZE_FEES, MS_DELAY_FEES, MAX_RETRIES } = require('../config/config');
+const { LIMIT_PRODUCTS, OFFSET_PRODUCTS, ASINS_PER_GROUP, BATCH_SIZE_FEES, MS_DELAY_FEES, MAX_RETRIES } = require('../utils/constants/constants');
 const { Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
