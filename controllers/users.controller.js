@@ -5,8 +5,6 @@ const asyncHandler = require('../middlewares/async');
 //@desc     Get all users
 //@access   Private
 exports.getUsers = asyncHandler(async (req, res, next) => {
-
-   console.log('Users From DB')
    const users = await User.findAll();
    return res.status(200).json({
       success: true,

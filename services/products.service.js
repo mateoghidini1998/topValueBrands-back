@@ -1,4 +1,7 @@
 const productRepository = require('../repositories/product.repository');
+const purchaseOrderRepository = require('../repositories/purchase-order.repository');
+const palletRepository = require('../repositories/pallet.repository');
+const shipmentRepository = require('../repositories/shipment.repository');
 const { getProductDetailsByASIN } = require('../utils/product_utils');
 const supplierService = require('../services/supplier.service');
 
@@ -100,8 +103,40 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
   };
 };
 
+const deleteProduct = async (id) => {
+  const product = await productRepository.FindProductById(id);
+
+  if(!product) {
+    throw new Error('Product not found');
+  }
+
+  if(await productHasStock(product)) {
+    throw new Error('Product has stock');
+  }
+  
+  const purchase_orders_count = await purchaseOrderRepository.FindPurchaseOrdersByProduct(id);
+  const pallets_count = await palletRepository.FindPalletsAssociatedToProduct(id);
+  const shipments_count = await shipmentRepository.FindAllShipmentsAssociatedToProduct(id);
+  if(purchase_orders_count > 0 || pallets_count > 0 || shipments_count > 0) {
+    throw new Error('Product has associated purchase orders, pallets or shipments');
+  }
+
+  
+  await productRepository.DeleteProduct(id);
+
+}
+
+const productHasStock = async (product) => {
+  const warehouse_stock = product.warehouse_stock;
+  const fba_stock = product.FBA_available_inventory;
+  const reserved_quantity = product.reserved_quantity;
+  const inbound_to_fba = product.Inbound_to_FBA;
+
+  return warehouse_stock > 0 || fba_stock > 0 || reserved_quantity > 0 || inbound_to_fba > 0;
+}
 
 module.exports = {
   createProduct,
-  findAllProducts
+  findAllProducts,
+  deleteProduct,
 };

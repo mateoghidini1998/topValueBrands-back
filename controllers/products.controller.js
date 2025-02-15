@@ -77,46 +77,23 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
   }
 });
 
-//@route    PATCH api/products/disable
-//@desc     Update is_active as a toggle field of products
+//@route    DELETE api/products/:id
+//@desc     Delete product
 //@access   Private
-exports.toggleShowProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({
-    where: { id: req.body.id },
-  });
-  const warehouse_stock = product.warehouse_stock;
-  const fba_stock = product.FBA_available_inventory;
-  const reserved_quantity = product.reserved_quantity;
-  const inbound_to_fba = product.Inbound_to_FBA;
-
-  if (!product) {
-    return res.status(404).json({ msg: 'Product not found' });
-  }
-
-  if (warehouse_stock > 0 || fba_stock > 0 || reserved_quantity > 0 || inbound_to_fba > 0) {
-    return res.status(400).json({ msg: 'Product has stock' });
-  }
-
-  const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
-
+exports.deleteProduct = asyncHandler(async (req, res) => {
   try {
-    product.is_active = !product.is_active;
-    await product.save();
+    const accessToken = req.headers['x-amz-access-token'];
+    
+    const { id } = req.params;
+    await productService.deleteProduct(id);
 
-    if (trackedProduct) {
-      trackedProduct.is_active = !trackedProduct.is_active;
-      await trackedProduct.save();
-    }
+    return res.status(204).json({});
 
-    res.status(200).json(product);
   } catch (error) {
-    console.error({ msg: error.message });
+    res.status(400).json({ msg: error.message });
   }
 });
 
-//@route    GET api/products/
-//@desc     Get products
-//@access   Private
 //@route    GET api/products/
 //@desc     Get products
 //@access   Private

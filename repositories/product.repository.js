@@ -51,8 +51,13 @@ const CreateProduct = async (productData) => {
   return await Product.create(productData);
 };
 
+const DeleteProduct = async (id) => {
+  return await Product.update({ is_active: 0 }, { where: { id } });
+}
+
 module.exports = {
   FindAllProducts,
   FindProductById,
   CreateProduct,
+  DeleteProduct,
 };

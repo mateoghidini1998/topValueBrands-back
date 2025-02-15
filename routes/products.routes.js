@@ -2,7 +2,7 @@ const express = require('express');
 
 const {
   addExtraInfoToProduct,
-  toggleShowProduct,
+  deleteProduct,
   getProducts,
   createProduct,
 } = require('../controllers/products.controller');
@@ -11,8 +11,7 @@ const { authMiddleware } = require('../middlewares/authMiddleware');
 const { roleMiddleware } = require('../middlewares/roleMiddleware');
 
 const router = express.Router();
-// Aplicar autenticación a todas las rutas dentro de este router
-router.use(authMiddleware);
+/* router.use(authMiddleware); */
 
 router.get('/', roleMiddleware(['admin', 'warehouse']), getProducts);
 
@@ -25,7 +24,7 @@ router.patch(
   addExtraInfoToProduct
 );
 
-router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
+router.patch('/:id', deleteProduct);
 
 
 module.exports = router;
