@@ -34,6 +34,7 @@ exports.recalculateWarehouseStock = async (productId) => {
 
     if (result.length === 0) {
       logger.warn(`No warehouse stock data found for product_id=${productId}`)
+      await Product.update({ warehouse_stock: 0 }, { where: { id: productId } })
       return
     }
 
