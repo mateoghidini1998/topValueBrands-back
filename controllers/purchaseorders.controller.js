@@ -894,7 +894,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       quantity_missing: orderProduct.quantity_missing,
       quantity_available: orderProduct.quantity_available,
       reason_id: orderProduct.reason_id,
-      reason: orderProduct.PurchaseOrderProductReason.description,
+      reason: orderProduct?.PurchaseOrderProductReason?.description || "Unknown",
       expire_date: orderProduct.expire_date,
     };
   });
