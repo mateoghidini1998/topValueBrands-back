@@ -6,6 +6,7 @@ const {
   Supplier,
   TrackedProduct,
   PurchaseOrderStatus,
+  PurchaseOrderProductReason,
 } = require("../models");
 const { addUPCToPOProduct: addUPC } = require("./products.controller");
 const path = require("path");
@@ -791,6 +792,10 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         as: "purchaseOrderProducts",
         where: { is_active: true },
         attributes: ["product_id", "quantity_purchased", "quantity_received", "quantity_missing", "quantity_available", "product_cost", "total_amount", "id", 'reason_id', "expire_date"],
+        include: {
+          model: PurchaseOrderProductReason,
+          attributes: ["description"]
+        },
       },
       {
         model: PurchaseOrderStatus,
@@ -889,6 +894,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       quantity_missing: orderProduct.quantity_missing,
       quantity_available: orderProduct.quantity_available,
       reason_id: orderProduct.reason_id,
+      reason: orderProduct.PurchaseOrderProductReason.description,
       expire_date: orderProduct.expire_date,
     };
   });
