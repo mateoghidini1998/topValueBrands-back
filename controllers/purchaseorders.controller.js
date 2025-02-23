@@ -94,6 +94,98 @@ exports.createPurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { purchaseOrderIds } = req.body;
+
+  if (!purchaseOrderIds || !Array.isArray(purchaseOrderIds) || purchaseOrderIds.length === 0) {
+    return res.status(400).json({ message: "Invalid purchaseOrderIds" });
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Obtener la orden de compra a la que se van a fusionar otras
+    const purchaseOrderToMerge = await PurchaseOrder.findByPk(id, { transaction });
+
+    if (!purchaseOrderToMerge) {
+      await transaction.rollback();
+      return res.status(404).json({ message: "Purchase Order not found" });
+    }
+
+    // Obtener las órdenes de compra a fusionar
+    const purchaseOrders = await PurchaseOrder.findAll({
+      where: { id: purchaseOrderIds },
+      transaction,
+    });
+
+    if (purchaseOrders.length !== purchaseOrderIds.length) {
+      await transaction.rollback();
+      return res.status(404).json({ message: "One or more Purchase Orders not found" });
+    }
+
+    // Validar que todas las órdenes de compra tienen el mismo supplier_id
+    const supplierIds = new Set(purchaseOrders.map(po => po.supplier_id));
+    supplierIds.add(purchaseOrderToMerge.supplier_id);
+
+    if (supplierIds.size > 1) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "All purchase orders must belong to the same supplier",
+      });
+    }
+
+    // Obtener los productos a fusionar
+    const productsToMerge = await PurchaseOrderProduct.findAll({
+      where: { purchase_order_id: purchaseOrderIds },
+      transaction,
+    });
+
+    if (productsToMerge.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({ message: "No products to merge" });
+    }
+
+    // Actualizar los productos para asignarlos a la orden de compra destino
+    await PurchaseOrderProduct.update(
+      { purchase_order_id: id },
+      { where: { purchase_order_id: purchaseOrderIds }, transaction }
+    );
+
+    // Calcular el nuevo total_price
+    const totalPriceToAdd = purchaseOrders.reduce((sum, po) => sum + parseFloat(po.total_price), 0);
+    console.log('totalPriceToAdd', typeof totalPriceToAdd, totalPriceToAdd);
+    console.log(purchaseOrderToMerge.total_price)
+    await purchaseOrderToMerge.update(
+      { total_price: parseFloat(purchaseOrderToMerge.total_price) + totalPriceToAdd },
+      { transaction }
+    );
+
+    // Concatenar notas de todas las órdenes de compra
+    const allNotes = [purchaseOrderToMerge.notes, ...purchaseOrders.map(po => po.notes)]
+      .filter(Boolean) // Elimina valores nulos o undefined
+      .join("\n");
+
+    await purchaseOrderToMerge.update({ notes: allNotes }, { transaction });
+
+    // Eliminar las órdenes de compra fusionadas
+    await PurchaseOrder.destroy({ where: { id: purchaseOrderIds }, transaction });
+
+    await transaction.commit();
+
+    return res.status(201).json({
+      success: true,
+      data: "Purchase Orders merged successfully",
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Error merging purchase orders:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
     include: [

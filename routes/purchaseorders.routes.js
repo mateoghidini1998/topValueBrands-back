@@ -17,11 +17,11 @@ const {
   addExpireDateToPOProduct,
   deletePurchaseOrderProductFromAnOrder,
   updatePONumber,
-  addProductToPurchaseOrder,
   getIncomingShipments,
   addOrUpdateProductInPurchaseOrder,
   updateIncomingOrderProducts,
-  updateIncomingOrderNotes
+  updateIncomingOrderNotes,
+  mergePurchaseOrder,
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
@@ -31,6 +31,9 @@ router.get('/', getPurchaseOrders);
 router.get('/incoming-shipments', getIncomingShipments);
 
 router.post('/', createPurchaseOrder);
+
+router.put('/merge/:id', mergePurchaseOrder);
+
 router.put('/:id', updatePurchaseOrder);
 router.get('/:id', getPurchaseOrderById);
 
