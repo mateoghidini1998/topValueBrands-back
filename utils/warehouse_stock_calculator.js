@@ -40,8 +40,6 @@ exports.recalculateWarehouseStock = async (productId) => {
 
     // Fetch the updated product to confirm the change
     const updatedProduct = await Product.findByPk(productId);
-    console.log(`Updated product data:`, updatedProduct.toJSON());
-    console.log(`Updated product data:`, updatedProduct.toJSON())
   } catch (error) {
     logger.error(`Error recalculating warehouse stock for product_id=${productId}:`, error)
     throw error
