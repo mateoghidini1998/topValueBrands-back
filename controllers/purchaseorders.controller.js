@@ -208,9 +208,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   }
 });
 
-
-
-
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
   const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
     include: [
@@ -364,10 +361,6 @@ exports.addOrUpdateProductInPurchaseOrder = asyncHandler(async (req, res, next) 
       }
     }
 
-    const updatedProducts = await PurchaseOrderProduct.findAll({
-      where: { purchase_order_id: id, is_active: true },
-      transaction,
-    });
     const newTotalPrice = products.reduce((sum, prod) => sum + parseFloat(prod.quantity * parseFloat(prod.product_cost)), 0);
 
     // Redondear el total_price a un número con dos decimales
@@ -528,11 +521,14 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
   const productsToRecalculate = new Set();
 
   for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
+    console.log(purchaseOrderProductUpdate);
     const purchaseOrderProduct = purchaseorderproducts.find(
       (p) => p.id === purchaseOrderProductUpdate.purchaseOrderProductId
     );
 
     if (purchaseOrderProduct) {
+      const oldProductCost = purchaseOrderProduct.product_cost;
+      console.log('purchase order product found');
       purchaseOrderProduct.product_cost = parseFloat(
         purchaseOrderProductUpdate.product_cost
       );
@@ -543,9 +539,14 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
         purchaseOrderProduct.product_cost *
         purchaseOrderProduct.quantity_purchased;
 
-      purchaseOrderProduct.profit = parseFloat(
-        purchaseOrderProductUpdate.profit
+
+      // Calcular el profit correctamente usando el costo anterior
+      const newProfit = parseFloat(
+        purchaseOrderProduct.profit - (purchaseOrderProduct.product_cost - oldProductCost)
       );
+      console.log(newProfit)
+      purchaseOrderProduct.profit = newProfit;
+
 
       if (
         purchaseOrderProduct.quantity_received !==
@@ -557,6 +558,7 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
         productsToRecalculate.add(purchaseOrderProduct.product_id);
       }
 
+      console.log(purchaseOrderProduct)
       const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
 
       if (updatedPurchaseOrderProduct) {
@@ -580,6 +582,7 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
           }
         }
       }
+
     } else {
       return res.status(404).json({
         message: `Purchase Order Product not found: ${purchaseOrderProductUpdate.purchaseOrderProductId}`,
@@ -908,7 +911,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
-        attributes: ["product_id", "quantity_purchased", "quantity_received", "quantity_missing", "quantity_available", "product_cost", "total_amount", "id", 'reason_id', "expire_date"],
+        attributes: ["product_id", "quantity_purchased", "quantity_received", "quantity_missing", "quantity_available", "product_cost", "total_amount", "id", 'reason_id', "expire_date", "profit"],
         include: {
           model: PurchaseOrderProductReason,
           attributes: ["description"]
@@ -973,7 +976,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const productsData = trackedProducts.map(tp => {
     const product = tp.product;
     const orderProduct = purchaseOrder.purchaseOrderProducts.find(p => p.product_id === tp.product_id);
-    const roi = product.product_cost ? ((tp.profit / product.product_cost) * 100) : 0;
+    const roi = orderProduct.product_cost ? ((orderProduct.profit / orderProduct.product_cost) * 100) : 0;
     return {
       // product
       id: product.id,
@@ -996,7 +999,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       ninety_days_rank: tp.ninety_days_rank,
       lowest_fba_price: tp.lowest_fba_price,
       fees: tp.fees,
-      profit: tp.profit,
       roi: roi.toFixed(2),
       updatedAt: tp.updatedAt,
       sellable_quantity: tp.sellable_quantity,
@@ -1013,6 +1015,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       reason_id: orderProduct.reason_id,
       reason: orderProduct?.PurchaseOrderProductReason?.description || "Unknown",
       expire_date: orderProduct.expire_date,
+      profit: orderProduct.profit
     };
   });
 
@@ -1285,7 +1288,6 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
   let totalPrice = 0;
 
   for (const product of products) {
-    // console.log(product);
     const { product_id, product_cost, quantity, fees, lowest_fba_price } =
       product;
     const purchaseOrderProduct = await PurchaseOrderProduct.create({
@@ -1295,7 +1297,7 @@ const createPurchaseOrderProducts = async (purchaseOrderId, products) => {
       unit_price: parseFloat(product_cost),
       quantity_purchased: quantity,
       total_amount: product_cost * quantity,
-      profit: lowest_fba_price - fees - product_cost,
+      profit: lowest_fba_price - (fees + product_cost),
     });
 
     totalPrice += purchaseOrderProduct.total_amount;
