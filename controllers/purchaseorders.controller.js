@@ -671,6 +671,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
         {
           model: PurchaseOrderProduct,
           as: "purchaseOrderProducts",
+          where: { is_active: true },
           include: [{ model: Product }],
         },
       ],
