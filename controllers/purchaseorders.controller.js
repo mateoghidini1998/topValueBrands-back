@@ -105,7 +105,7 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // Obtener la orden de compra a la que se van a fusionar otras
+    // Obtener la orden de compra destino
     const purchaseOrderToMerge = await PurchaseOrder.findByPk(id, { transaction });
 
     if (!purchaseOrderToMerge || purchaseOrderToMerge.purchase_order_status_id !== 2) {
@@ -124,27 +124,23 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: "One or more Purchase Orders not found" });
     }
 
-    // Validate that all purchase orders has status id 2 (PENDING STATUS).
+    // Validar que todas las órdenes tengan estado 'Pending' (2)
     const invalidStatus = purchaseOrders.find(po => po.purchase_order_status_id !== 2);
     if (invalidStatus) {
       await transaction.rollback();
-      return res.status(400).json({
-        message: "All purchase orders must have status 'Pending'",
-      });
+      return res.status(400).json({ message: "All purchase orders must have status 'Pending'" });
     }
 
-    // Validar que todas las órdenes de compra tienen el mismo supplier_id
+    // Validar que todas las órdenes de compra tengan el mismo supplier_id
     const supplierIds = new Set(purchaseOrders.map(po => po.supplier_id));
     supplierIds.add(purchaseOrderToMerge.supplier_id);
 
     if (supplierIds.size > 1) {
       await transaction.rollback();
-      return res.status(400).json({
-        message: "All purchase orders must belong to the same supplier",
-      });
+      return res.status(400).json({ message: "All purchase orders must belong to the same supplier" });
     }
 
-    // Obtener los productos a fusionar
+    // Obtener productos de todas las órdenes a fusionar
     const productsToMerge = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: purchaseOrderIds },
       transaction,
@@ -155,24 +151,42 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       return res.status(400).json({ message: "No products to merge" });
     }
 
-    // Actualizar los productos para asignarlos a la orden de compra destino
+    // Mapear los productos existentes en la orden destino
+    const existingProducts = await PurchaseOrderProduct.findAll({
+      where: { purchase_order_id: id },
+      transaction,
+    });
+
+    const existingProductIds = new Set(existingProducts.map(p => p.product_id));
+
+    // Filtrar productos duplicados (eliminar los que ya existen en purchaseOrderToMerge)
+    const productsToDelete = productsToMerge.filter(p => existingProductIds.has(p.product_id));
+    if (productsToDelete.length > 0) {
+      await PurchaseOrderProduct.destroy({
+        where: { id: productsToDelete.map(p => p.id) },
+        transaction,
+      });
+    }
+
+    // Asignar los productos restantes a la orden destino
     await PurchaseOrderProduct.update(
       { purchase_order_id: id },
       { where: { purchase_order_id: purchaseOrderIds }, transaction }
     );
 
-    // Calcular el nuevo total_price
-    const totalPriceToAdd = purchaseOrders.reduce((sum, po) => sum + parseFloat(po.total_price), 0);
-    console.log('totalPriceToAdd', typeof totalPriceToAdd, totalPriceToAdd);
-    console.log(purchaseOrderToMerge.total_price)
-    await purchaseOrderToMerge.update(
-      { total_price: parseFloat(purchaseOrderToMerge.total_price) + totalPriceToAdd },
-      { transaction }
-    );
+    // Recalcular el total_price basado en los productos finales de purchaseOrderToMerge
+    const updatedProducts = await PurchaseOrderProduct.findAll({
+      where: { purchase_order_id: id },
+      transaction,
+    });
+
+    const newTotalPrice = updatedProducts.reduce((sum, p) => sum + parseFloat(p.product_cost) * p.quantity_purchased, 0);
+
+    await purchaseOrderToMerge.update({ total_price: newTotalPrice }, { transaction });
 
     // Concatenar notas de todas las órdenes de compra
     const allNotes = [purchaseOrderToMerge.notes, ...purchaseOrders.map(po => po.notes)]
-      .filter(Boolean) // Elimina valores nulos o undefined
+      .filter(Boolean)
       .join("\n");
 
     await purchaseOrderToMerge.update({ notes: allNotes }, { transaction });
@@ -193,6 +207,8 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
+
 
 
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
