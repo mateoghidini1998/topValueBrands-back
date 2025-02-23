@@ -705,7 +705,7 @@ exports.getPurchaseOrders = asyncHandler(async (req, res) => {
             (p) => p.product_id === trackedProduct.product_id
           );
           return product?.product_cost
-            ? (trackedProduct.profit / product.product_cost) * 100
+            ? (product.profit / product.product_cost) * 100
             : 0;
         });
 
