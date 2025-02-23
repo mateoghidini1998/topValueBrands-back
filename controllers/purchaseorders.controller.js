@@ -108,9 +108,9 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     // Obtener la orden de compra a la que se van a fusionar otras
     const purchaseOrderToMerge = await PurchaseOrder.findByPk(id, { transaction });
 
-    if (!purchaseOrderToMerge) {
+    if (!purchaseOrderToMerge || purchaseOrderToMerge.purchase_order_status_id !== 2) {
       await transaction.rollback();
-      return res.status(404).json({ message: "Purchase Order not found" });
+      return res.status(404).json({ message: "Purchase Order not found or status is not pending" });
     }
 
     // Obtener las órdenes de compra a fusionar
@@ -122,6 +122,15 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     if (purchaseOrders.length !== purchaseOrderIds.length) {
       await transaction.rollback();
       return res.status(404).json({ message: "One or more Purchase Orders not found" });
+    }
+
+    // Validate that all purchase orders has status id 2 (PENDING STATUS).
+    const invalidStatus = purchaseOrders.find(po => po.purchase_order_status_id !== 2);
+    if (invalidStatus) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "All purchase orders must have status 'Pending'",
+      });
     }
 
     // Validar que todas las órdenes de compra tienen el mismo supplier_id
