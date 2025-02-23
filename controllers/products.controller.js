@@ -130,12 +130,13 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const orderWay = req.query.orderWay || 'DESC';
 
     const products = await productService.findAllProducts({ page, limit, keyword, supplier, orderBy, orderWay });
-
+    console.log(products)
     return res.status(200).json({
       success: true,
       ...products,
     });
   } catch (error) {
+    console.log("ERROR: ", error)
     return res.status(500).json({
       success: false,
       msg: 'Error fetching products',

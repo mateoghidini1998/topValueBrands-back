@@ -95,7 +95,7 @@ app.listen(PORT, () => {
       }
     },
     {
-      timezone: "America/Argentina/Buenos_Aires",
+      timezone: "America/New_York",
       scheduled: true,
     }
   );
@@ -120,7 +120,7 @@ app.listen(PORT, () => {
       }
     },
     {
-      timezone: "America/Argentina/Buenos_Aires",
+      timezone: "America/New_York",
       scheduled: true,
     }
   );
@@ -139,7 +139,7 @@ app.listen(PORT, () => {
       }
     },
     {
-      timezone: "America/Argentina/Buenos_Aires",
+      timezone: "America/New_York",
       scheduled: true,
     }
   );

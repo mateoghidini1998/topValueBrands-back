@@ -20,10 +20,26 @@ let sequelize;
 if (config.use_env_variable) {
   const connectionString = process.env[config.use_env_variable];
   console.log(`Using connection string from environment variable: ${config.use_env_variable}`);
-  sequelize = new Sequelize(connectionString, config);
+  sequelize = new Sequelize(connectionString, {
+    ...config,
+    pool: {
+      max: 10,       
+      min: 2,        
+      acquire: 30000, 
+      idle: 10000    
+    }
+  });
 } else {
   console.log(`Using individual database parameters from configuration.`);
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  sequelize = new Sequelize(config.database, config.username, config.password, {
+    ...config,
+    pool: {
+      max: 10,
+      min: 2,
+      acquire: 30000,
+      idle: 10000
+    }
+  })
 }
 
 // Resto de la configuración del modelo permanece igual...
