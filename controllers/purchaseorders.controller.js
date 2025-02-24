@@ -209,99 +209,179 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
 });
 
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
-  const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: "purchaseOrderProducts",
-      },
-    ],
-  });
+  const transaction = await sequelize.transaction();
 
-  if (!purchaseOrder) {
-    return res.status(404).json({ message: "Purchase Order not found" });
-  }
-
-  const {
-    notes,
-    purchase_order_status_id,
-    products, // Array of updated products
-  } = req.body;
-
-  let totalPrice = 0;
-
-  if (notes) purchaseOrder.notes = notes;
-  if (purchase_order_status_id) purchaseOrder.purchase_order_status_id = purchase_order_status_id;
-
-  if (products && products.length > 0) {
-    const updatedProductIds = products.map((p) => p.product_id);
-
-    const existingProductIds = purchaseOrder.purchaseOrderProducts.map(
-      (p) => p.product_id
-    );
-
-    const productsToAdd = products.filter(
-      (p) => !existingProductIds.includes(p.product_id)
-    );
-    const productsToRemove = existingProductIds.filter(
-      (id) => !updatedProductIds.includes(id)
-    );
-
-    for (const productId of productsToRemove) {
-      await PurchaseOrderProduct.destroy({
-        where: {
-          purchase_order_id: purchaseOrder.id,
-          product_id: productId,
+  try {
+    const purchaseOrder = await PurchaseOrder.findByPk(req.params.id, {
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
         },
-      });
+      ],
+      transaction
+    });
+
+    if (!purchaseOrder) {
+      await transaction.rollback();
+      return res.status(404).json({ message: "Purchase Order not found" });
     }
 
-    for (const product of products) {
-      const purchaseOrderProduct = await PurchaseOrderProduct.findOne({
+    const {
+      notes,
+      purchase_order_status_id,
+      products,
+    } = req.body;
+
+    console.log('Processing update for PO:', purchaseOrder.id);
+    console.log('Products to process:', JSON.stringify(products, null, 2));
+
+    // Update purchase order fields
+    const updateFields = {};
+    if (notes) updateFields.notes = notes;
+    if (purchase_order_status_id) updateFields.purchase_order_status_id = purchase_order_status_id;
+
+    if (Object.keys(updateFields).length > 0) {
+      await purchaseOrder.update(updateFields, { transaction });
+    }
+
+    if (products && products.length > 0) {
+      // Get all existing products including inactive ones
+      const existingProducts = await PurchaseOrderProduct.findAll({
         where: {
+          purchase_order_id: purchaseOrder.id
+        },
+        transaction
+      });
+
+      console.log('Existing products:', existingProducts.length);
+
+      const existingProductIds = existingProducts.map(p => p.product_id);
+      const updatedProductIds = products.map(p => p.product_id);
+
+      // Find products to add (not in existing products)
+      const productsToAdd = products.filter(
+        p => !existingProductIds.includes(p.product_id)
+      );
+
+      console.log('Products to add:', productsToAdd.length);
+
+      // Find products to deactivate
+      const productsToDeactivate = existingProductIds.filter(
+        id => !updatedProductIds.includes(id)
+      );
+
+      console.log('Products to deactivate:', productsToDeactivate.length);
+
+      // Soft delete by setting is_active to false
+      if (productsToDeactivate.length > 0) {
+        await PurchaseOrderProduct.update(
+          { is_active: false },
+          {
+            where: {
+              purchase_order_id: purchaseOrder.id,
+              product_id: productsToDeactivate
+            },
+            transaction
+          }
+        );
+      }
+
+      // Update existing products
+      for (const product of products) {
+        const existingProduct = existingProducts.find(
+          p => p.product_id === product.product_id
+        );
+
+        if (existingProduct) {
+          console.log('Updating existing product:', product.product_id);
+
+          const newProductCost = parseFloat(product.product_cost);
+          const quantity = parseInt(product.quantity);
+          const fees = parseFloat(product.fees || 0);
+          const lowest_fba_price = parseFloat(product.lowest_fba_price || 0);
+
+          // Calculate new profit
+          const newProfit = lowest_fba_price - fees - newProductCost;
+
+          await PurchaseOrderProduct.update(
+            {
+              quantity_purchased: quantity,
+              product_cost: newProductCost,
+              total_amount: quantity * newProductCost,
+              profit: newProfit,
+              is_active: true,
+              unit_price: newProductCost
+            },
+            {
+              where: { id: existingProduct.id },
+              transaction
+            }
+          );
+        }
+      }
+
+      // Add new products
+      if (productsToAdd.length > 0) {
+        console.log('Creating new products');
+        const newProducts = productsToAdd.map(product => ({
           purchase_order_id: purchaseOrder.id,
           product_id: product.product_id,
+          quantity_purchased: parseInt(product.quantity),
+          product_cost: parseFloat(product.product_cost),
+          total_amount: parseInt(product.quantity) * parseFloat(product.product_cost),
+          profit: parseFloat(product.lowest_fba_price || 0) - parseFloat(product.fees || 0) - parseFloat(product.product_cost),
+          unit_price: parseFloat(product.product_cost),
+          is_active: true,
+          quantity_received: 0
+        }));
+
+        await PurchaseOrderProduct.bulkCreate(newProducts, { transaction });
+      }
+
+      // Calculate total price only from active products
+      const activeProducts = await PurchaseOrderProduct.findAll({
+        where: {
+          purchase_order_id: purchaseOrder.id,
+          is_active: true
         },
+        transaction
       });
 
-      if (purchaseOrderProduct) {
-        await purchaseOrderProduct.update({
-          quantity_purchased: product.quantity,
-          product_cost: product.product_cost,
-          total_amount: product.quantity * product.product_cost,
-        });
-      }
+      const totalPrice = activeProducts.reduce(
+        (sum, prod) => sum + (prod.quantity_purchased * parseFloat(prod.product_cost)),
+        0
+      );
+
+      await purchaseOrder.update(
+        { total_price: totalPrice },
+        { transaction }
+      );
     }
 
-    if (productsToAdd.length > 0) {
-      await createPurchaseOrderProducts(purchaseOrder.id, productsToAdd);
-    }
+    await transaction.commit();
+
+    // Fetch final updated purchase order with only active products
+    const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
+      include: [
+        {
+          model: PurchaseOrderProduct,
+          as: "purchaseOrderProducts",
+          where: { is_active: true }
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: updatedPurchaseOrder,
+    });
+  } catch (error) {
+    console.error('Error in updatePurchaseOrder:', error);
+    console.error('Error stack:', error.stack);
+    await transaction.rollback();
+    return next(error);
   }
-
-
-  await purchaseOrder.save();
-
-  const updatedProducts = await PurchaseOrderProduct.findAll({
-    where: { purchase_order_id: purchaseOrder.id },
-  });
-
-  totalPrice = updatedProducts.reduce((sum, prod) => sum + parseFloat(prod.quantity_purchased * parseFloat(prod.product_cost)), 0);
-
-  await purchaseOrder.update({ total_price: totalPrice });
-
-  const updatedPurchaseOrder = await PurchaseOrder.findByPk(purchaseOrder.id, {
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: "purchaseOrderProducts",
-      },
-    ],
-  });
-
-  return res.status(200).json({
-    success: true,
-    data: updatedPurchaseOrder,
-  });
 });
 
 // Controlador para agregar o actualizar productos en una orden de compra
