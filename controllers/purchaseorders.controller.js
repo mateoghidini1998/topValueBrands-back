@@ -1391,11 +1391,6 @@ exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
   });
 });
 
-// const asyncHandler = require("express-async-handler");
-// const PDFDocument = require("pdfkit");
-// const path = require("path");
-// const { PurchaseOrder, PurchaseOrderProduct, Product, Supplier } = require("../models");
-
 // Método para descargar la orden de compra
 exports.downloadPurchaseOrder = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -1553,3 +1548,57 @@ const generatePDF = (data) => {
     doc.end();
   });
 };
+
+
+exports.fixPurchaseOrderProductsProfit = asyncHandler(async (req, res, next) => {
+
+  // Get all PO products.
+  const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
+    attributes: ['product_id', 'product_cost', 'profit', 'id'],
+    order: [
+      ['id', 'ASC']
+    ]
+  });
+  const productsToUpdate = await TrackedProduct.findAll({
+    where: {
+      product_id: purchaseOrderProducts.map(p => p.product_id)
+    },
+    attributes: [
+      'fees', 'lowest_fba_price', 'product_id'
+    ],
+  });
+
+  // JOIN purchaseOrderProducts with productsToUpdate
+  const purchaseOrderProductsToUpdate = purchaseOrderProducts.map(p => {
+    const product = productsToUpdate.find(prod => prod.product_id === p.product_id);
+    return {
+      purchaseOrderProductId: p.id,
+      product_id: p.product_id,
+      product_cost: p.product_cost,
+      profit: p.profit,
+      lowest_fba_price: product.lowest_fba_price,
+      fees: product.fees,
+    };
+  });
+
+  // Update all purchaseOrderProducts profits to be: lowest_fba_price - (product_cost + fees)
+  for (const product of purchaseOrderProductsToUpdate) {
+    product.profit = parseFloat(((parseFloat(product.lowest_fba_price) || 0) - ((parseFloat(product.product_cost) || 0) + (parseFloat(product.fees) || 0))).toFixed(2));
+  }
+
+  // Update all purchaseOrderProducts
+  for (const product of purchaseOrderProductsToUpdate) {
+    await PurchaseOrderProduct.update({
+      profit: product.profit
+    }, {
+      where: {
+        id: product.purchaseOrderProductId
+      }
+    });
+  }
+
+  return res.json({
+    purchaseOrderProductsToUpdate
+  });
+
+})

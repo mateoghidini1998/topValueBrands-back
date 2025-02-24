@@ -22,6 +22,7 @@ const {
   updateIncomingOrderProducts,
   updateIncomingOrderNotes,
   mergePurchaseOrder,
+  fixPurchaseOrderProductsProfit
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
@@ -78,5 +79,9 @@ router.patch('/reason/:purchaseOrderProductId', addReasonToPOProduct);
 
 // add expire date to purchase order product
 router.patch('/expireDate/:purchaseOrderProductId', addExpireDateToPOProduct);
+
+
+// Fix PO Products Profit
+router.patch('/products/fix-profit', fixPurchaseOrderProductsProfit);
 
 module.exports = router;
