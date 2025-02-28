@@ -2,7 +2,7 @@ const { LIMIT_PRODUCTS, OFFSET_PRODUCTS, ASINS_PER_GROUP, BATCH_SIZE_FEES, MS_DE
 const { Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
-const { generateOrderReport } = require('../utils/utils');
+const { generateOrderReport, generateStorageReport } = require('../utils/utils');
 const dotenv = require('dotenv');
 const logger = require('../logger/logger');
 const { Op, literal } = require('sequelize');
@@ -304,6 +304,26 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+exports.getStorageReport = asyncHandler(async (req, res) => {
+  try {
+    const storageReport = await generateStorageReport(req, res);
+    res.status(200).json({
+      message: 'Storage report generated successfully.',
+      success: true,
+      data: storageReport,
+      itemsQuantity: storageReport.length,
+    });
+    logger.info('Response sent successfully with 200 status code. ' + JSON.stringify(storageReport.length) + ' items tracked.');
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error.stack,
+    });
+  }
+})
 
 const getProductsTrackedData = async (products) => {
   logger.info(`Starting getProductsTrackedData with ${products.length} products`);

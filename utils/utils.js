@@ -337,6 +337,60 @@ const importJSON = asyncHandler(async (req, res, next) => {
   }
 });
 
+const generateStorageReport = asyncHandler(async (req, res, next) => {
+  logger.info('Executing generateStorageReport...');
+  console.log('Executing generateStorageReport...');
+  const reportData = await getReportById(
+    req,
+    'GET_FBA_STORAGE_FEE_CHARGES_DATA'
+  );
+
+  if (!reportData) {
+    logger.error("Error getting report by id");
+    throw new Error('Report data is invalid or missing reportDocumentId');
+  }
+
+  const documentId = reportData;
+
+  const response = await axios.get(
+    `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': req.headers['x-amz-access-token'],
+      },
+    }
+  );
+
+  if (!response.data || !response.data.url) {
+    logger.error(`Error getting the report with documentId: ${documentId}`);
+    throw new Error('Failed to retrieve document URL from response');
+  }
+
+  const documentUrl = response.data.url;
+  const compressionAlgorithm = response.data.compressionAlgorithm;
+
+  const documentResponse = await axios.get(documentUrl, {
+    responseType: 'arraybuffer',
+  });
+
+  let decodedData;
+  if (compressionAlgorithm === 'GZIP') {
+    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+  } else {
+    decodedData = Buffer.from(documentResponse.data);
+  }
+
+  const dataString = decodedData.toString('utf-8');
+
+  if (!dataString) {
+    throw new Error('Failed to decode report data');
+  }
+
+  const jsonData = parseReportToJSON(dataString);
+  return jsonData;
+});
+
 module.exports = {
   createReport,
   pollReportStatus,
@@ -347,4 +401,5 @@ module.exports = {
   generateInventoryReport,
   importJSON,
   downloadCSVReport,
+  generateStorageReport
 };

@@ -5,13 +5,15 @@ const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const {
   generateTrackedProductsData,
   getTrackedProducts,
-  getTrackedProductsFromAnOrder: getTrackedProdcutsFromAnOrder
+  getTrackedProductsFromAnOrder: getTrackedProdcutsFromAnOrder,
+  getStorageReport
 } = require('../controllers/trackedproducts.controller');
 const { getProductsTrackedData, addProductVelocityAndUnitsSold } = require('../controllers/prueba');
 
 router.get('/ranks', addAccessTokenHeader, generateTrackedProductsData);
 router.get('/velocity', addAccessTokenHeader, addProductVelocityAndUnitsSold);
 
+router.get('/storage-report', getStorageReport)
 
 router.get('/', getTrackedProducts);
 
