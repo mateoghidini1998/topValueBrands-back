@@ -83,6 +83,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 exports.deleteProduct = asyncHandler(async (req, res) => {
   try {
     const accessToken = req.headers['x-amz-access-token'];
+    console.log(accessToken);
 
     const { id } = req.params;
     await productService.deleteProduct(id, accessToken);

@@ -30,7 +30,7 @@ router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct
 
 
 
-router.delete('/:id', roleMiddleware(['admin', 'manager']), deleteProduct)
+router.delete('/:id', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, deleteProduct)
 
 
 module.exports = router;
