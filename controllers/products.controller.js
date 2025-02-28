@@ -77,6 +77,23 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
   }
 });
 
+//@route    DELETE api/products/:id
+//@desc     Delete product
+//@access   Private
+exports.deleteProduct = asyncHandler(async (req, res) => {
+  try {
+    const accessToken = req.headers['x-amz-access-token'];
+
+    const { id } = req.params;
+    await productService.deleteProduct(id, accessToken);
+
+    return res.status(204).json({});
+
+  } catch (error) {
+    res.status(400).json({ msg: error.message });
+  }
+});
+
 //@route    PATCH api/products/disable
 //@desc     Update is_active as a toggle field of products
 //@access   Private

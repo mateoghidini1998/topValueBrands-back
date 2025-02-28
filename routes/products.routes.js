@@ -5,6 +5,7 @@ const {
   toggleShowProduct,
   getProducts,
   createProduct,
+  deleteProduct
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const { authMiddleware } = require('../middlewares/authMiddleware');
@@ -26,6 +27,10 @@ router.patch(
 );
 
 router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
+
+
+
+router.delete('/:id', roleMiddleware(['admin', 'manager']), deleteProduct)
 
 
 module.exports = router;

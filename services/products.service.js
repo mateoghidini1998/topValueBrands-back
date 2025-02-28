@@ -1,6 +1,10 @@
 const productRepository = require('../repositories/product.repository');
 const { getProductDetailsByASIN } = require('../utils/product_utils');
 const supplierService = require('../services/supplier.service');
+const shipmentRepository = require('../repositories/shipment.repository');
+const palletRepository = require('../repositories/pallet.repository');
+const purchaseOrderRepository = require('../repositories/purchase-order.repository');
+const { TrackedProduct } = require('../models');
 
 const createProduct = async (productData, accessToken) => {
   let product = await productRepository.FindProductById(productData.id);
@@ -100,8 +104,64 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
   };
 };
 
+const deleteProduct = async (id, accessToken) => {
+  console.log('Executing deleteProduct...');
+  console.log(`access token: ${accessToken}`);
+  const product = await productRepository.FindProductById(id);
+
+  if (!product) {
+    throw new Error('Product not found');
+  }
+
+  if (await productHasStock(product)) {
+    throw new Error('Product has stock');
+  }
+
+  const purchase_orders_count = await purchaseOrderRepository.FindPurchaseOrdersByProduct(id);
+  const pallets_count = await palletRepository.FindPalletsAssociatedToProduct(id);
+  const shipments_count = await shipmentRepository.FindAllShipmentsAssociatedToProduct(id);
+
+  console.log({
+    purchase_orders_count,
+    pallets_count,
+    shipments_count
+  })
+
+  if (purchase_orders_count > 0 || pallets_count > 0 || shipments_count > 0) {
+    throw new Error('Product has associated purchase orders, pallets or shipments');
+  }
+
+
+
+  await productRepository.DeleteProduct(id).then((res) => {
+    console.log({ res });
+    if (res) {
+      TrackedProduct.findOne({ where: { product_id: id } }).then((trackedProduct) => {
+        if (trackedProduct) {
+          trackedProduct.update({
+            is_active: 0
+          });
+        }
+      });
+    }
+  });
+
+}
+
+// Used in deleteProduct function
+const productHasStock = async (product) => {
+  const warehouse_stock = product.warehouse_stock;
+  const fba_stock = product.FBA_available_inventory;
+  const reserved_quantity = product.reserved_quantity;
+  const inbound_to_fba = product.Inbound_to_FBA;
+
+  return warehouse_stock > 0 || fba_stock > 0 || reserved_quantity > 0 || inbound_to_fba > 0;
+}
+
+
 
 module.exports = {
   createProduct,
-  findAllProducts
+  findAllProducts,
+  deleteProduct
 };
