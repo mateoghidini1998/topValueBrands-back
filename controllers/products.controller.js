@@ -58,7 +58,6 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     product.product_cost = req.body.product_cost;
 
     const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
-    console.log(trackedProduct);
     if (trackedProduct) {
       trackedProduct.profit = trackedProduct.lowest_fba_price - trackedProduct.fees - product.product_cost;
       await trackedProduct.save();
@@ -83,8 +82,6 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
 exports.deleteProduct = asyncHandler(async (req, res) => {
   try {
     const accessToken = req.headers['x-amz-access-token'];
-    console.log(accessToken);
-
     const { id } = req.params;
     await productService.deleteProduct(id, accessToken);
 
@@ -148,13 +145,11 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const orderWay = req.query.orderWay || 'DESC';
 
     const products = await productService.findAllProducts({ page, limit, keyword, supplier, orderBy, orderWay });
-    console.log(products)
     return res.status(200).json({
       success: true,
       ...products,
     });
   } catch (error) {
-    console.log("ERROR: ", error)
     return res.status(500).json({
       success: false,
       msg: 'Error fetching products',
