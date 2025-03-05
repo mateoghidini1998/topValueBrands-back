@@ -30,26 +30,6 @@ const createReport = asyncHandler(async (req, reportType) => {
     custom: true,
   };
 
-  /* if (reportType === 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL') {
-    const dataEndTime = moment().utc().endOf('day').toISOString();
-    const dataStartTime = moment()
-      .utc()
-      .subtract(30, 'days')
-      .startOf('day')
-      .toISOString();
-    requestBody = {
-      ...requestBody,
-      dataStartTime,
-      dataEndTime,
-      custom: true,
-    };
-  } else if (reportType === 'GET_FBA_MYI_ALL_INVENTORY_DATA') {
-    requestBody = {
-      ...requestBody,
-      custom: true,
-    };
-  } */
-
   console.log(requestBody);
   const response = await axios.post(url, requestBody, {
     headers: {
