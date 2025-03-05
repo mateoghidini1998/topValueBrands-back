@@ -14,9 +14,20 @@ const createReport = asyncHandler(async (req, reportType) => {
   console.log('Executing createReport...');
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
 
+
+  const dataEndTime = moment().utc().endOf('day').toISOString();
+  const dataStartTime = moment()
+    .utc()
+    .subtract(30, 'days')
+    .startOf('day')
+    .toISOString();
+
   let requestBody = {
     reportType,
     marketplaceIds: [`${process.env.MARKETPLACE_US_ID}`],
+    dataStartTime,
+    dataEndTime,
+    custom: true,
   };
 
   /* if (reportType === 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL') {
@@ -39,19 +50,7 @@ const createReport = asyncHandler(async (req, reportType) => {
     };
   } */
 
-  const dataEndTime = moment().utc().endOf('day').toISOString();
-  const dataStartTime = moment()
-    .utc()
-    .subtract(30, 'days')
-    .startOf('day')
-    .toISOString();
-  requestBody = {
-    ...requestBody,
-    dataStartTime,
-    dataEndTime,
-    custom: true,
-  };
-
+  console.log(requestBody);
   const response = await axios.post(url, requestBody, {
     headers: {
       'Content-Type': 'application/json',
@@ -67,9 +66,10 @@ const createReport = asyncHandler(async (req, reportType) => {
     logger.info('Report created successfully');
   }
 
-  console.log(response.data);
+  console.log(response.data.reportId);
   return response.data.reportId;
 });
+
 
 const pollReportStatus = async (reportId, accessToken) => {
   logger.info('Executing pollReportStatus...');

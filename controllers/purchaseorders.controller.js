@@ -233,9 +233,6 @@ exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
       products,
     } = req.body;
 
-    console.log('Processing update for PO:', purchaseOrder.id);
-    console.log('Products to process:', JSON.stringify(products, null, 2));
-
     // Update purchase order fields
     const updateFields = {};
     if (notes) updateFields.notes = notes;
@@ -254,8 +251,6 @@ exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
         transaction
       });
 
-      console.log('Existing products:', existingProducts.length);
-
       const existingProductIds = existingProducts.map(p => p.product_id);
       const updatedProductIds = products.map(p => p.product_id);
 
@@ -264,14 +259,10 @@ exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
         p => !existingProductIds.includes(p.product_id)
       );
 
-      console.log('Products to add:', productsToAdd.length);
-
       // Find products to deactivate
       const productsToDeactivate = existingProductIds.filter(
         id => !updatedProductIds.includes(id)
       );
-
-      console.log('Products to deactivate:', productsToDeactivate.length);
 
       // Soft delete by setting is_active to false
       if (productsToDeactivate.length > 0) {
@@ -294,8 +285,6 @@ exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
         );
 
         if (existingProduct) {
-          console.log('Updating existing product:', product.product_id);
-
           const newProductCost = parseFloat(product.product_cost);
           const quantity = parseInt(product.quantity);
           const fees = parseFloat(product.fees || 0);
@@ -323,7 +312,6 @@ exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
 
       // Add new products
       if (productsToAdd.length > 0) {
-        console.log('Creating new products');
         const newProducts = productsToAdd.map(product => ({
           purchase_order_id: purchaseOrder.id,
           product_id: product.product_id,
@@ -557,11 +545,6 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     (p) => p.quantity_received > 0
   );
 
-  console.log("allReceived", allReceived);
-  console.log("atLeastOneReceived", atLeastOneReceived);
-
-  console.log(`Acutal status of the order: ${purchaseOrder.purchase_order_status_id}`);
-
   if (allReceived) {
     await PurchaseOrder.update(
       { purchase_order_status_id: PURCHASE_ORDER_STATUSES.CLOSED },
@@ -569,7 +552,6 @@ exports.updateIncomingOrderProducts = asyncHandler(async (req, res, next) => {
     );
   } else {
     if (atLeastOneReceived && purchaseOrder.purchase_order_status_id === PURCHASE_ORDER_STATUSES.IN_TRANSIT) {
-      console.log(`Updating status from ${purchaseOrder.purchase_order_status_id} to ${PURCHASE_ORDER_STATUSES.ARRIVED} (ARRIVED).`);
       await PurchaseOrder.update(
         { purchase_order_status_id: PURCHASE_ORDER_STATUSES.ARRIVED },
         { where: { id: purchaseOrder.id } }
@@ -598,17 +580,13 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
     purchaseOrder.id
   );
 
-  const productsToRecalculate = new Set();
-
   for (const purchaseOrderProductUpdate of purchaseOrderProductsUpdates) {
-    console.log(purchaseOrderProductUpdate);
     const purchaseOrderProduct = purchaseorderproducts.find(
       (p) => p.id === purchaseOrderProductUpdate.purchaseOrderProductId
     );
 
     if (purchaseOrderProduct) {
       const oldProductCost = purchaseOrderProduct.product_cost;
-      console.log('purchase order product found');
       purchaseOrderProduct.product_cost = parseFloat(
         purchaseOrderProductUpdate.product_cost
       );
@@ -624,21 +602,8 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
       const newProfit = parseFloat(
         purchaseOrderProduct.profit - (purchaseOrderProduct.product_cost - oldProductCost)
       );
-      console.log(newProfit)
       purchaseOrderProduct.profit = newProfit;
 
-
-      if (
-        purchaseOrderProduct.quantity_received !==
-        parseInt(purchaseOrderProductUpdate.quantityReceived)
-      ) {
-        purchaseOrderProduct.quantity_received = parseInt(
-          purchaseOrderProductUpdate.quantityReceived
-        );
-        productsToRecalculate.add(purchaseOrderProduct.product_id);
-      }
-
-      console.log(purchaseOrderProduct)
       const updatedPurchaseOrderProduct = await purchaseOrderProduct.save();
 
       if (updatedPurchaseOrderProduct) {
@@ -649,34 +614,12 @@ exports.updatePurchaseOrderProducts = asyncHandler(async (req, res, next) => {
           return acc + product.product_cost * product.quantity_purchased;
         }, 0);
         await purchaseOrder.update({ total_price: totalPrice });
-
-        const product = await Product.findByPk(purchaseOrderProduct.product_id);
-        if (product) {
-          const { upc } = purchaseOrderProductUpdate;
-          try {
-            await addUPC(product, upc);
-          } catch (error) {
-            console.error(
-              `Error updating UPC for product ${product.id}: ${error.message}`
-            );
-          }
-        }
       }
 
     } else {
       return res.status(404).json({
         message: `Purchase Order Product not found: ${purchaseOrderProductUpdate.purchaseOrderProductId}`,
       });
-    }
-  }
-
-  for (const productId of productsToRecalculate) {
-    try {
-      await recalculateWarehouseStock(productId);
-    } catch (error) {
-      console.error(
-        `Error recalculating warehouse stock for product ${productId}: ${error.message}`
-      );
     }
   }
 
@@ -1408,7 +1351,6 @@ exports.updatePurchaseOrderStatus = asyncHandler(async (req, res, next) => {
 
   const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId);
   if (!purchaseOrder) {
-    console.log("Purchase Order not found");
     return res.status(404).json({ message: "Purchase Order not found" });
   }
 
@@ -1517,12 +1459,6 @@ exports.downloadPurchaseOrder = asyncHandler(async (req, res) => {
     const product_cost = product.dataValues.product_cost / packType;
     const quantity_purchased = product.dataValues.quantity_purchased * packType;
     const total_amount = product_cost * quantity_purchased;
-    console.log({
-      product_cost,
-      quantity_purchased,
-      total_amount,
-      testing: product_cost * quantity_purchased,
-    })
     return {
       ASIN: productData.ASIN,
       product_id: product.dataValues.product_id,
@@ -1598,7 +1534,6 @@ const generatePDF = (data) => {
 
     let position = TABLE_TOP + itemDistanceY;
     data.products.forEach((product, index) => {
-      console.log(product)
       if (index % 2 === 0) {
         doc.rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY).fill("#f2f2f2").stroke();
       }
