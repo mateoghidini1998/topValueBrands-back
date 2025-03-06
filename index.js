@@ -76,7 +76,7 @@ app.listen(PORT, () => {
 
   // Cron job to sync database with Amazon
   cron.schedule(
-    "00 4,15 * * *",
+    "00 4,12 * * *",
     async () => {
       logger.info("Starting Amazon sync cron job...");
       try {
