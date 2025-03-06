@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
-const { sendCSVasJSON } = require('../utils/utils');
+const { sendCSVasJSON, generateStorageReport } = require('../utils/utils');
 const {
   addImageToProducts,
   addImageToNewProducts,
@@ -27,24 +27,17 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
     if (!accessToken) {
       logger.info('fetching new token for sync db with amazon...');
       accessToken = await fetchNewTokenForFees();
+      req.headers['x-amz-access-token'] = accessToken;
     } else {
       logger.info('Token is still valid...');
     }
 
-    req.headers['x-amz-access-token'] = accessToken;
 
     // Call createReport and get the reportId
     const report = await sendCSVasJSON(req, res, next);
     logger.info('Finish creating report');
-
     // Continue with the rest of the code after sendCSVasJSON has completed
     const newSync = await processReport(report);
-
-    // Call addImageToProducts to add images to new products
-    // const newProducts = await Product.findAll({ where: { product_image: null } || { product_image: '' } });
-    // const accessToken = req.headers['x-amz-access-token'];
-    // const imageSyncResult = await addImageToProducts(newProducts, accessToken);
-
     const imageSyncResult = await addImageToNewProducts(accessToken);
 
     res.json({ newSync, imageSyncResult });

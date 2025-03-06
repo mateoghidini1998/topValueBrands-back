@@ -3,53 +3,39 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline/promises');
 const zlib = require('zlib');
-const moment = require('moment');
 const asyncHandler = require('../middlewares/async');
 const inventory = require('../data/Inventory.json');
 const { Product } = require('../models');
 const logger = require('../logger/logger');
 
-const createReport = asyncHandler(async (req, reportType) => {
+const createReport = asyncHandler(async (req) => {
   logger.info('Executing createReport...');
   console.log('Executing createReport...');
+
+  console.log('Body: ', req.body);
+
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
+  try {
+    const response = await axios.post(url, req.body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': req.headers['x-amz-access-token'],
+      },
+    });
 
+    if (!response.data || !response.data.reportId) {
+      throw new Error('Error creating report');
+    }
 
-  const dataEndTime = moment().utc().endOf('day').toISOString();
-  const dataStartTime = moment()
-    .utc()
-    .subtract(30, 'days')
-    .startOf('day')
-    .toISOString();
-
-  let requestBody = {
-    reportType,
-    marketplaceIds: [`${process.env.MARKETPLACE_US_ID}`],
-    dataStartTime,
-    dataEndTime,
-    custom: true,
-  };
-
-  console.log(requestBody);
-  const response = await axios.post(url, requestBody, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-amz-access-token': req.headers['x-amz-access-token'],
-    },
-  });
-
-  if (!response.data) {
-    logger.error('Error creating report');
-    console.log('Error creating report');
-    throw new Error('Error creating report');
-  } else {
     logger.info('Report created successfully');
+    console.log("Report ID:", response.data.reportId);
+    return response.data.reportId;
+  } catch (error) {
+    logger.error(`Error creating report: ${error.message}`);
+    console.error("Error creating report:", error);
+    throw error;
   }
-
-  console.log(response.data.reportId);
-  return response.data.reportId;
 });
-
 
 const pollReportStatus = async (reportId, accessToken) => {
   logger.info('Executing pollReportStatus...');
@@ -84,7 +70,8 @@ const pollReportStatus = async (reportId, accessToken) => {
 const getReportById = asyncHandler(async (req, reportType) => {
   logger.info('Executing getReportById...');
   console.log('Executing getReportById...');
-  const reportId = await createReport(req, reportType);
+  console.log('Report Type: ', reportType);
+  const reportId = await createReport(req);
   const accessToken = req.headers['x-amz-access-token'];
 
   try {
@@ -161,7 +148,7 @@ const generateInventoryReport = asyncHandler(async (req, res, next) => {
   logger.info('Executing generateInventoryReport...');
   console.log('Executing generateInventoryReport...');
   const report = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
-  console.log('REPORT:', report);
+  // console.log('REPORT:', report);
   /* if (!report) {
     throw new Error('Invalid or missing report data');
   } */
@@ -371,6 +358,104 @@ const generateStorageReport = asyncHandler(async (req, res, next) => {
   return jsonData;
 });
 
+/**
+ * Updates the dangerous_goods field for products in the database
+ * using data from the storage report
+ */
+const updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
+  logger.info("Executing updateDangerousGoodsFromReport...")
+
+  try {
+    // Fetch the storage report data
+    const storageReportResponse = await generateStorageReport(req, res, next)
+
+    if (!storageReportResponse || storageReportResponse.length === 0) {
+      logger.error("No valid items found in storage report")
+      return res.status(400).json({
+        success: false,
+        message: "No valid items found in storage report",
+      })
+    }
+
+    logger.info(`Processing ${storageReportResponse.length} items from storage report`)
+
+    const stats = {
+      total: storageReportResponse.length,
+      updated: 0,
+      notFound: 0,
+      errors: 0,
+    }
+
+    // Extract unique ASINs from the report
+    const uniqueAsins = [...new Set(storageReportResponse.map((item) => item.asin).filter(Boolean))]
+
+    if (uniqueAsins.length === 0) {
+      logger.warn("No ASINs found in report")
+      return res.status(400).json({
+        success: false,
+        message: "No ASINs found in report",
+      })
+    }
+
+    // Fetch all products that match the ASINs in a single query
+    const products = await Product.findAll({
+      where: { ASIN: uniqueAsins },
+    })
+
+    // Create a map of ASIN -> Product for quick lookups
+    const productMap = new Map(products.map((p) => [p.ASIN, p]))
+
+    // Prepare batch updates
+    const updates = []
+
+    for (const item of storageReportResponse) {
+      if (!item.asin) continue
+
+      const product = productMap.get(item.ASIN)
+      if (!product) {
+        stats.notFound++
+        continue
+      }
+
+      const dangerousGoodsValue = item.dangerous_goods_storage_type === "--" ? null : item.dangerous_goods_storage_type
+
+      // Only update if the value is different
+      if (product.dangerous_goods !== dangerousGoodsValue) {
+        updates.push({
+          asin: item.asin,
+          dangerous_goods: dangerousGoodsValue,
+        })
+        stats.updated++
+      }
+    }
+
+    // Perform batch update
+    if (updates.length > 0) {
+      await Promise.all(
+        updates.map((update) =>
+          Product.update({ dangerous_goods: update.dangerous_goods }, { where: { ASIN: update.asin } })
+        )
+      )
+    }
+
+    logger.info(`Updated ${stats.updated} products`)
+
+    return res.json({
+      success: true,
+      message: "Dangerous goods update completed",
+      stats: stats,
+    })
+  } catch (error) {
+    logger.error(`Error in updateDangerousGoodsFromReport: ${error.message}`)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update dangerous goods information",
+      error: error.message,
+    })
+  }
+})
+
+
 module.exports = {
   createReport,
   pollReportStatus,
@@ -381,5 +466,6 @@ module.exports = {
   generateInventoryReport,
   importJSON,
   downloadCSVReport,
-  generateStorageReport
+  generateStorageReport,
+  updateDangerousGoodsFromReport
 };
