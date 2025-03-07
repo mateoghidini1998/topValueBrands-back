@@ -76,13 +76,7 @@ exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => 
       },
     };
 
-    const result = await updateDangerousGoodsFromReport(reqDGItems, res, next);
-
-    return res.json({
-      success: true,
-      message: "Dangerous goods information updated successfully",
-      data: result
-    });
+    return await updateDangerousGoodsFromReport(reqDGItems, res, next);
 
   } catch (error) {
     next(error);

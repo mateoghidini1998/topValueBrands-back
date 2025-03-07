@@ -6,6 +6,7 @@ const zlib = require('zlib');
 const asyncHandler = require('../middlewares/async');
 const inventory = require('../data/Inventory.json');
 const { Product } = require('../models');
+const { sequelize } = require('../models');
 const logger = require('../logger/logger');
 
 const createReport = asyncHandler(async (req) => {
@@ -402,27 +403,34 @@ const updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
       where: { ASIN: uniqueAsins },
     })
 
-    // Create a map of ASIN -> Product for quick lookups
-    const productMap = new Map(products.map((p) => [p.ASIN, p]))
+    console.log({
+      productsToUpdate: products.length
+    })
+
+    // Create a map of ASIN -> Storage Report Item for quick lookups
+    // Using lowercase asin as key for consistency
+    const storageItemMap = new Map(
+      storageReportResponse.map((item) => [item.asin.toUpperCase(), item])
+    )
 
     // Prepare batch updates
     const updates = []
 
-    for (const item of storageReportResponse) {
-      if (!item.asin) continue
+    for (const product of products) {
+      if (!product.ASIN) continue
 
-      const product = productMap.get(item.ASIN)
-      if (!product) {
+      const storageItem = storageItemMap.get(product.ASIN)
+      if (!storageItem) {
         stats.notFound++
         continue
       }
 
-      const dangerousGoodsValue = item.dangerous_goods_storage_type === "--" ? null : item.dangerous_goods_storage_type
+      const dangerousGoodsValue = storageItem.dangerous_goods_storage_type
 
       // Only update if the value is different
       if (product.dangerous_goods !== dangerousGoodsValue) {
         updates.push({
-          asin: item.asin,
+          ASIN: product.ASIN,
           dangerous_goods: dangerousGoodsValue,
         })
         stats.updated++
@@ -431,20 +439,19 @@ const updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
 
     // Perform batch update
     if (updates.length > 0) {
-      await Promise.all(
-        updates.map((update) =>
-          Product.update({ dangerous_goods: update.dangerous_goods }, { where: { ASIN: update.asin } })
-        )
-      )
+      await sequelize.transaction(async (t) => {
+        for (const update of updates) {
+          await Product.update(
+            { dangerous_goods: update.dangerous_goods },
+            { where: { ASIN: update.ASIN }, transaction: t }
+          )
+        }
+      })
     }
 
     logger.info(`Updated ${stats.updated} products`)
 
-    return res.json({
-      success: true,
-      message: "Dangerous goods update completed",
-      stats: stats,
-    })
+    return res.status(200).json(stats)
   } catch (error) {
     logger.error(`Error in updateDangerousGoodsFromReport: ${error.message}`)
     return res.status(500).json({
@@ -466,6 +473,5 @@ module.exports = {
   generateInventoryReport,
   importJSON,
   downloadCSVReport,
-  generateStorageReport,
   updateDangerousGoodsFromReport
 };
