@@ -3,6 +3,7 @@ const { syncDBWithAmazon } = require('../controllers/reports.controller');
 const { generateTrackedProductsData } = require('../controllers/trackedproducts.controller');
 const logger = require('../logger/logger');
 const { updateDangerousGoodsFromReport } = require('../utils/utils');
+const moment = require('moment');
 
 (async () => {
   try {
@@ -12,6 +13,10 @@ const { updateDangerousGoodsFromReport } = require('../utils/utils');
     if (!workerData || !workerData.accessToken) {
       throw new Error("No valid access token received in worker.");
     }
+
+    const dataStartTime = moment().utc().subtract(1, 'months').startOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
+    const dataEndTime = moment().utc().subtract(1, 'months').endOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
+
 
     const reqProducts = {
       body: {
@@ -26,6 +31,8 @@ const { updateDangerousGoodsFromReport } = require('../utils/utils');
       body: {
         reportType: 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL',
         marketplaceIds: [process.env.MARKETPLACE_US_ID],
+        dataStartTime: dataStartTime,
+        dataEndTime: dataEndTime,
       },
       headers: {
         "x-amz-access-token": workerData.accessToken,
