@@ -1,13 +1,13 @@
-const { Sequelize, Op } = require('sequelize');
+
 const { sequelize } = require('../models');
 const path = require('path');
 const fs = require('fs');
 
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
-const { sendCSVasJSON, generateStorageReport } = require('../utils/utils');
+const { sendCSVasJSON, updateDangerousGoodsFromReport } = require('../utils/utils');
 const {
-  addImageToProducts,
+
   addImageToNewProducts,
 } = require('../controllers/products.controller');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
@@ -42,6 +42,48 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
 
     res.json({ newSync, imageSyncResult });
     return { newSync, imageSyncResult };
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
+
+  logger.info('fetching new token for sync db with amazon...');
+  let accessToken = await fetchNewTokenForFees();
+
+  try {
+
+    if (!accessToken) {
+      logger.info('fetching new token for sync db with amazon...');
+      accessToken = await fetchNewTokenForFees();
+      req.headers['x-amz-access-token'] = accessToken;
+    } else {
+      logger.info('Token is still valid...');
+    }
+
+    const reqDGItems = {
+      body: {
+        reportType: 'GET_FBA_STORAGE_FEE_CHARGES_DATA',
+        marketplaceIds: [process.env.MARKETPLACE_US_ID],
+        dataStartTime: "2025-01-01T00:00:00Z",
+        dataEndTime: "2025-01-31T00:00:00Z",
+        custom: true,
+      },
+      headers: {
+        "x-amz-access-token": accessToken,
+      },
+    };
+
+    const result = await updateDangerousGoodsFromReport(reqDGItems, res, next);
+
+    return res.json({
+      success: true,
+      message: "Dangerous goods information updated successfully",
+      data: result
+    });
+
   } catch (error) {
     next(error);
   }
@@ -130,7 +172,6 @@ const processReport = async (productsArray) => {
     throw error;
   }
 };
-
 
 // @route    GET api/reports/download/:filename
 // @desc     Download a CSV file
