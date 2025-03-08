@@ -67,8 +67,8 @@ exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => 
       body: {
         reportType: 'GET_FBA_STORAGE_FEE_CHARGES_DATA',
         marketplaceIds: [process.env.MARKETPLACE_US_ID],
-        dataStartTime: "2025-01-01T00:00:00Z",
-        dataEndTime: "2025-01-31T00:00:00Z",
+        dataStartTime: req.body.dataStartTime,
+        dataEndTime: req.body.dataEndTime,
         custom: true,
       },
       headers: {
