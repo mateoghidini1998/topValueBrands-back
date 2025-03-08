@@ -42,8 +42,8 @@ const moment = require('moment');
       body: {
         reportType: 'GET_FBA_STORAGE_FEE_CHARGES_DATA',
         marketplaceIds: [process.env.MARKETPLACE_US_ID],
-        dataStartTime: "2025-01-01T00:00:00Z",
-        dataEndTime: "2025-01-31T00:00:00Z",
+        dataStartTime: "2025-03-01T00:00:00Z",
+        dataEndTime: "2025-03-31T00:00:00Z",
         custom: true,
       },
       headers: {
@@ -69,7 +69,7 @@ const moment = require('moment');
 
 
 
-    await updateDangerousGoodsFromReport(reqDGItems, res, next);
+    // await updateDangerousGoodsFromReport(reqDGItems, res, next);
     await syncDBWithAmazon(reqProducts, res, next);
     await generateTrackedProductsData(reqOrders, res, next);
 
