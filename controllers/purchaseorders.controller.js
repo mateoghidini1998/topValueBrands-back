@@ -99,7 +99,7 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   const { purchaseOrderIds } = req.body;
 
   if (!purchaseOrderIds || !Array.isArray(purchaseOrderIds) || purchaseOrderIds.length === 0) {
-    return res.status(400).json({ message: "Invalid purchaseOrderIds" });
+    return res.status(400).json({ msg: "Invalid purchaseOrderIds" });
   }
 
   const transaction = await sequelize.transaction();
@@ -107,91 +107,89 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   try {
     // Obtener la orden de compra destino
     const purchaseOrderToMerge = await PurchaseOrder.findByPk(id, { transaction });
-
     if (!purchaseOrderToMerge || purchaseOrderToMerge.purchase_order_status_id !== 2) {
       await transaction.rollback();
-      return res.status(404).json({ message: "Purchase Order not found or status is not pending" });
+      return res.status(404).json({ msg: "Purchase Order status should be Pending" });
     }
 
     // Obtener las órdenes de compra a fusionar
     const purchaseOrders = await PurchaseOrder.findAll({
-      where: { id: purchaseOrderIds },
+      where: {
+        id: purchaseOrderIds,
+        purchase_order_status_id: 2,
+        is_active: true,
+        supplier_id: purchaseOrderToMerge.supplier_id,
+      },
       transaction,
     });
-
     if (purchaseOrders.length !== purchaseOrderIds.length) {
       await transaction.rollback();
-      return res.status(404).json({ message: "One or more Purchase Orders not found" });
-    }
-
-    // Validar que todas las órdenes tengan estado 'Pending' (2)
-    const invalidStatus = purchaseOrders.find(po => po.purchase_order_status_id !== 2);
-    if (invalidStatus) {
-      await transaction.rollback();
-      return res.status(400).json({ message: "All purchase orders must have status 'Pending'" });
-    }
-
-    // Validar que todas las órdenes de compra tengan el mismo supplier_id
-    const supplierIds = new Set(purchaseOrders.map(po => po.supplier_id));
-    supplierIds.add(purchaseOrderToMerge.supplier_id);
-
-    if (supplierIds.size > 1) {
-      await transaction.rollback();
-      return res.status(400).json({ message: "All purchase orders must belong to the same supplier" });
+      return res.status(404).json({ msg: "Invalid orders are selected to merge" });
     }
 
     // Obtener productos de todas las órdenes a fusionar
     const productsToMerge = await PurchaseOrderProduct.findAll({
-      where: { purchase_order_id: purchaseOrderIds },
+      where: { purchase_order_id: purchaseOrderIds, is_active: true },
       transaction,
     });
-
     if (productsToMerge.length === 0) {
       await transaction.rollback();
-      return res.status(400).json({ message: "No products to merge" });
+      return res.status(400).json({ msg: "No products to merge" });
     }
 
-    // Mapear los productos existentes en la orden destino
+    // Obtener productos existentes en la orden destino y mapearlos por product_id
     const existingProducts = await PurchaseOrderProduct.findAll({
-      where: { purchase_order_id: id },
+      where: { purchase_order_id: id, is_active: true },
       transaction,
     });
+    const existingProductMap = new Map();
+    existingProducts.forEach(p => {
+      existingProductMap.set(p.product_id, p);
+    });
 
-    const existingProductIds = new Set(existingProducts.map(p => p.product_id));
+    // Actualizar los productos duplicados
+    for (const product of productsToMerge) {
+      if (existingProductMap.has(product.product_id)) {
+        const existingProduct = existingProductMap.get(product.product_id);
+        const newQuantity = existingProduct.quantity_purchased + product.quantity_purchased;
+        const newTotalAmount = existingProduct.product_cost * newQuantity;
 
-    // Filtrar productos duplicados (eliminar los que ya existen en purchaseOrderToMerge)
-    const productsToDelete = productsToMerge.filter(p => existingProductIds.has(p.product_id));
-    if (productsToDelete.length > 0) {
-      await PurchaseOrderProduct.destroy({
-        where: { id: productsToDelete.map(p => p.id) },
-        transaction,
-      });
+        await existingProduct.update(
+          {
+            quantity_purchased: newQuantity,
+            total_amount: newTotalAmount,
+          },
+          { transaction }
+        );
+
+        // Eliminar el producto duplicado después de actualizar
+        await product.destroy({ transaction });
+      }
     }
 
-    // Asignar los productos restantes a la orden destino
+    // Asignar a la orden destino los productos que no eran duplicados
     await PurchaseOrderProduct.update(
       { purchase_order_id: id },
       { where: { purchase_order_id: purchaseOrderIds }, transaction }
     );
 
-    // Recalcular el total_price basado en los productos finales de purchaseOrderToMerge
+    // Recalcular el total_price basado en los productos finales de la orden destino
     const updatedProducts = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: id },
       transaction,
     });
-
-    const newTotalPrice = updatedProducts.reduce((sum, p) => sum + parseFloat(p.product_cost) * p.quantity_purchased, 0);
-
+    const newTotalPrice = updatedProducts.reduce((sum, p) => {
+      return sum + parseFloat(p.product_cost) * p.quantity_purchased;
+    }, 0);
     await purchaseOrderToMerge.update({ total_price: newTotalPrice }, { transaction });
 
     // Concatenar notas de todas las órdenes de compra
     const allNotes = [purchaseOrderToMerge.notes, ...purchaseOrders.map(po => po.notes)]
       .filter(Boolean)
       .join("\n");
-
     await purchaseOrderToMerge.update({ notes: allNotes }, { transaction });
 
-    // Eliminar las órdenes de compra fusionadas
+    // Eliminar las órdenes de compra que fueron fusionadas
     await PurchaseOrder.destroy({ where: { id: purchaseOrderIds }, transaction });
 
     await transaction.commit();
@@ -203,10 +201,21 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
 
   } catch (error) {
     await transaction.rollback();
+
+    // Manejo específico para error de restricción de clave foránea
+    if (error.name === "SequelizeForeignKeyConstraintError") {
+      console.error("Error merging purchase orders - Foreign Key Constraint:", error);
+      return res.status(409).json({
+        msg: "No se puede eliminar o actualizar la orden de compra, ya que tiene registros asociados en 'pallets'."
+      });
+    }
+
     console.error("Error merging purchase orders:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ msg: "Internal Server Error" });
   }
 });
+
+
 
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
   const transaction = await sequelize.transaction();
