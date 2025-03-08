@@ -147,6 +147,10 @@ const processReport = async (productsArray) => {
         product.in_seller_account = false;
         await product.save({ transaction: t });
         updatedProducts.push(product);  // Añadimos a la lista de actualizados
+      } else if (!product.in_seller_account) {
+        product.in_seller_account = true;
+        await product.save({ transaction: t });
+        updatedProducts.push(product);
       }
     }
 
