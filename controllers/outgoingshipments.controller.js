@@ -917,6 +917,20 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
   }
 });
 
+exports.addReferenceId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { referenceId } = req.body;
+  const shipment = await OutgoingShipment.findOne({
+    where: { id },
+  });
+  if (!shipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+  shipment.reference_id = referenceId;
+  await shipment.save();
+  return res.status(200).json({ msg: "Reference ID added successfully" });
+})
+
 const updateShipmentId = async (shipment, shipmentId) => {
   try {
     if (shipment.fba_shipment_id !== shipmentId) {
