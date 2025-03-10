@@ -989,6 +989,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
           "pack_type",
           "upc",
           "warehouse_stock",
+          "dangerous_goods"
         ],
         include: [
           {
@@ -1024,6 +1025,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       supplier_item_number: product.supplier_item_number,
       upc: product.upc,
       warehouse_stock: product.warehouse_stock,
+      dg_item: product.dangerous_goods,
 
       // tracked product
       product_velocity: tp.product_velocity,
@@ -1071,6 +1073,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         notes: purchaseOrder.notes,
         incoming_order_notes: purchaseOrder.incoming_order_notes,
       },
+      // order the productsData so that when the dangerous_goods is true, it will be at the bottom
       purchaseOrderProducts: productsData,
     },
   });
