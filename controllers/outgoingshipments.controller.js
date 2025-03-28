@@ -873,6 +873,8 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
   const shipmentStatuses = SHIPMENT_STATUSES.join(",");
   const accessToken = req.headers["x-amz-access-token"];
 
+  console.log(lastUpdatedAfter)
+
   try {
     if (!accessToken) {
       throw new Error("Access token is missing");
@@ -993,7 +995,7 @@ const getLastMonthDate = () => {
   const now = new Date();
   const lastMonth = new Date(
     now.getFullYear(),
-    now.getMonth() - 1,
+    now.getMonth(),
     now.getDate()
   );
   return lastMonth.toISOString();
