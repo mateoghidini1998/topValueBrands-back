@@ -16,9 +16,11 @@ const {
     addReferenceId,
     getShipmentTracking
 } = require('../controllers/outgoingshipments.controller');
+const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 router.post('/', createShipment)
 router.post('/po/:id', protect, createShipmentByPurchaseOrder)
+router.get('/tracking', addAccessTokenHeader, getShipmentTracking)
 router.get('/', getShipments)
 router.get('/:id', getShipment)
 router.delete('/:id', deleteShipment)
@@ -28,5 +30,4 @@ router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
 router.put('/checked/:outgoingShipmentProductId', toggleProductChecked);
 router.patch('/reference/:id', addReferenceId)
-router.get('/tracking', getShipmentTracking)
 module.exports = router;
