@@ -867,57 +867,63 @@ exports.getPurchaseOrdersWithPallets = asyncHandler(async (req, res) => {
 //@access  Private
 exports.getShipmentTracking = asyncHandler(async (req, res) => {
   const baseUrl = `https://sellingpartnerapi-na.amazon.com/fba/inbound/v0/shipments`;
-
   const marketPlace = process.env.MARKETPLACE_US_ID;
   const lastUpdatedAfter = getLastMonthDate();
-  const shipmentStatuses = SHIPMENT_STATUSES.join(",");
   const accessToken = req.headers["x-amz-access-token"];
 
-  console.log(lastUpdatedAfter)
+  if (!accessToken) {
+    return res.status(400).json({ error: "Access token is missing" });
+  }
 
   try {
-    if (!accessToken) {
-      throw new Error("Access token is missing");
-    }
+    // Ejecutamos todas las requests en paralelo
+    const shipmentRequests = SHIPMENT_STATUSES.map(async (status) => {
+      console.log(status)
+      try {
+        const url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${status}`;
+        const response = await axios.get(url, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-amz-access-token": accessToken,
+          },
+        });
 
-    const url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${shipmentStatuses}`;
+        const amazonShipments = response.data.payload?.ShipmentData || [];
+        console.log(`Fetched ${amazonShipments.length} shipments for status: ${status}`);
 
-    const response = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-        "x-amz-access-token": accessToken,
-      },
+        // Procesamos los envíos en paralelo para mejorar el rendimiento
+        await Promise.all(
+          amazonShipments.map(async (amazonShipment) => {
+            const { ShipmentId, ShipmentName, ShipmentStatus } = amazonShipment;
+
+            const shipment = await OutgoingShipment.findOne({
+              where: { shipment_number: ShipmentName },
+            });
+
+            if (shipment) {
+              await updateShipmentId(shipment, ShipmentId);
+              await updateShipmentStatus(shipment, ShipmentStatus);
+            }
+          })
+        );
+      } catch (error) {
+        console.error(`Error fetching shipments for status ${status}:`, error.response?.data || error.message);
+      }
     });
 
-    const amazonShipments = response.data.payload.ShipmentData;
+    // Esperamos a que todas las solicitudes se completen
+    await Promise.all(shipmentRequests);
 
-    for (const amazonShipment of amazonShipments) {
-      const { ShipmentId, ShipmentName, ShipmentStatus } = amazonShipment;
-
-      const shipment = await OutgoingShipment.findOne({
-        where: { shipment_number: ShipmentName },
-      });
-
-      if (shipment) {
-        await updateShipmentId(shipment, ShipmentId);
-        await updateShipmentStatus(shipment, ShipmentStatus);
-      }
-    }
-
-    return res
-      .status(200)
-      .json({ msg: "Shipments tracked and updated successfully." });
+    return res.status(200).json({ msg: "Shipments tracked and updated successfully." });
   } catch (error) {
-    logger.error(
-      "Error fetching shipment data:",
-      error.response?.data || error.message
-    );
+    logger.error("Error in getShipmentTracking:", error);
     return res.status(500).json({
       error: "Failed to fetch shipments",
       details: error.message,
     });
   }
 });
+
 
 exports.addReferenceId = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -995,7 +1001,7 @@ const getLastMonthDate = () => {
   const now = new Date();
   const lastMonth = new Date(
     now.getFullYear(),
-    now.getMonth(),
+    now.getMonth() - 1,
     now.getDate()
   );
   return lastMonth.toISOString();
