@@ -13,10 +13,9 @@ const logger = require('../logger/logger');
 
     const req = {
       headers: {
-        "x-amz-access-token": workerData.accessToken, 
+        "x-amz-access-token": workerData.accessToken,
       },
     };
-    console.log("Request headers:", req.headers);
 
     const res = {
       status: (code) => {

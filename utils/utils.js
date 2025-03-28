@@ -63,7 +63,7 @@ const pollReportStatus = async (reportId, accessToken) => {
     console.log(reportStatus);
     reportStatus = response.data.processingStatus;
     reportDocument = response.data.reportDocumentId;
-    await new Promise((resolve) => setTimeout(resolve, 20000));
+    await new Promise((resolve) => setTimeout(resolve, 20000)); // Poll every 20 seconds
   }
   return reportDocument;
 };
@@ -149,10 +149,7 @@ const generateInventoryReport = asyncHandler(async (req, res, next) => {
   logger.info('Executing generateInventoryReport...');
   console.log('Executing generateInventoryReport...');
   const report = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
-  // console.log('REPORT:', report);
-  /* if (!report) {
-    throw new Error('Invalid or missing report data');
-  } */
+
   const documentId = report;
   console.log('Document ID : ', documentId);
   const response = await axios.get(

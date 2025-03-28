@@ -13,7 +13,8 @@ const {
     getPalletsByPurchaseOrder,
     getPurchaseOrdersWithPallets,
     toggleProductChecked,
-    addReferenceId
+    addReferenceId,
+    getShipmentTracking
 } = require('../controllers/outgoingshipments.controller');
 
 router.post('/', createShipment)
@@ -27,4 +28,5 @@ router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
 router.put('/checked/:outgoingShipmentProductId', toggleProductChecked);
 router.patch('/reference/:id', addReferenceId)
+router.get('/tracking', getShipmentTracking)
 module.exports = router;

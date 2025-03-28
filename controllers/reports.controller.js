@@ -89,9 +89,9 @@ const processReport = async (productsArray) => {
   try {
     const newProducts = [];
     const updatedProducts = [];
-    const touchedProducts = new Set();  // Para llevar el control de productos "tocados"
+    const productsInReport = new Set();  // Para llevar control de productos presentes en el reporte
 
-    // Obtener todos nuestros productos de la base de datos
+    // 1. Obtener todos nuestros productos de la base de datos
     const allOurProducts = await Product.findAll({ transaction: t });
     const ourProductsMap = new Map();
 
@@ -99,11 +99,14 @@ const processReport = async (productsArray) => {
       ourProductsMap.set(product.ASIN, product);
     }
 
+
+    // 2. Procesar productos del reporte
     for (const product of productsArray) {
+
+      productsInReport.add(product.asin);  // Marcamos como presente en el reporte
       const existingProduct = ourProductsMap.get(product.asin);
 
       if (existingProduct) {
-        touchedProducts.add(existingProduct.ASIN);  // Marcamos como tocado
         let needsUpdate = false;
 
         // Comparar los valores
@@ -118,6 +121,12 @@ const processReport = async (productsArray) => {
         if (existingProduct.Inbound_to_FBA !== parseFloat(product['afn-inbound-shipped-quantity'])) {
           needsUpdate = true;
           existingProduct.Inbound_to_FBA = parseFloat(product['afn-inbound-shipped-quantity']);
+        }
+
+        // Siempre asegurar que in_seller_account sea true (está en el reporte)
+        if (!existingProduct.in_seller_account) {
+          needsUpdate = true;
+          existingProduct.in_seller_account = true;
         }
 
         if (needsUpdate) {
@@ -140,17 +149,15 @@ const processReport = async (productsArray) => {
       }
     }
 
-    // Identificar productos en la base de datos que no han sido tocados
+    // 3. Actualizar productos que NO están en el reporte
     for (const [asin, product] of ourProductsMap) {
-      if (!touchedProducts.has(asin)) {
-        // Actualizamos el producto a `in_seller_account: false`
-        product.in_seller_account = false;
-        await product.save({ transaction: t });
-        updatedProducts.push(product);  // Añadimos a la lista de actualizados
-      } else if (!product.in_seller_account) {
-        product.in_seller_account = true;
-        await product.save({ transaction: t });
-        updatedProducts.push(product);
+      if (!productsInReport.has(asin)) {
+        // Producto en BD pero no en reporte → marcar como false
+        if (product.in_seller_account !== false) {
+          product.in_seller_account = false;
+          await product.save({ transaction: t });
+          updatedProducts.push(product);
+        }
       }
     }
 
@@ -195,3 +202,4 @@ exports.downloadReport = asyncHandler(async (req, res) => {
     }
   });
 });
+// 
