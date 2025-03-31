@@ -4,7 +4,6 @@ const supplierService = require('../services/supplier.service');
 const shipmentRepository = require('../repositories/shipment.repository');
 const palletRepository = require('../repositories/pallet.repository');
 const purchaseOrderRepository = require('../repositories/purchase-order.repository');
-const { TrackedProduct } = require('../models');
 const logger = require('../logger/logger');
 const { sequelize } = require("../models");
 
@@ -300,9 +299,22 @@ const updateProductInSellerAccountState = async (productId, inSellerAccount) => 
   }
 };
 
+const updateProductDgType = async (productId, dgType) => {
+  const product = await productRepository.FindProductById(productId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  await productRepository.UpdateProductDgType(productId, dgType);
+
+  return { message: "Product updated successfully" };
+};
+
 
 module.exports = {
   createProduct,
   findAllProducts,
-  deleteProduct
+  deleteProduct,
+  updateProductDgType
 };

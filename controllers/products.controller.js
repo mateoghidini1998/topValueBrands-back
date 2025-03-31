@@ -9,6 +9,7 @@ const { where, Op } = require('sequelize');
 const productService = require('../services/products.service');
 
 const { clerkClient, getAuth } = require('@clerk/express');
+const req = require('express/lib/request');
 
 dotenv.config({
   path: './.env',
@@ -278,3 +279,20 @@ exports.addUPC = asyncHandler(async (req, res) => {
     res.status(500).json({ msg: 'Error adding UPC to product' });
   }
 })
+
+exports.updateDGType = asyncHandler(async (req, res) => {
+
+  const { productId } = req.params;
+  const { dgType } = req.body;
+
+  if (!dgType) {
+    return res.status(400).json({ error: "dgType is required" });
+  }
+
+  try {
+    const result = await productService.updateProductDgType(productId, dgType);
+    return res.json(result);
+  } catch (error) {
+    return res.status(404).json({ error: error.message });
+  }
+});

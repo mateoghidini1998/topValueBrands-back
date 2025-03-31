@@ -55,9 +55,18 @@ const DeleteProduct = async (id) => {
   return await Product.update({ is_active: 0 }, { where: { id } });
 }
 
+const UpdateProductDgType = async (id, dgType) => {
+  return await Product.update(
+    { dangerous_goods: dgType },
+    { where: { id } }
+  );
+};
+
+
 module.exports = {
   FindAllProducts,
   FindProductById,
   CreateProduct,
-  DeleteProduct
+  DeleteProduct,
+  UpdateProductDgType
 };

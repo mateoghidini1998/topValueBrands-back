@@ -5,7 +5,8 @@ const {
   toggleShowProduct,
   getProducts,
   createProduct,
-  deleteProduct
+  deleteProduct,
+  updateDGType
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const { authMiddleware } = require('../middlewares/authMiddleware');
@@ -26,9 +27,9 @@ router.patch(
   addExtraInfoToProduct
 );
 
+router.patch('/dg-type/:productId', updateDGType)
+
 router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
-
-
 
 router.delete('/:id', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, deleteProduct)
 
