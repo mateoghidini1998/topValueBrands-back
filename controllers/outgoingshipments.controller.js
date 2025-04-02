@@ -325,6 +325,8 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "seller_sku",
                   "in_seller_account",
                   "upc",
+                  "pack_type",
+                  "ASIN",
                 ],
               },
             ],
@@ -365,6 +367,8 @@ exports.getShipment = asyncHandler(async (req, res) => {
         product_image: product?.product_image || null,
         seller_sku: product?.seller_sku || null,
         upc: product?.upc || null,
+        pack_type: parseInt(product?.pack_type) || 1,
+        ASIN: product?.ASIN || null,
         in_seller_account: product?.in_seller_account || null,
         purchaseOrderProduct: undefined, // Eliminamos datos anidados innecesarios
       };
