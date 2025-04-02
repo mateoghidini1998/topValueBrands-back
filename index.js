@@ -63,8 +63,6 @@ app.use("/api/v1/purchaseorders", purchaseorders);
 app.use("/api/v1/shipments", outgoingshipment);
 app.use("/api/v1/pallets", pallets);
 
-// app.use();
-
 // Server setup
 const PORT = process.env.PORT || 5000;
 
@@ -74,72 +72,72 @@ app.listen(PORT, () => {
   swaggerDoc(app, PORT);
 
   // Cron job to sync database with Amazon
-  cron.schedule(
-    "00 4,12 * * *",
-    async () => {
-      logger.info("Starting Amazon sync cron job...");
-      try {
-        logger.info("Fetching new token...");
-        const accessToken = await fetchNewTokenForFees();
-        if (!accessToken) {
-          throw new Error("Failed to fetch a valid access token.");
-        }
-        await runWorker("./syncWorker.js", {
-          accessToken,
-        });
-        logger.info("Amazon sync cron job completed successfully");
-        console.log("Amazon sync cron job completed successfully");
-      } catch (error) {
-        logger.error("Error in Amazon sync cron job:", error);
-      }
-    },
-    {
-      timezone: "America/New_York",
-      scheduled: true,
-    }
-  );
+  // cron.schedule(
+  //   "00 4,12 * * *",
+  //   async () => {
+  //     logger.info("Starting Amazon sync cron job...");
+  //     try {
+  //       logger.info("Fetching new token...");
+  //       const accessToken = await fetchNewTokenForFees();
+  //       if (!accessToken) {
+  //         throw new Error("Failed to fetch a valid access token.");
+  //       }
+  //       await runWorker("./syncWorker.js", {
+  //         accessToken,
+  //       });
+  //       logger.info("Amazon sync cron job completed successfully");
+  //       console.log("Amazon sync cron job completed successfully");
+  //     } catch (error) {
+  //       logger.error("Error in Amazon sync cron job:", error);
+  //     }
+  //   },
+  //   {
+  //     timezone: "America/New_York",
+  //     scheduled: true,
+  //   }
+  // );
 
-  cron.schedule(
-    "0 * * * *",
-    async () => {
-      console.log("Starting shipment tracking cron job...");
-      logger.info("Starting shipment tracking cron job...");
-      try {
-        logger.info("Fetching new token...");
-        const accessToken = await fetchNewTokenForFees();
-        if (!accessToken) {
-          throw new Error("Failed to fetch a valid access token.");
-        }
+  // cron.schedule(
+  //   "0 * * * *",
+  //   async () => {
+  //     console.log("Starting shipment tracking cron job...");
+  //     logger.info("Starting shipment tracking cron job...");
+  //     try {
+  //       logger.info("Fetching new token...");
+  //       const accessToken = await fetchNewTokenForFees();
+  //       if (!accessToken) {
+  //         throw new Error("Failed to fetch a valid access token.");
+  //       }
 
-        logger.info("Access token en el cronjob:", accessToken);
-        await runWorker("./shipmentWorker.js", { accessToken });
-        logger.info("Shipment tracking cron job completed successfully");
-      } catch (error) {
-        logger.error("Error in shipment tracking cron job:", error.message);
-      }
-    },
-    {
-      timezone: "America/New_York",
-      scheduled: true,
-    }
-  );
+  //       logger.info("Access token en el cronjob:", accessToken);
+  //       await runWorker("./shipmentWorker.js", { accessToken });
+  //       logger.info("Shipment tracking cron job completed successfully");
+  //     } catch (error) {
+  //       logger.error("Error in shipment tracking cron job:", error.message);
+  //     }
+  //   },
+  //   {
+  //     timezone: "America/New_York",
+  //     scheduled: true,
+  //   }
+  // );
 
-  // Cron job to delete old shipments
-  cron.schedule(
-    "0 6 * * *",
-    async () => {
-      console.log("Starting old shipments cleanup cron job...");
-      logger.info("Starting old shipments cleanup cron job...");
-      try {
-        await runWorker("./deleteShipmentWorker.js");
-        console.info("Old shipments cleanup cron job completed successfully");
-      } catch (error) {
-        console.error("Error in old shipments cleanup cron job:", error);
-      }
-    },
-    {
-      timezone: "America/New_York",
-      scheduled: true,
-    }
-  );
+  // // Cron job to delete old shipments
+  // cron.schedule(
+  //   "0 6 * * *",
+  //   async () => {
+  //     console.log("Starting old shipments cleanup cron job...");
+  //     logger.info("Starting old shipments cleanup cron job...");
+  //     try {
+  //       await runWorker("./deleteShipmentWorker.js");
+  //       console.info("Old shipments cleanup cron job completed successfully");
+  //     } catch (error) {
+  //       console.error("Error in old shipments cleanup cron job:", error);
+  //     }
+  //   },
+  //   {
+  //     timezone: "America/New_York",
+  //     scheduled: true,
+  //   }
+  // );
 });
