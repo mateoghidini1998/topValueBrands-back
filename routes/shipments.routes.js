@@ -14,7 +14,8 @@ const {
     getPurchaseOrdersWithPallets,
     toggleProductChecked,
     addReferenceId,
-    getShipmentTracking
+    getShipmentTracking,
+    checkAllShipmentProductsOfAPallet
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
@@ -29,5 +30,7 @@ router.get('/:id/download', download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
 router.put('/checked/:outgoingShipmentProductId', toggleProductChecked);
+router.put('/:shipmentId/pallets/:palletId/check', checkAllShipmentProductsOfAPallet);
+
 router.patch('/reference/:id', addReferenceId)
 module.exports = router;
