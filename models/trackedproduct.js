@@ -1,22 +1,22 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class TrackedProduct extends Model {
+  class AmzTrackedProduct extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      TrackedProduct.belongsTo(models.Product, {
-        foreignKey: 'product_id',
-        as: 'product',
+      AmzTrackedProduct.belongsTo(models.AmzProduct, {
+        foreignKey: 'amz_product_id',
+        as: 'amz_product',
       });
     }
   }
-  TrackedProduct.init(
+  AmzTrackedProduct.init(
     {
-      product_id: {
+      amz_product_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         unique: true,
@@ -33,9 +33,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: 'TrackedProduct',
+      modelName: 'AmzTrackedProduct',
       timestamps: true,
     }
   );
-  return TrackedProduct;
+  return AmzTrackedProduct;
 };
