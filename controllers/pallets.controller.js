@@ -127,6 +127,12 @@ exports.getPallets = asyncHandler(async (req, res) => {
             attributes: ['quantity', 'available_quantity'],
           },
           attributes: ['id'],
+          include: [
+            {
+              model: Product,
+              attributes: ['product_name', 'product_image', 'seller_sku', 'ASIN', 'dangerous_goods'],
+            },
+          ],
         },
         {
           model: WarehouseLocation,
@@ -145,6 +151,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
       order: [[orderBy, orderWay]],
     });
 
+    // pallets.storage_type = pallets.purchaseorderproducts[0].product.dangerous_goods; // Asignar storage_type al primer producto del pallet
 
     const totalPages = Math.ceil(count / limit);
 
@@ -163,6 +170,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
         createdAt: pallet.createdAt,
         updatedAt: pallet.updatedAt,
         products: pallet.purchaseorderproducts,
+        storage_type: pallet.purchaseorderproducts[0].Product.dangerous_goods, // Asignar storage_type al primer producto del pallet
       })),
     });
   } catch (error) {
