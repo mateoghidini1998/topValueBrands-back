@@ -1020,7 +1020,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       seller_sku: product.seller_sku,
       supplier_name: product.supplier.supplier_name,
       supplier_id: product.supplier_id,
-      pack_type: product.pack_type,
+      pack_type: parseInt(product.pack_type),
       product_image: product.product_image,
       supplier_item_number: product.supplier_item_number,
       upc: product.upc,
@@ -1033,14 +1033,14 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       thirty_days_rank: tp.thirty_days_rank,
       ninety_days_rank: tp.ninety_days_rank,
       lowest_fba_price: tp.lowest_fba_price,
-      fees: tp.fees,
-      roi: roi.toFixed(2),
+      fees: parseFloat(tp.fees),
+      roi: parseFloat(roi.toFixed(2)),
       updatedAt: tp.updatedAt,
       sellable_quantity: tp.sellable_quantity,
 
       // order product
       product_id: orderProduct.product_id,
-      product_cost: orderProduct.product_cost,
+      product_cost: parseFloat(orderProduct.product_cost),
       purchase_order_product_id: orderProduct.id,
       total_amount: parseFloat(orderProduct?.total_amount ?? "0"), // Obtener total_amount ya en el backend
       quantity_purchased: parseInt((orderProduct?.quantity_purchased ?? 0).toString()), // Obtener cantidad comprada ya en el backend
@@ -1050,7 +1050,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       reason_id: orderProduct.reason_id,
       reason: orderProduct?.PurchaseOrderProductReason?.description || "Unknown",
       expire_date: orderProduct.expire_date,
-      profit: orderProduct.profit
+      profit: parseFloat(orderProduct.profit)
     };
   });
 
