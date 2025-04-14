@@ -170,7 +170,7 @@ exports.getPallets = asyncHandler(async (req, res) => {
         createdAt: pallet.createdAt,
         updatedAt: pallet.updatedAt,
         products: pallet.purchaseorderproducts,
-        storage_type: pallet.purchaseorderproducts[0].Product.dangerous_goods, // Asignar storage_type al primer producto del pallet
+        storage_type: pallet.purchaseorderproducts[0]?.Product.dangerous_goods, // Asignar storage_type al primer producto del pallet
       })),
     });
   } catch (error) {

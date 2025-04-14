@@ -1180,11 +1180,85 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
     }
   );
 
+  await Promise.all(
+    palletProductIds.map(palletProductId => updatePalletStatus(palletProductId))
+  );
+
+
   return res.status(200).json({
     message: `Productos ${newValue ? "marcados" : "desmarcados"} correctamente`,
     updatedCount,
   });
 });
+
+
+async function updatePalletStatus(palletProductId) {
+  const palletProduct = await PalletProduct.findByPk(palletProductId);
+  if (!palletProduct) return;
+
+  const remainingUnchecked = await OutgoingShipmentProduct.count({
+    where: {
+      pallet_product_id: palletProduct.id,
+      is_checked: false,
+    },
+  });
+
+  const prevActivePalletProducts = await PalletProduct.count({
+    where: {
+      pallet_id: palletProduct.pallet_id,
+      is_active: true,
+    },
+  });
+
+  palletProduct.is_active = remainingUnchecked > 0;
+  await palletProduct.save();
+
+  const activePalletProducts = await PalletProduct.count({
+    where: {
+      pallet_id: palletProduct.pallet_id,
+      is_active: true,
+    },
+  });
+
+  const pallet = await Pallet.findByPk(palletProduct.pallet_id);
+  let warehouse_location = await WarehouseLocation.findByPk(pallet.warehouse_location_id);
+
+  if (activePalletProducts === 0) {
+    pallet.is_active = false;
+    await pallet.save();
+
+    const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+    const new_current_capacity = warehouse_location.capacity - pallets_quantity;
+    await warehouse_location.update({ current_capacity: new_current_capacity });
+  } else if (activePalletProducts > 0 && prevActivePalletProducts === 0) {
+    if (warehouse_location.current_capacity === 0) {
+      warehouse_location = await WarehouseLocation.findOne({
+        where: sequelize.where(
+          sequelize.fn("LOWER", sequelize.col("location")),
+          "floor"
+        ),
+      });
+    }
+
+    await pallet.update({
+      warehouse_location_id: warehouse_location.id,
+      is_active: true,
+    });
+
+    const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+    const new_current_capacity = warehouse_location.capacity - pallets_quantity;
+    await warehouse_location.update({ current_capacity: new_current_capacity });
+  } else {
+    await pallet.update({
+      warehouse_location_id: warehouse_location.id,
+      is_active: true,
+    });
+
+    const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+    const new_current_capacity = warehouse_location.capacity - pallets_quantity;
+    await warehouse_location.update({ current_capacity: new_current_capacity });
+  }
+}
 
 
 
