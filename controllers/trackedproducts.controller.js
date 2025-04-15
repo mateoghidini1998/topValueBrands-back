@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const logger = require('../logger/logger');
 const { Op, literal } = require('sequelize');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
+const { generateMockDataArray, generateMockTrackedDataForProducts } = require('../utils/mock_data');
 
 dotenv.config({ path: './.env' });
 
@@ -228,6 +229,11 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         ninety_days_rank: keepaItem.avg90 || null,
         units_sold: unitsSold,
         product_velocity: productVelocity,
+        product_velocity_2: orderItem.velocity_2_days || 0,
+        product_velocity_7: orderItem.velocity_7_days || 0,
+        product_velocity_15: orderItem.velocity_15_days || 0,
+        product_velocity_30: orderItem.velocity_30_days || 0,
+        product_velocity_60: orderItem.velocity_60_days || 0,
         lowest_fba_price: lowestFbaPriceInDollars,
       };
     });
@@ -239,6 +245,10 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         'ninety_days_rank',
         'units_sold',
         'product_velocity',
+        'product_velocity_2',
+        'product_velocity_7',
+        'product_velocity_15',
+        'product_velocity_60',
         'lowest_fba_price',
       ],
     }).catch((error) => {
@@ -256,21 +266,23 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     }).catch((error) => {
       throw new Error(`Product.findAll failed for related products: ${error.message}`);
     });
+
+
     logger.info('Fetched related products successfully');
 
     // Encontrar y registrar los productos no registrados como TrackedProducts
-    const allProductIds = products.map(product => product.id);
-    const untrackedProductIds = allProductIds.filter(id => !trackedProductIds.includes(id));
+    // const allProductIds = products.map(product => product.id);
+    // const untrackedProductIds = allProductIds.filter(id => !trackedProductIds.includes(id));
 
 
     // Proceso para registrar los productos que no se registraron como TrackedProducts porque tenian ASIN repetidos.
-    if (untrackedProductIds.length > 0) {
-      logger.warn(`Products ID's not tracked:[ ${untrackedProductIds.join(', ')} ]`);
-      const fixedProducts = [];
-      const unfixedProducts = [];
+    // if (untrackedProductIds.length > 0) {
+    //   logger.warn(`Products ID's not tracked:[ ${untrackedProductIds.join(', ')} ]`);
+    //   const fixedProducts = [];
+    //   const unfixedProducts = [];
 
-      fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts);
-    }
+    //   fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts);
+    // }
 
 
     //* Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
@@ -292,7 +304,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     res.status(200).json({
       message: 'Data combined and saved successfully.',
       success: true,
-      data: combinedData,
+      // data: combinedData,
       itemsQuantity: combinedData.length,
     });
     logger.info('Response sent successfully with 200 status code. ' + JSON.stringify(combinedData.length) + ' items tracked.');
@@ -327,93 +339,100 @@ exports.getStorageReport = asyncHandler(async (req, res) => {
 })
 
 const getProductsTrackedData = async (products) => {
-  logger.info(`Starting getProductsTrackedData with ${products.length} products`);
-  logger.info(`Groups of ${ASINS_PER_GROUP} ASINs will be processed in batches of ${ASINS_PER_GROUP} products`);
 
-  // Agrupar productos por ASIN para evitar duplicados
-  const uniqueProductsMap = products.reduce((acc, product) => {
-    if (!acc[product.ASIN]) {
-      acc[product.ASIN] = [];
+  if (process.env.MOCK_KEEPA_DATA === 'true' || process.env.MOCK_KEEPA_DATA === true) {
+    console.warn('⚠️ MOCKED getProductsTrackedData: No Keepa API calls will be made.');
+    return generateMockTrackedDataForProducts(products);
+  } else {
+
+    logger.info(`Starting getProductsTrackedData with ${products.length} products`);
+    logger.info(`Groups of ${ASINS_PER_GROUP} ASINs will be processed in batches of ${ASINS_PER_GROUP} products`);
+
+    // Agrupar productos por ASIN para evitar duplicados
+    const uniqueProductsMap = products.reduce((acc, product) => {
+      if (!acc[product.ASIN]) {
+        acc[product.ASIN] = [];
+      }
+      acc[product.ASIN].push(product);
+      return acc;
+    }, {});
+
+    const uniqueASINs = Object.keys(uniqueProductsMap);
+    const asinGroups = [];
+    for (let i = 0; i < uniqueASINs.length; i += ASINS_PER_GROUP) {
+      const group = uniqueASINs.slice(i, i + ASINS_PER_GROUP).join(',');
+      asinGroups.push(group);
     }
-    acc[product.ASIN].push(product);
-    return acc;
-  }, {});
 
-  const uniqueASINs = Object.keys(uniqueProductsMap);
-  const asinGroups = [];
-  for (let i = 0; i < uniqueASINs.length; i += ASINS_PER_GROUP) {
-    const group = uniqueASINs.slice(i, i + ASINS_PER_GROUP).join(',');
-    asinGroups.push(group);
-  }
+    logger.info(`Total ASIN groups to process: ${asinGroups.length}`);
 
-  logger.info(`Total ASIN groups to process: ${asinGroups.length}`);
+    const keepaResponses = [];
+    const TOKENS_PER_MIN = 70;
+    const REQUIRED_TOKENS = 500;
+    let tokensLeft = 4200;
+    let totalTokensConsumed = 0;
 
-  const keepaResponses = [];
-  const TOKENS_PER_MIN = 70;
-  const REQUIRED_TOKENS = 500;
-  let tokensLeft = 4200;
-  let totalTokensConsumed = 0;
+    for (const [index, asinGroup] of asinGroups.entries()) {
+      try {
+        logger.info(`Processing group ${index + 1}/${asinGroups.length}`);
 
-  for (const [index, asinGroup] of asinGroups.entries()) {
-    try {
-      logger.info(`Processing group ${index + 1}/${asinGroups.length}`);
+        const missingTokens = REQUIRED_TOKENS - tokensLeft;
+        logger.info(`tokens consumed: ${totalTokensConsumed}`);
+        logger.info(`tokens left: ${tokensLeft}`);
+        logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`);
 
-      const missingTokens = REQUIRED_TOKENS - tokensLeft;
-      logger.info(`tokens consumed: ${totalTokensConsumed}`);
-      logger.info(`tokens left: ${tokensLeft}`);
-      logger.info(`tokens refill rate: ${TOKENS_PER_MIN}`);
+        if (missingTokens <= 0) {
+          const keepaDataResponse = await getKeepaData(asinGroup);
+          keepaResponses.push(keepaDataResponse);
+          tokensLeft = keepaDataResponse.tokensLeft;
+          totalTokensConsumed += keepaDataResponse.tokensConsumed;
+          logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
+        } else {
+          const waitTimeForTokens = Math.ceil((missingTokens / TOKENS_PER_MIN)) * 60000;
+          logger.info(`Waiting ${waitTimeForTokens} ms to accumulate enough tokens`);
+          await delay(waitTimeForTokens);
 
-      if (missingTokens <= 0) {
-        const keepaDataResponse = await getKeepaData(asinGroup);
-        keepaResponses.push(keepaDataResponse);
-        tokensLeft = keepaDataResponse.tokensLeft;
-        totalTokensConsumed += keepaDataResponse.tokensConsumed;
-        logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
-      } else {
-        const waitTimeForTokens = Math.ceil((missingTokens / TOKENS_PER_MIN)) * 60000;
-        logger.info(`Waiting ${waitTimeForTokens} ms to accumulate enough tokens`);
-        await delay(waitTimeForTokens);
+          const keepaDataResponse = await getKeepaData(asinGroup);
+          tokensLeft = keepaDataResponse.tokensLeft;
+          totalTokensConsumed += keepaDataResponse.tokensConsumed;
+          keepaResponses.push(keepaDataResponse);
 
-        const keepaDataResponse = await getKeepaData(asinGroup);
-        tokensLeft = keepaDataResponse.tokensLeft;
-        totalTokensConsumed += keepaDataResponse.tokensConsumed;
-        keepaResponses.push(keepaDataResponse);
+          logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
+        }
 
-        logger.info(`getKeepaData succeeded for group ${index + 1}: [ ${asinGroup} ]`);
+      } catch (error) {
+        logger.error(`getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${error.message}`);
       }
 
-    } catch (error) {
-      logger.error(`getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${error.message}`);
+      if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
+        logger.info(`Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000} ms to refill tokens`);
+        await delay(Math.ceil(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000);
+      }
     }
 
-    if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
-      logger.info(`Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000} ms to refill tokens`);
-      await delay(Math.ceil(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000);
-    }
+    const processedData = keepaResponses.flatMap((response) =>
+      response.products.flatMap((product) => {
+        const matchingProducts = uniqueProductsMap[product.asin];
+        const lowestPrice = product.stats.buyBoxPrice > 0
+          ? product.stats.buyBoxPrice
+          : product.stats.current[10] > 0
+            ? product.stats.current[10]
+            : product.stats.current[7];
+
+        return matchingProducts.map((matchingProduct) => ({
+          product_id: matchingProduct.id,
+          currentSalesRank: product.stats.current[3],
+          avg30: product.stats.avg30[3],
+          avg90: product.stats.avg90[3],
+          lowestFbaPrice: lowestPrice,
+        }));
+      })
+    );
+
+    return processedData;
   }
 
-  const processedData = keepaResponses.flatMap((response) =>
-    response.products.flatMap((product) => {
-      const matchingProducts = uniqueProductsMap[product.asin];
-      const lowestPrice = product.stats.buyBoxPrice > 0
-        ? product.stats.buyBoxPrice
-        : product.stats.current[10] > 0
-          ? product.stats.current[10]
-          : product.stats.current[7];
-
-      return matchingProducts.map((matchingProduct) => ({
-        product_id: matchingProduct.id,
-        currentSalesRank: product.stats.current[3],
-        avg30: product.stats.avg30[3],
-        avg90: product.stats.avg90[3],
-        lowestFbaPrice: lowestPrice,
-      }));
-    })
-  );
-
-  return processedData;
 };
-
 
 const getKeepaData = async (asinGroup, retryCount = 0) => {
   logger.info(`Executing getKeepaData with ASIN group`);
@@ -443,9 +462,68 @@ const getKeepaData = async (asinGroup, retryCount = 0) => {
   }
 };
 
+// const saveOrders = async (req, res, next, products) => {
+//   console.log("Executing saveOrders...")
+//   logger.info("Executing saveOrders...")
+
+//   req.body.dataStartTime = new Date();
+//   req.body.dataEndTime = new Date() - 60 * 24 * 60 * 60 * 1000; // -> 60 days
+//   const jsonData = await generateOrderReport(req, res, next);
+
+//   if (!jsonData) {
+//     logger.error('Generating order report failed');
+//     throw new Error('Failed to retrieve orders');
+//   }
+
+//   const filteredOrders = jsonData.filter(
+//     (item) =>
+//       (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
+//       new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 // -> 30 days
+//   );
+
+
+
+
+//   const skuQuantities = filteredOrders.reduce((acc, item) => {
+//     const { sku, quantity, asin } = item;
+//     const qty = parseInt(quantity, 10);
+//     if (!acc[sku]) {
+//       acc[sku] = { quantity: qty, asin };
+//     } else {
+//       acc[sku].quantity += qty;
+//     }
+//     return acc;
+//   }, {});
+
+//   const asinToProductId = products.reduce((acc, product) => {
+//     if (!acc[product.ASIN]) {
+//       acc[product.ASIN] = [];
+//     }
+//     acc[product.ASIN].push(product.id);
+//     return acc;
+//   }, {});
+
+
+//   const finalJson = Object.entries(skuQuantities).flatMap(
+//     ([sku, { quantity, asin }]) => {
+//       return (asinToProductId[asin] || []).map(productId => ({
+//         sku,
+//         product_id: productId,
+//         quantity,
+//         velocity: quantity / 30,
+//       }));
+//     }
+//   );
+
+
+//   logger.info("The final json is: ", finalJson)
+//   return finalJson;
+// };
+
+
 const saveOrders = async (req, res, next, products) => {
-  console.log("Executing saveOrders...")
-  logger.info("Executing saveOrders...")
+  console.log("Executing saveOrders...");
+  logger.info("Executing saveOrders...");
 
   const jsonData = await generateOrderReport(req, res, next);
 
@@ -454,26 +532,42 @@ const saveOrders = async (req, res, next, products) => {
     throw new Error('Failed to retrieve orders');
   }
 
+  const now = new Date();
+
   const filteredOrders = jsonData.filter(
     (item) =>
       (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
-      new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 // -> 30 days
+      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 // -> 60 days
   );
 
+  // Agrupar por SKU y calcular cantidades por cada rango
+  const skuQuantities = {};
 
-
-
-  const skuQuantities = filteredOrders.reduce((acc, item) => {
+  filteredOrders.forEach(item => {
     const { sku, quantity, asin } = item;
     const qty = parseInt(quantity, 10);
-    if (!acc[sku]) {
-      acc[sku] = { quantity: qty, asin };
-    } else {
-      acc[sku].quantity += qty;
-    }
-    return acc;
-  }, {});
+    const purchaseDate = new Date(item['purchase-date']);
+    const diffDays = Math.floor((now - purchaseDate) / (1000 * 60 * 60 * 24));
 
+    if (!skuQuantities[sku]) {
+      skuQuantities[sku] = {
+        asin,
+        total: 0,
+        last2: 0,
+        last7: 0,
+        last15: 0,
+        last30: 0,
+      };
+    }
+
+    skuQuantities[sku].total += qty;
+    if (diffDays <= 30) skuQuantities[sku].last30 += qty;
+    if (diffDays <= 15) skuQuantities[sku].last15 += qty;
+    if (diffDays <= 7) skuQuantities[sku].last7 += qty;
+    if (diffDays <= 2) skuQuantities[sku].last2 += qty;
+  });
+
+  // Relacionar ASIN con product_id
   const asinToProductId = products.reduce((acc, product) => {
     if (!acc[product.ASIN]) {
       acc[product.ASIN] = [];
@@ -482,22 +576,25 @@ const saveOrders = async (req, res, next, products) => {
     return acc;
   }, {});
 
+  // Generar json final con velocidades
+  const finalJson = Object.entries(skuQuantities).flatMap(([sku, data]) => {
+    const { asin, last2, last7, last15, last30 } = data;
+    return (asinToProductId[asin] || []).map(productId => ({
+      sku,
+      product_id: productId,
+      quantity: data.total,
+      velocity: data.total / 30,
+      velocity_2_days: last2 / 2,
+      velocity_7_days: last7 / 7,
+      velocity_15_days: last15 / 15,
+      velocity_30_days: last30 / 30,
+    }));
+  });
 
-  const finalJson = Object.entries(skuQuantities).flatMap(
-    ([sku, { quantity, asin }]) => {
-      return (asinToProductId[asin] || []).map(productId => ({
-        sku,
-        product_id: productId,
-        quantity,
-        velocity: quantity / 30,
-      }));
-    }
-  );
-
-
-  logger.info("The final json is: ", finalJson)
+  // logger.info("The final json is: ", finalJson);
   return finalJson;
 };
+
 
 const getEstimateFees = async (req, res, next, products) => {
   let accessToken = req.headers['x-amz-access-token'];
@@ -721,61 +818,61 @@ const getNewAccessToken = async () => {
   }
 };
 
-async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
-  for (const productId of untrackedProductIds) {
-    try {
-      // 1. Buscar el asin del producto no trackeado
-      const untrackedProduct = await Product.findOne({ where: { id: productId } });
+// async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
+//   for (const productId of untrackedProductIds) {
+//     try {
+//       // 1. Buscar el asin del producto no trackeado
+//       const untrackedProduct = await Product.findOne({ where: { id: productId } });
 
 
-      if (!untrackedProduct) {
-        logger.warn(`Product with ID ${productId} not found.`);
-        continue;
-      }
+//       if (!untrackedProduct) {
+//         logger.warn(`Product with ID ${productId} not found.`);
+//         continue;
+//       }
 
-      const { ASIN } = untrackedProduct;
+//       const { ASIN } = untrackedProduct;
 
-      // 2. Encontrar todos los productos con ese asin
-      const productsWithSameAsin = await Product.findAll({ where: { ASIN } });
+//       // 2. Encontrar todos los productos con ese asin
+//       const productsWithSameAsin = await Product.findAll({ where: { ASIN } });
 
-      // 3. Encontrar el TrackedProduct del primer producto encontrado con ese asin
-      const firstProduct = productsWithSameAsin[0];
-      const trackedProduct = await TrackedProduct.findOne({ where: { product_id: firstProduct.id } });
+//       // 3. Encontrar el TrackedProduct del primer producto encontrado con ese asin
+//       const firstProduct = productsWithSameAsin[0];
+//       const trackedProduct = await TrackedProduct.findOne({ where: { product_id: firstProduct.id } });
 
-      if (!trackedProduct) {
-        logger.warn(`TrackedProduct for Product with ID ${firstProduct.id} not found.`);
-        continue;
-      }
+//       if (!trackedProduct) {
+//         logger.warn(`TrackedProduct for Product with ID ${firstProduct.id} not found.`);
+//         continue;
+//       }
 
-      // 4. Crear un nuevo TrackedProduct para cada uno de los productos restantes
-      for (const product of productsWithSameAsin.slice(1)) {
-        const newTrackedProductData = {
-          ...trackedProduct.dataValues, // Copiar todos los valores del trackedProduct original
-          product_id: product.id, // Asignar el nuevo product_id
-          createdAt: new Date(), // Actualizar la fecha de creación
-          updatedAt: new Date() // Actualizar la fecha de actualización
-        };
+//       // 4. Crear un nuevo TrackedProduct para cada uno de los productos restantes
+//       for (const product of productsWithSameAsin.slice(1)) {
+//         const newTrackedProductData = {
+//           ...trackedProduct.dataValues, // Copiar todos los valores del trackedProduct original
+//           product_id: product.id, // Asignar el nuevo product_id
+//           createdAt: new Date(), // Actualizar la fecha de creación
+//           updatedAt: new Date() // Actualizar la fecha de actualización
+//         };
 
-        delete newTrackedProductData.id; // Eliminar el ID para que se genere uno nuevo
+//         delete newTrackedProductData.id; // Eliminar el ID para que se genere uno nuevo
 
-        try {
-          const newTrackedProduct = await TrackedProduct.create(newTrackedProductData);
-          fixedProducts.push(product.id);
-          logger.info(`TrackedProduct.create successful: ${JSON.stringify(newTrackedProduct)}`);
+//         try {
+//           const newTrackedProduct = await TrackedProduct.create(newTrackedProductData);
+//           fixedProducts.push(product.id);
+//           logger.info(`TrackedProduct.create successful: ${JSON.stringify(newTrackedProduct)}`);
 
 
-        } catch (error) {
-          unfixedProducts.push(product.id);
-          logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
-        }
+//         } catch (error) {
+//           unfixedProducts.push(product.id);
+//           logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
+//         }
 
-      }
-    } catch (error) {
-      logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
-    }
-  }
+//       }
+//     } catch (error) {
+//       logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
+//     }
+//   }
 
-  // 5. Mostrar los id de los productos actualizados y no actualizados
-  logger.info(`Fixed products: [ ${Array.from(fixedProducts).join(', ')} ]`);
-  logger.info(`Unfixed products: [ ${Array.from(unfixedProducts).join(', ')} ]`);
-}
+//   // 5. Mostrar los id de los productos actualizados y no actualizados
+//   logger.info(`Fixed products: [ ${Array.from(fixedProducts).join(', ')} ]`);
+//   logger.info(`Unfixed products: [ ${Array.from(unfixedProducts).join(', ')} ]`);
+// }

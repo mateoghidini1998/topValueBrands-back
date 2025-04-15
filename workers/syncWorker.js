@@ -14,9 +14,11 @@ const moment = require('moment');
       throw new Error("No valid access token received in worker.");
     }
 
-    const dataStartTime = moment().utc().subtract(1, 'months').startOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
-    const dataEndTime = moment().utc().subtract(1, 'months').endOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
+    // const dataStartTime = moment().utc().subtract(1, 'months').startOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
+    // const dataEndTime = moment().utc().subtract(1, 'months').endOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
 
+    const yesterday = moment().subtract(1, 'days').format("YYYY-MM-DDTHH:mm:ssZ");
+    const yesterdayMinus30Days = moment().subtract(30, 'days').format("YYYY-MM-DDTHH:mm:ssZ");
 
     const reqProducts = {
       body: {
@@ -31,8 +33,8 @@ const moment = require('moment');
       body: {
         reportType: 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL',
         marketplaceIds: [process.env.MARKETPLACE_US_ID],
-        dataStartTime: dataStartTime,
-        dataEndTime: dataEndTime,
+        dataStartTime: yesterdayMinus30Days,
+        dataEndTime: yesterday,
       },
       headers: {
         "x-amz-access-token": workerData.accessToken,
