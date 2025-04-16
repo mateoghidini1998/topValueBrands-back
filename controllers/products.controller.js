@@ -1,7 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async');
 const axios = require('axios');
-const { Supplier, TrackedProduct, Product, User } = require('../models');
+const { Supplier, TrackedProduct, Product, User, SupressedListing } = require('../models');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -158,6 +158,21 @@ exports.getProducts = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+exports.getSupressedListings = asyncHandler(async (req, res) => {
+  try {
+    const response = await SupressedListing.findAll();
+
+    res.status(200).json({
+      success: true,
+      data: response,
+    });
+  } catch (error) {
+    res.status(400).json({ msg: error.message });
+  }
+});
+
 
 const addImageToProducts = async (products, accessToken) => {
   const delay = 2000;
