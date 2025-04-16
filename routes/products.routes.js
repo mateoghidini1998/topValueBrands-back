@@ -6,7 +6,8 @@ const {
   getProducts,
   createProduct,
   deleteProduct,
-  updateDGType
+  updateDGType,
+  getSupressedListings
 } = require('../controllers/products.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 const { authMiddleware } = require('../middlewares/authMiddleware');
@@ -26,6 +27,8 @@ router.patch(
 
   addExtraInfoToProduct
 );
+
+router.get('/supressed', roleMiddleware(['admin', 'warehouse']), getSupressedListings);
 
 router.patch('/dg-type/:productId', updateDGType)
 

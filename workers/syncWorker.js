@@ -2,7 +2,7 @@ const { parentPort, workerData, isMainThread } = require('worker_threads');
 const { syncDBWithAmazon } = require('../controllers/reports.controller');
 const { generateTrackedProductsData } = require('../controllers/trackedproducts.controller');
 const logger = require('../logger/logger');
-const { updateDangerousGoodsFromReport } = require('../utils/utils');
+const { updateDangerousGoodsFromReport, updateSupressedListings } = require('../utils/utils');
 const moment = require('moment');
 
 (async () => {
@@ -14,9 +14,11 @@ const moment = require('moment');
       throw new Error("No valid access token received in worker.");
     }
 
-    const dataStartTime = moment().utc().subtract(1, 'months').startOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
-    const dataEndTime = moment().utc().subtract(1, 'months').endOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
+    // const dataStartTime = moment().utc().subtract(1, 'months').startOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
+    // const dataEndTime = moment().utc().subtract(1, 'months').endOf('month').format("YYYY-MM-DDTHH:mm:ssZ");
 
+    const yesterday = moment().subtract(1, 'days').format("YYYY-MM-DDTHH:mm:ssZ");
+    const yesterdayMinus30Days = moment().subtract(30, 'days').format("YYYY-MM-DDTHH:mm:ssZ");
 
     const reqProducts = {
       body: {
@@ -31,8 +33,8 @@ const moment = require('moment');
       body: {
         reportType: 'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL',
         marketplaceIds: [process.env.MARKETPLACE_US_ID],
-        dataStartTime: dataStartTime,
-        dataEndTime: dataEndTime,
+        dataStartTime: yesterdayMinus30Days,
+        dataEndTime: yesterday,
       },
       headers: {
         "x-amz-access-token": workerData.accessToken,
@@ -45,6 +47,15 @@ const moment = require('moment');
         dataStartTime: "2025-03-01T00:00:00Z",
         dataEndTime: "2025-03-31T00:00:00Z",
         custom: true,
+      },
+      headers: {
+        "x-amz-access-token": workerData.accessToken,
+      },
+    };
+    const reqSupressedListings = {
+      body: {
+        reportType: 'GET_MERCHANTS_LISTINGS_FYP_REPORT',
+        marketplaceIds: [process.env.MARKETPLACE_US_ID],
       },
       headers: {
         "x-amz-access-token": workerData.accessToken,
@@ -70,6 +81,7 @@ const moment = require('moment');
 
 
     // await updateDangerousGoodsFromReport(reqDGItems, res, next);
+    await updateSupressedListings(reqSupressedListings, res, next);
     await syncDBWithAmazon(reqProducts, res, next);
     await generateTrackedProductsData(reqOrders, res, next);
 
