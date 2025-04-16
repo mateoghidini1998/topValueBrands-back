@@ -234,6 +234,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         product_velocity_15: orderItem.velocity_15_days || 0,
         product_velocity_30: orderItem.velocity_30_days || 0,
         product_velocity_60: orderItem.velocity_60_days || 0,
+        avg_selling_price: orderItem.avg_selling_price || null,
         lowest_fba_price: lowestFbaPriceInDollars,
       };
     });
@@ -249,6 +250,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
         'product_velocity_7',
         'product_velocity_15',
         'product_velocity_60',
+        'avg_selling_price',
         'lowest_fba_price',
       ],
     }).catch((error) => {
@@ -521,7 +523,7 @@ const getKeepaData = async (asinGroup, retryCount = 0) => {
 // };
 
 
-const saveOrders = async (req, res, next, products) => {
+const saveOrdersWithoutAvgPrice = async (req, res, next, products) => {
   console.log("Executing saveOrders...");
   logger.info("Executing saveOrders...");
 
@@ -594,6 +596,87 @@ const saveOrders = async (req, res, next, products) => {
   // logger.info("The final json is: ", finalJson);
   return finalJson;
 };
+
+const saveOrders = async (req, res, next, products) => {
+  console.log("Executing saveOrders...");
+  logger.info("Executing saveOrders...");
+
+  const jsonData = await generateOrderReport(req, res, next);
+
+  if (!jsonData) {
+    logger.error('Generating order report failed');
+    throw new Error('Failed to retrieve orders');
+  }
+
+  const now = new Date();
+
+  const filteredOrders = jsonData.filter(
+    (item) =>
+      (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
+      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000
+  );
+
+  const skuQuantities = {};
+
+  filteredOrders.forEach(item => {
+    const { sku, quantity, asin } = item;
+    const qty = parseInt(quantity, 10);
+    const purchaseDate = new Date(item['purchase-date']);
+    const diffDays = Math.floor((now - purchaseDate) / (1000 * 60 * 60 * 24));
+    const price = parseFloat(item['item-price']) || 0;
+
+    if (!skuQuantities[sku]) {
+      skuQuantities[sku] = {
+        asin,
+        total: 0,
+        last2: 0,
+        last7: 0,
+        last15: 0,
+        last30: 0,
+        totalPrice: 0,
+        totalQty: 0,
+      };
+    }
+
+    skuQuantities[sku].total += qty;
+    skuQuantities[sku].totalPrice += price;
+    skuQuantities[sku].totalQty += qty;
+
+    if (diffDays <= 30) skuQuantities[sku].last30 += qty;
+    if (diffDays <= 15) skuQuantities[sku].last15 += qty;
+    if (diffDays <= 7) skuQuantities[sku].last7 += qty;
+    if (diffDays <= 2) skuQuantities[sku].last2 += qty;
+  });
+
+  const asinToProductId = products.reduce((acc, product) => {
+    if (!acc[product.ASIN]) {
+      acc[product.ASIN] = [];
+    }
+    acc[product.ASIN].push(product.id);
+    return acc;
+  }, {});
+
+  const finalJson = Object.entries(skuQuantities).flatMap(([sku, data]) => {
+    const { asin, last2, last7, last15, last30, totalPrice, totalQty } = data;
+    const avg_selling_price = totalQty > 0 ? totalPrice / totalQty : 0;
+
+    return (asinToProductId[asin] || []).map(productId => ({
+      sku,
+      product_id: productId,
+      quantity: data.total,
+      velocity: data.total / 30,
+      velocity_2_days: last2 / 2,
+      velocity_7_days: last7 / 7,
+      velocity_15_days: last15 / 15,
+      velocity_30_days: last30 / 30,
+      avg_selling_price: parseFloat(avg_selling_price.toFixed(2))
+    }));
+  });
+
+  return finalJson;
+};
+
+
 
 
 const getEstimateFees = async (req, res, next, products) => {

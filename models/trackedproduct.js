@@ -30,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       product_velocity_7: DataTypes.FLOAT,
       product_velocity_15: DataTypes.FLOAT,
       product_velocity_60: DataTypes.FLOAT,
+      avg_selling_price: DataTypes.FLOAT,
       lowest_fba_price: DataTypes.FLOAT,
       fees: DataTypes.FLOAT,
       profit: DataTypes.FLOAT,
