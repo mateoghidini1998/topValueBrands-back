@@ -5,7 +5,7 @@ const readline = require('readline/promises');
 const zlib = require('zlib');
 const asyncHandler = require('../middlewares/async');
 const inventory = require('../data/Inventory.json');
-const { Product } = require('../models');
+const { Product, SupressedListing } = require('../models');
 const { sequelize } = require('../models');
 const logger = require('../logger/logger');
 
@@ -93,6 +93,64 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
   const reportData = await getReportById(
     req,
     'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL'
+  );
+
+  if (!reportData) {
+    logger.error("Error getting report by id");
+    throw new Error('Report data is invalid or missing reportDocumentId');
+  }
+
+  const documentId = reportData;
+
+  const response = await axios.get(
+    `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': req.headers['x-amz-access-token'],
+      },
+    }
+  );
+
+  if (!response.data || !response.data.url) {
+    logger.error(`Error getting the report with documentId: ${documentId}`);
+    throw new Error('Failed to retrieve document URL from response');
+  }
+
+  const documentUrl = response.data.url;
+  const compressionAlgorithm = response.data.compressionAlgorithm;
+
+  // Obtener el contenido del documento desde la URL
+  const documentResponse = await axios.get(documentUrl, {
+    responseType: 'arraybuffer',
+  });
+
+  // Descomprimir y decodificar los datos si es necesario
+  let decodedData;
+  if (compressionAlgorithm === 'GZIP') {
+    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+  } else {
+    decodedData = Buffer.from(documentResponse.data);
+  }
+
+  // Convertir los datos decodificados a string
+  const dataString = decodedData.toString('utf-8');
+
+  // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
+  if (!dataString) {
+    throw new Error('Failed to decode report data');
+  }
+
+  const jsonData = parseReportToJSON(dataString);
+  return jsonData;
+});
+
+const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
+  logger.info('Executing generateOrderReport...');
+  console.log('Executing generateOrderReport...');
+  const reportData = await getReportById(
+    req,
+    'GET_MERCHANTS_LISTINGS_FYP_REPORT'
   );
 
   if (!reportData) {
@@ -459,6 +517,54 @@ const updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
   }
 })
 
+const updateSupressedListings = asyncHandler(async (reqSupressedListings, res, next) => {
+  logger.info("Executing updateSupressedListings...");
+
+  const supressedData = await generateSupressedListingItems(reqSupressedListings, res, next);
+
+  if (!supressedData) {
+    logger.error('Generating order report failed');
+    throw new Error('Failed to retrieve supressed listings');
+  }
+
+  try {
+    // 1. Borrar todos los registros existentes
+    await SupressedListing.destroy({
+      where: {},
+      truncate: true,
+    });
+
+    // 2. Insertar los nuevos datos
+    await SupressedListing.bulkCreate(supressedData.map((item) => ({
+      ASIN: item.ASIN,
+      reason: item['Reason'],
+      seller_sku: item.SKU,
+      product_name: item['Product name'],
+      condition: item.Condition,
+      status_change_date: item['Status Change Date'],
+      issue_description: item['Issue Description'],
+    })));
+
+    logger.info("Supressed listings updated successfully");
+
+    return res.status(200).json({
+      msg: "Supressed listings updated successfully",
+      success: true,
+      totalItems: supressedData.length,
+    });
+
+  } catch (error) {
+    logger.error(`Error in updateSupressedListings: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update supressed listings information",
+      error: error.message,
+    });
+  }
+});
+
+
+
 
 module.exports = {
   createReport,
@@ -470,5 +576,6 @@ module.exports = {
   generateInventoryReport,
   importJSON,
   downloadCSVReport,
-  updateDangerousGoodsFromReport
+  updateDangerousGoodsFromReport,
+  updateSupressedListings
 };

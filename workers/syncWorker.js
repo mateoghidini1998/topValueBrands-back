@@ -2,7 +2,7 @@ const { parentPort, workerData, isMainThread } = require('worker_threads');
 const { syncDBWithAmazon } = require('../controllers/reports.controller');
 const { generateTrackedProductsData } = require('../controllers/trackedproducts.controller');
 const logger = require('../logger/logger');
-const { updateDangerousGoodsFromReport } = require('../utils/utils');
+const { updateDangerousGoodsFromReport, updateSupressedListings } = require('../utils/utils');
 const moment = require('moment');
 
 (async () => {
@@ -52,6 +52,15 @@ const moment = require('moment');
         "x-amz-access-token": workerData.accessToken,
       },
     };
+    const reqSupressedListings = {
+      body: {
+        reportType: 'GET_MERCHANTS_LISTINGS_FYP_REPORT',
+        marketplaceIds: [process.env.MARKETPLACE_US_ID],
+      },
+      headers: {
+        "x-amz-access-token": workerData.accessToken,
+      },
+    };
     const res = {
       status: (code) => {
         logger.info(`Worker: Response status code: ${code}`);
@@ -72,6 +81,7 @@ const moment = require('moment');
 
 
     // await updateDangerousGoodsFromReport(reqDGItems, res, next);
+    await updateSupressedListings(reqSupressedListings, res, next);
     await syncDBWithAmazon(reqProducts, res, next);
     await generateTrackedProductsData(reqOrders, res, next);
 
