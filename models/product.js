@@ -40,6 +40,8 @@ module.exports = (sequelize, DataTypes) => {
       is_active: DataTypes.BOOLEAN,
       in_seller_account: DataTypes.BOOLEAN,
       dangerous_goods: DataTypes.STRING,
+      is_hazmat: DataTypes.BOOLEAN,
+      hazmat_value: DataTypes.STRING,
     },
     {
       sequelize,
