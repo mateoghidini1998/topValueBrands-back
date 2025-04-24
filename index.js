@@ -52,6 +52,8 @@ const purchaseorders = require("./routes/purchaseorders.routes");
 const outgoingshipment = require("./routes/shipments.routes");
 const pallets = require("./routes/pallets.routes");
 const { swaggerDoc } = require("./routes/swagger.routes");
+const loopPeticiones = require('./workers/syncProductsWorker');
+
 
 // Mount routers
 app.use("/api/v1/auth", auth);
@@ -72,9 +74,11 @@ app.listen(PORT, () => {
   console.log("DATABASE_URL_LOCAL:", process.env.DATABASE_URL_LOCAL);
   swaggerDoc(app, PORT);
 
+  // loopPeticiones(); // <-- Aquí empieza el loop una vez
+
   // Cron job to sync database with Amazon
   // cron.schedule(
-  //   "00 4,12 * * *",
+  //   "55 4,22 * * *",
   //   async () => {
   //     logger.info("Starting Amazon sync cron job...");
   //     try {
