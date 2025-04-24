@@ -24,7 +24,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   logger.info('Executing getTrackedProducts...');
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = 10000 || parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
   const supplier_id = req.query.supplier || null;
