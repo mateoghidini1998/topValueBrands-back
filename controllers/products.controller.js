@@ -139,7 +139,7 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 exports.getProducts = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = 10000 || parseInt(req.query.limit) || 50;
     const keyword = req.query.keyword || '';
     const supplier = req.query.supplier || null;
     const orderBy = req.query.orderBy || 'updatedAt';
