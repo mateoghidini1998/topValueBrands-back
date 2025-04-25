@@ -1,3 +1,4 @@
+const logger = require("../logger/logger");
 const { fetchNewTokenForFees } = require("../middlewares/lwa_token");
 const productService = require("../services/products.service");
 
@@ -14,7 +15,6 @@ const fetchProductAttributes = async (asin, token) => {
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
       "Accept": "application/json",
       "x-amz-access-token": token, // Amazon SP-API lo requiere
@@ -44,31 +44,13 @@ const fetchProductAttributes = async (asin, token) => {
  */
 const loopPeticiones = async () => {
 
-  const asins = await (await productService.findAllProducts({ page: 1, limit: 1000 })).data.map((p) => {
+  const asins = await (await productService.findAllProducts({ page: 1, limit: 5000 })).data.map((p) => {
     return {
       asin: p.ASIN,
-      id: p.id
+      id: p.id,
+      needsUpdate: p.dangerous_goods === '--'
     }
-  });
-
-  // const asins = [
-  //   {
-  //     asin: "B000HHM9WI",
-  //     id: 1
-  //   },
-  //   {
-  //     asin: "B000HHM9WI",
-  //     id: 2
-  //   },
-  //   {
-  //     asin: "B005GX6NKM",
-  //     id: 3
-  //   },
-  //   {
-  //     asin: "B01IADWJT8",
-  //     id: 2696
-  //   },
-  // ]
+  })
 
   let token = await fetchNewTokenForFees();
 
@@ -112,6 +94,7 @@ const loopPeticiones = async () => {
     }
   }
 
+  logger.info("✔️ Todas las peticiones fueron procesadas.");
   console.log("✔️ Todas las peticiones fueron procesadas.");
 };
 

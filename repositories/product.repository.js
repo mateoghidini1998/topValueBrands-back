@@ -11,7 +11,7 @@ const FindAllProducts = async ({
 }) => {
   const products = await sequelize.query(
     `
-    SELECT p.id, p.product_name, p.product_cost, p.seller_sku, p.ASIN, p.updatedAt, p.product_image, p.supplier_item_number, p.pack_type, p.warehouse_stock, p.FBA_available_inventory, p.reserved_quantity, p.Inbound_to_FBA, p.in_seller_account, p.is_active, p.supplier_id, p.upc,
+    SELECT p.id, p.product_name, p.product_cost, p.seller_sku, p.ASIN, p.updatedAt, p.product_image, p.supplier_item_number, p.pack_type, p.warehouse_stock, p.FBA_available_inventory, p.reserved_quantity, p.Inbound_to_FBA, p.in_seller_account, p.is_active, p.supplier_id, p.upc,p.dangerous_goods,
            s.supplier_name
     FROM products p
     LEFT JOIN suppliers s ON p.supplier_id = s.id
