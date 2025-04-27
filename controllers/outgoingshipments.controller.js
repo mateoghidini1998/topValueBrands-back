@@ -999,6 +999,20 @@ exports.addReferenceId = asyncHandler(async (req, res) => {
   return res.status(200).json({ msg: "Reference ID added successfully" });
 })
 
+exports.addFbaShipmentId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { fbaShipmentId } = req.body;
+  const shipment = await OutgoingShipment.findOne({
+    where: { id },
+  });
+  if (!shipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+  shipment.fba_shipment_id = fbaShipmentId;
+  await shipment.save();
+  return res.status(200).json({ msg: "Reference ID added successfully" });
+})
+
 exports.toggleProductChecked = asyncHandler(async (req, res) => {
   const { outgoingShipmentProductId } = req.params;
 
@@ -1191,7 +1205,6 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
   });
 });
 
-
 async function updatePalletStatus(palletProductId) {
   const palletProduct = await PalletProduct.findByPk(palletProductId);
   if (!palletProduct) return;
@@ -1259,8 +1272,6 @@ async function updatePalletStatus(palletProductId) {
     await warehouse_location.update({ current_capacity: new_current_capacity });
   }
 }
-
-
 
 const updateShipmentId = async (shipment, shipmentId) => {
   try {
