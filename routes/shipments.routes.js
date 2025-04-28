@@ -15,6 +15,7 @@ const {
     toggleProductChecked,
     addReferenceId,
     addFbaShipmentId,
+    updateFbaShipmentStatusToShipped,
     getShipmentTracking,
     checkAllShipmentProductsOfAPallet
 } = require('../controllers/outgoingshipments.controller');
@@ -35,4 +36,5 @@ router.put('/:shipmentId/pallets/:palletId/check', checkAllShipmentProductsOfAPa
 
 router.patch('/reference/:id', addReferenceId)
 router.patch('/reference/fba/:id', addFbaShipmentId)
+router.patch('/status-shipped/:id', updateFbaShipmentStatusToShipped)
 module.exports = router;
