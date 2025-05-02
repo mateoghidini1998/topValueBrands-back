@@ -24,11 +24,11 @@ const FindAllProducts = async ({
       p.warehouse_stock,
       p.is_active,
       p.in_seller_account,
+      p.warehouse_stock AS amazon_warehouse_stock,
       
       -- Datos de AmazonProductDetail
       apd.ASIN AS amazon_asin,
       apd.seller_sku AS amazon_seller_sku,
-      apd.warehouse_stock AS amazon_warehouse_stock,
       apd.FBA_available_inventory AS amazon_fba_available_inventory,
       apd.reserved_quantity AS amazon_reserved_quantity,
       apd.Inbound_to_FBA AS amazon_inbound_to_fba,

@@ -94,7 +94,7 @@ const processReport = async (productsArray) => {
 
     // 1. Obtener todos los AmazonProductDetail con su Product
     const allDetails = await AmazonProductDetail.findAll({
-      include: [{ model: Product }],
+      include: [{ model: Product, as: 'product' }],
       transaction: t,
     });
 
