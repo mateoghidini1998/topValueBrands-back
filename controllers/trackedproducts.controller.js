@@ -7,7 +7,7 @@ const dotenv = require('dotenv');
 const logger = require('../logger/logger');
 const { Op, literal } = require('sequelize');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
-const { generateMockDataArray, generateMockTrackedDataForProducts } = require('../utils/mock_data');
+const { generateMockTrackedDataForProducts } = require('../utils/mock_data');
 
 dotenv.config({ path: './.env' });
 
@@ -84,7 +84,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 
   // Construir la ordenación dinámicamente
   const order = isProductField
-    ? [[literal(`product.${orderBy}`), orderWay]] // Sequelize.literal permite usar alias en ORDER BY
+    ? [[literal(`product.${orderBy}`), orderWay]]
     : [[orderBy, orderWay]];
 
   try {
@@ -128,19 +128,15 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 });
 
 exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
-  // 1. get the purchaseorderproducts by purchase_order_id
   const products = await PurchaseOrderProduct.findAll({ where: { purchase_order_id: req.params.id } });
   if (!products) {
     return res.status(404).json({ message: 'Products not found' });
   }
 
-  // 2. get the trackedproducts by product_id
   const trackedProducts = await TrackedProduct.findAll({ where: { product_id: products.map(product => product.product_id) } });
   if (!trackedProducts) {
     return res.status(404).json({ message: 'Tracked products not found' });
   }
-
-  // 3. transform the trackedproducts to include product_name, ASIN, seller_sku, supplier_name, product_image
 
   const productsOfTheOrder = await Promise.all(trackedProducts.map(async (trackedProduct) => {
 
@@ -167,7 +163,6 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
   }));
 
-  // 4. return the transformed trackedproducts
   const transformedTrackedProductsForTable = productsOfTheOrder.map((product) => {
     const { product_name, ASIN, seller_sku, supplier_name, product_image, product_cost, ...trackedProducts } = product;
     return {
@@ -197,7 +192,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     const products = await fetchProducts({ limit: LIMIT_PRODUCTS });
     logger.info('Fetched products successfully');
 
-    // Primera etapa: Guardar los productos combinados sin usar BATCH_SIZE
     const [orderData, keepaData] = await Promise.all([
       saveOrders(req, res, next, products).catch((error) => {
         logger.error('saveOrders failed', {
@@ -258,7 +252,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
     logger.info('Combined data saved successfully');
 
-    // Obtener los productos que están relacionados con los TrackedProducts
     const trackedProductIds = combinedData.map(item => item.product_id);
 
     const relatedProducts = await Product.findAll({
@@ -271,30 +264,13 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
 
     logger.info('Fetched related products successfully');
-
-    // Encontrar y registrar los productos no registrados como TrackedProducts
-    // const allProductIds = products.map(product => product.id);
-    // const untrackedProductIds = allProductIds.filter(id => !trackedProductIds.includes(id));
-
-
-    // Proceso para registrar los productos que no se registraron como TrackedProducts porque tenian ASIN repetidos.
-    // if (untrackedProductIds.length > 0) {
-    //   logger.warn(`Products ID's not tracked:[ ${untrackedProductIds.join(', ')} ]`);
-    //   const fixedProducts = [];
-    //   const unfixedProducts = [];
-
-    //   fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts);
-    // }
-
-
-    //* Segunda etapa: Obtener las estimaciones de tarifas y actualizar la información de los productos usando BATCH_SIZE
-
+  
     logger.info(`Batch size fees: ${BATCH_SIZE_FEES}`);
 
     for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
       const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
       logger.info(`Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(relatedProducts.length / BATCH_SIZE_FEES).toFixed(0)} with ${productBatch.length} products`);
-      await delay(MS_DELAY_FEES); // Espera antes de procesar el siguiente lote
+      await delay(MS_DELAY_FEES);
 
       await addAccessTokenAndProcessBatch(req, res, productBatch, combinedData, BATCH_SIZE_FEES, i / BATCH_SIZE_FEES);
 
@@ -464,65 +440,6 @@ const getKeepaData = async (asinGroup, retryCount = 0) => {
   }
 };
 
-// const saveOrders = async (req, res, next, products) => {
-//   console.log("Executing saveOrders...")
-//   logger.info("Executing saveOrders...")
-
-//   req.body.dataStartTime = new Date();
-//   req.body.dataEndTime = new Date() - 60 * 24 * 60 * 60 * 1000; // -> 60 days
-//   const jsonData = await generateOrderReport(req, res, next);
-
-//   if (!jsonData) {
-//     logger.error('Generating order report failed');
-//     throw new Error('Failed to retrieve orders');
-//   }
-
-//   const filteredOrders = jsonData.filter(
-//     (item) =>
-//       (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
-//       new Date() - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 // -> 30 days
-//   );
-
-
-
-
-//   const skuQuantities = filteredOrders.reduce((acc, item) => {
-//     const { sku, quantity, asin } = item;
-//     const qty = parseInt(quantity, 10);
-//     if (!acc[sku]) {
-//       acc[sku] = { quantity: qty, asin };
-//     } else {
-//       acc[sku].quantity += qty;
-//     }
-//     return acc;
-//   }, {});
-
-//   const asinToProductId = products.reduce((acc, product) => {
-//     if (!acc[product.ASIN]) {
-//       acc[product.ASIN] = [];
-//     }
-//     acc[product.ASIN].push(product.id);
-//     return acc;
-//   }, {});
-
-
-//   const finalJson = Object.entries(skuQuantities).flatMap(
-//     ([sku, { quantity, asin }]) => {
-//       return (asinToProductId[asin] || []).map(productId => ({
-//         sku,
-//         product_id: productId,
-//         quantity,
-//         velocity: quantity / 30,
-//       }));
-//     }
-//   );
-
-
-//   logger.info("The final json is: ", finalJson)
-//   return finalJson;
-// };
-
-
 const saveOrdersWithoutAvgPrice = async (req, res, next, products) => {
   console.log("Executing saveOrders...");
   logger.info("Executing saveOrders...");
@@ -539,7 +456,7 @@ const saveOrdersWithoutAvgPrice = async (req, res, next, products) => {
   const filteredOrders = jsonData.filter(
     (item) =>
       (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
-      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 // -> 60 days
+      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 
   );
 
   // Agrupar por SKU y calcular cantidades por cada rango
@@ -676,9 +593,6 @@ const saveOrders = async (req, res, next, products) => {
   return finalJson;
 };
 
-
-
-
 const getEstimateFees = async (req, res, next, products) => {
   let accessToken = req.headers['x-amz-access-token'];
   const feeEstimate = [];
@@ -686,7 +600,7 @@ const getEstimateFees = async (req, res, next, products) => {
   try {
     for (let i = 0; i < products.length; i += 2) {
       try {
-        await delay(2100); // Espera 2.1 segundos antes de procesar el siguiente producto
+        await delay(2100);
         feeEstimate.push(await estimateFeesForProduct(products[i], accessToken));
         feeEstimate.push(await estimateFeesForProduct(products[i + 1], accessToken));
       } catch (error) {
@@ -770,7 +684,6 @@ const estimateFeesForProduct = async (product, accessToken) => {
   }
 };
 
-//* This function recives an array of products (keepa + orders), calculates the fees and saves on the database the complete tracked products
 const processBatch = async (req, res, next, productBatch, combinedData, BATCH_SIZE_FEES, batchIndex) => {
   const feeEstimates = [];
   logger.info(`start delay for proccess batch of 3 sec`);
@@ -900,62 +813,3 @@ const getNewAccessToken = async () => {
     throw new Error('Failed to refresh token');
   }
 };
-
-// async function fixUntrackedProducts(untrackedProductIds, fixedProducts, unfixedProducts) {
-//   for (const productId of untrackedProductIds) {
-//     try {
-//       // 1. Buscar el asin del producto no trackeado
-//       const untrackedProduct = await Product.findOne({ where: { id: productId } });
-
-
-//       if (!untrackedProduct) {
-//         logger.warn(`Product with ID ${productId} not found.`);
-//         continue;
-//       }
-
-//       const { ASIN } = untrackedProduct;
-
-//       // 2. Encontrar todos los productos con ese asin
-//       const productsWithSameAsin = await Product.findAll({ where: { ASIN } });
-
-//       // 3. Encontrar el TrackedProduct del primer producto encontrado con ese asin
-//       const firstProduct = productsWithSameAsin[0];
-//       const trackedProduct = await TrackedProduct.findOne({ where: { product_id: firstProduct.id } });
-
-//       if (!trackedProduct) {
-//         logger.warn(`TrackedProduct for Product with ID ${firstProduct.id} not found.`);
-//         continue;
-//       }
-
-//       // 4. Crear un nuevo TrackedProduct para cada uno de los productos restantes
-//       for (const product of productsWithSameAsin.slice(1)) {
-//         const newTrackedProductData = {
-//           ...trackedProduct.dataValues, // Copiar todos los valores del trackedProduct original
-//           product_id: product.id, // Asignar el nuevo product_id
-//           createdAt: new Date(), // Actualizar la fecha de creación
-//           updatedAt: new Date() // Actualizar la fecha de actualización
-//         };
-
-//         delete newTrackedProductData.id; // Eliminar el ID para que se genere uno nuevo
-
-//         try {
-//           const newTrackedProduct = await TrackedProduct.create(newTrackedProductData);
-//           fixedProducts.push(product.id);
-//           logger.info(`TrackedProduct.create successful: ${JSON.stringify(newTrackedProduct)}`);
-
-
-//         } catch (error) {
-//           unfixedProducts.push(product.id);
-//           logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
-//         }
-
-//       }
-//     } catch (error) {
-//       logger.error(`Error fixing product with ID ${productId}: ${error.message}`);
-//     }
-//   }
-
-//   // 5. Mostrar los id de los productos actualizados y no actualizados
-//   logger.info(`Fixed products: [ ${Array.from(fixedProducts).join(', ')} ]`);
-//   logger.info(`Unfixed products: [ ${Array.from(unfixedProducts).join(', ')} ]`);
-// }

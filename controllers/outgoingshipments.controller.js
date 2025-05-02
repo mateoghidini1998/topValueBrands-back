@@ -7,6 +7,7 @@ const {
   Pallet,
   PurchaseOrder,
   WarehouseLocation,
+  AmazonProductDetail
 } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
@@ -323,11 +324,16 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "id",
                   "product_name",
                   "product_image",
-                  "seller_sku",
                   "in_seller_account",
                   "upc",
                   "pack_type",
-                  "ASIN",
+                ],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    as: "AmazonProductDetail",
+                    attributes: ["ASIN", "seller_sku"],
+                  },
                 ],
               },
             ],
@@ -358,23 +364,24 @@ exports.getShipment = asyncHandler(async (req, res) => {
     ...shipmentData,
     PalletProducts: shipmentData.PalletProducts.map((palletProduct) => {
       const product = palletProduct.purchaseOrderProduct?.Product;
-
+      const amazonDetail = product?.AmazonProductDetail;
+  
       return {
         ...palletProduct,
-        warehouse_location:
-          palletProduct.Pallet?.warehouseLocation?.location || null,
+        warehouse_location: palletProduct.Pallet?.warehouseLocation?.location || null,
         pallet_number: palletProduct.Pallet?.pallet_number || null,
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
-        seller_sku: product?.seller_sku || null,
+        seller_sku: amazonDetail?.seller_sku || null,
         upc: product?.upc || null,
         pack_type: parseInt(product?.pack_type) || 1,
-        ASIN: product?.ASIN || null,
+        ASIN: amazonDetail?.ASIN || null,
         in_seller_account: product?.in_seller_account || null,
-        purchaseOrderProduct: undefined,
+        purchaseOrderProduct: undefined, 
       };
     }),
   };
+  
 
   const uniquePallets = [];
 
@@ -388,7 +395,6 @@ exports.getShipment = asyncHandler(async (req, res) => {
     }
   });
 
-  // 🔥 NUEVO: Llamamos a la función MySQL por cada pallet
   for (const pallet of uniquePallets) {
     const resultArray = await sequelize.query(
       `SELECT are_all_pallet_products_in_shipment(:pallet_id, :shipment_id) AS allInShipment`,
@@ -397,7 +403,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
           pallet_id: pallet.pallet_id,
           shipment_id: shipment.id,
         },
-        type: sequelize.QueryTypes.SELECT, // 👈 este retorna un array simple
+        type: sequelize.QueryTypes.SELECT,
       }
     );
 
@@ -810,14 +816,14 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
   const { purchase_order_id } = req.params;
 
-  // Obtener el purchase order asociado al purchase_order_id
+  // Buscar el Purchase Order
   const purchaseOrder = await PurchaseOrder.findByPk(purchase_order_id);
 
   if (!purchaseOrder) {
     return res.status(404).json({ msg: "Purchase order not found" });
   }
 
-  // Obtener todos los pallets relacionados con el purchase_order_id
+  // Buscar los pallets con productos relacionados
   const pallets = await Pallet.findAll({
     where: { purchase_order_id },
     include: [
@@ -840,12 +846,16 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
                 model: Product,
                 attributes: [
                   "id",
-                  "ASIN",
-                  "seller_sku",
                   "product_image",
                   "product_name",
                   "in_seller_account",
                   "upc",
+                ],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    attributes: ["ASIN", "seller_sku"],
+                  },
                 ],
               },
             ],
@@ -861,7 +871,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
       .json({ msg: "No pallets found for the given purchase order ID" });
   }
 
-  // Formatear la respuesta para que sea más clara
+  // Formatear la respuesta
   const formattedPallets = pallets.map((pallet) => {
     return {
       purchase_order_number: purchaseOrder.order_number,
@@ -870,16 +880,18 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
       purchase_order_id: pallet.purchase_order_id,
       products: pallet.PalletProducts.map((palletProduct) => {
         const productData = palletProduct.purchaseOrderProduct.Product || {};
+        const detail = productData.AmazonProductDetail || {};
+
         return {
           pallet_product_id: palletProduct.id,
           quantity: palletProduct.quantity,
           product_id: productData.id,
-          ASIN: productData.ASIN,
-          upc: productData.upc,
-          seller_sku: productData.seller_sku,
-          product_image: productData.product_image,
-          product_name: productData.product_name,
-          in_seller_account: productData.in_seller_account,
+          ASIN: detail.ASIN || null,
+          upc: productData.upc || null,
+          seller_sku: detail.seller_sku || null,
+          product_image: productData.product_image || null,
+          product_name: productData.product_name || null,
+          in_seller_account: productData.in_seller_account || null,
           available_quantity: palletProduct.available_quantity,
           pallet_number: pallet.pallet_number,
         };
@@ -893,6 +905,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
     pallets: formattedPallets,
   });
 });
+
 
 //@route    GET api/v1/purchaseorders/with-pallets
 //@desc     Get all purchase orders associated with pallets

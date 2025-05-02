@@ -61,8 +61,8 @@ const createProduct = async (productData, accessToken) => {
 const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, orderBy = 'updatedAt', orderWay = 'DESC' }) => {
   const offset = (page - 1) * limit;
 
-  const allowedOrderBy = ['updatedAt', 'product_name', 'product_cost', 'supplier_item_number', 'pack_type', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA', 'warehouse_stock'];
-  if (!allowedOrderBy.includes(orderBy)) orderBy = 'updatedAt';
+  const allowedOrderBy = ['p.updatedAt', 'product_name', 'product_cost', 'supplier_item_number', 'pack_type', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA', 'warehouse_stock', 'ASIN', 'seller_sku'];
+  if (!allowedOrderBy.includes(orderBy)) orderBy = 'p.updatedAt';
 
   const allowedOrderWay = ['ASC', 'DESC'];
   if (!allowedOrderWay.includes(orderWay)) orderWay = 'DESC';
@@ -81,8 +81,8 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
       s.supplier_name LIKE :keyword OR 
       p.pack_type LIKE :keyword OR 
       p.product_cost LIKE :keyword OR 
-      p.seller_sku LIKE :keyword OR 
-      p.ASIN LIKE :keyword OR 
+      apd.seller_sku LIKE :keyword OR 
+      apd.ASIN LIKE :keyword OR 
       p.product_name LIKE :keyword
     )`;
     replacements.keyword = `%${keyword}%`;
@@ -97,92 +97,57 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
     offset,
   });
 
+  const cleanedProducts = products.map((product) => {
+    const isAmazon = product.amazon_asin !== null;
+    const isWalmart = product.walmart_gtin !== null;
+  
+    const base = {
+      id: product.id,
+      product_name: product.product_name,
+      product_cost: product.product_cost,
+      product_image: product.product_image,
+      supplier_item_number: product.supplier_item_number,
+      supplier_id: product.supplier_id,
+      upc: product.upc,
+      supplier_name: product.supplier_name,
+      pack_type: product.pack_type,
+      warehouse_stock: product.warehouse_stock,
+      is_active: product.is_active,
+      in_seller_account: product.in_seller_account,
+      marketplace: isAmazon && isWalmart ? "both" : isAmazon ? "amazon" : isWalmart ? "walmart" : null
+    };
+  
+    if (isAmazon) {
+        base.asin = product.amazon_asin,
+        base.seller_sku = product.amazon_seller_sku,
+        base.warehouse_stock = product.amazon_warehouse_stock,
+        base.fba_available_inventory = product.amazon_fba_available_inventory,
+        base.reserved_quantity = product.amazon_reserved_quantity,
+        base.inbound_to_fba = product.amazon_inbound_to_fba,
+        base.dangerous_goods = product.dangerous_goods,
+        base.is_hazmat = product.is_hazmat,
+        base.hazmat_value = product.hazmat_value
+
+    }
+  
+    if (isWalmart) {
+        base.available_to_sell_qty = product.walmart_available_to_sell_qty,
+        base.price = product.walmart_price,
+        base.gtin = product.walmart_gtin,
+        base.seller_sku = product.walmart_seller_sku
+    }
+  
+    return base;
+  });
+  
   return {
     total,
     pages: Math.ceil(total / limit),
     currentPage: page,
-    data: products,
+    data: cleanedProducts,
   };
+
 };
-
-// const deleteProduct = async (id, accessToken) => {
-//   console.log('Executing deleteProduct...');
-//   console.log(`access token: ${accessToken}`);
-//   const product = await productRepository.FindProductById(id);
-
-//   if (!product) {
-//     throw new Error('Product not found');
-//   }
-
-//   if (await productHasStock(product)) {
-//     throw new Error('Product has stock');
-//   }
-
-//   const purchase_orders_count = await purchaseOrderRepository.FindPurchaseOrdersByProduct(id);
-//   const pallets_count = await palletRepository.FindPalletsAssociatedToProduct(id);
-//   const shipments_count = await shipmentRepository.FindAllShipmentsAssociatedToProduct(id);
-
-//   console.log({
-//     purchase_orders_count,
-//     pallets_count,
-//     shipments_count
-//   })
-
-//   if (purchase_orders_count > 0 || pallets_count > 0 || shipments_count > 0) {
-//     throw new Error('Product has associated purchase orders, pallets or shipments');
-//   }
-
-
-//   await productRepository.DeleteProduct(id).then(async (res) => {
-//     console.log({ res });
-//     if (res) {
-//       await TrackedProduct.findOne({ where: { product_id: id } }).then(async (trackedProduct) => {
-//         if (trackedProduct) {
-//           await trackedProduct.update({
-//             is_active: 0
-//           });
-//         }
-//       });
-
-//       await deleteProductFromSellerAccount(product.seller_sku, accessToken);
-//     }
-//   });
-
-// }
-// // Used in deleteProduct function
-// const productHasStock = async (product) => {
-//   const warehouse_stock = product.warehouse_stock;
-//   const fba_stock = product.FBA_available_inventory;
-//   const reserved_quantity = product.reserved_quantity;
-//   const inbound_to_fba = product.Inbound_to_FBA;
-
-//   return warehouse_stock > 0 || fba_stock > 0 || reserved_quantity > 0 || inbound_to_fba > 0;
-// }
-
-// // Used in deleteProduct function
-// const deleteProductFromSellerAccount = async (sellerSku, accessToken) => {
-
-//   const sellerId = process.env.AWS_SELLER_ID || 'A2VYDBAL8BMVQK';
-//   const marketplaceIds = [`${process.env.MARKETPLACE_US_ID}`];
-//   const url = `https://sellingpartnerapi-na.amazon.com/listings/2021-08-01/items/${sellerId}/${sellerSku}?marketplaceIds=${marketplaceIds}&issueLocale=en_US`;
-
-//   const headers = {
-//     'Content-Type': 'application/json',
-//     'x-amz-access-token': `${accessToken}`
-//   };
-
-//   try {
-//     const response = await fetch(url, {
-//       method: 'DELETE',
-//       headers
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error('Error deleting product from seller account:', error);
-//     logger.error(`Error deleting product from seller account: ${error.message}`);
-//     throw new Error(`Error deleting product from seller account: ${error.message}`);
-//   }
-// }
 
 const deleteProduct = async (id, accessToken) => {
   logger.info('Executing deleteProduct...', { productId: id });

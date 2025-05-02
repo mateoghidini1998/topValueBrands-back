@@ -1,5 +1,5 @@
 const { QueryTypes } = require("sequelize");
-const { Product, sequelize } = require("../models");
+const { Product, AmazonProductDetail, WalmartProductDetail, sequelize } = require("../models");
 
 const FindAllProducts = async ({
   whereClause,
@@ -11,10 +11,41 @@ const FindAllProducts = async ({
 }) => {
   const products = await sequelize.query(
     `
-    SELECT p.id, p.product_name, p.product_cost, p.seller_sku, p.ASIN, p.updatedAt, p.product_image, p.supplier_item_number, p.pack_type, p.warehouse_stock, p.FBA_available_inventory, p.reserved_quantity, p.Inbound_to_FBA, p.in_seller_account, p.is_active, p.supplier_id, p.upc,
-           s.supplier_name
+    SELECT 
+      p.id, 
+      p.product_name, 
+      p.product_cost, 
+      p.product_image, 
+      p.supplier_item_number, 
+      p.supplier_id, 
+      p.upc,
+      s.supplier_name,
+      p.pack_type,
+      p.warehouse_stock,
+      p.is_active,
+      p.in_seller_account,
+      
+      -- Datos de AmazonProductDetail
+      apd.ASIN AS amazon_asin,
+      apd.seller_sku AS amazon_seller_sku,
+      apd.warehouse_stock AS amazon_warehouse_stock,
+      apd.FBA_available_inventory AS amazon_fba_available_inventory,
+      apd.reserved_quantity AS amazon_reserved_quantity,
+      apd.Inbound_to_FBA AS amazon_inbound_to_fba,
+      apd.dangerous_goods AS dangerous_goods,
+      apd.is_hazmat AS is_hazmat,
+      apd.hazmat_value AS hazmat_value,
+      
+      -- Datos de WalmartProductDetail
+      wpd.available_to_sell_qty AS walmart_available_to_sell_qty,
+      wpd.price AS walmart_price,
+      wpd.gtin AS walmart_gtin,
+      wpd.seller_sku AS walmart_seller_sku
+
     FROM products p
     LEFT JOIN suppliers s ON p.supplier_id = s.id
+    LEFT JOIN amz_product_details apd ON p.id = apd.product_id
+    LEFT JOIN wmt_product_details wpd ON p.id = wpd.product_id
     ${whereClause}
     ORDER BY ${orderBy} ${orderWay}
     LIMIT :limit OFFSET :offset
@@ -27,7 +58,8 @@ const FindAllProducts = async ({
 
   const countResult = await sequelize.query(
     `
-    SELECT COUNT(*) AS total FROM products p
+    SELECT COUNT(*) AS total 
+    FROM products p
     LEFT JOIN suppliers s ON p.supplier_id = s.id
     ${whereClause}
   `,
@@ -43,6 +75,7 @@ const FindAllProducts = async ({
   };
 };
 
+
 const FindProductById = async (id) => {
   return await Product.findByPk(id);
 };
@@ -50,6 +83,14 @@ const FindProductById = async (id) => {
 const CreateProduct = async (productData) => {
   return await Product.create(productData);
 };
+
+const CreateAmazonProductDetail = async (productDetailData) => {
+  return await AmazonProductDetail.create(productDetailData);
+};
+
+const CreateWalmartProductDetail = async (productDetailData) => {
+  return await WalmartProductDetail.create(productDetailData);
+}
 
 const DeleteProduct = async (id) => {
   return await Product.update({ is_active: 0 }, { where: { id } });
@@ -67,6 +108,8 @@ module.exports = {
   FindAllProducts,
   FindProductById,
   CreateProduct,
+  CreateAmazonProductDetail,
+  CreateWalmartProductDetail,
   DeleteProduct,
   UpdateProductDgType
 };

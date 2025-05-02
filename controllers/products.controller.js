@@ -1,15 +1,9 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async');
 const axios = require('axios');
-const { Supplier, TrackedProduct, Product, User, SupressedListing } = require('../models');
-const fs = require('fs');
-const path = require('path');
+const { Supplier, TrackedProduct, Product, SupressedListing } = require('../models');
 const dotenv = require('dotenv');
-const { where, Op } = require('sequelize');
 const productService = require('../services/products.service');
-
-const { clerkClient, getAuth } = require('@clerk/express');
-const req = require('express/lib/request');
 
 dotenv.config({
   path: './.env',
@@ -130,9 +124,6 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
   }
 });
 
-//@route    GET api/products/
-//@desc     Get products
-//@access   Private
 //@route    GET api/products/
 //@desc     Get products
 //@access   Private
@@ -263,17 +254,12 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
 
 exports.addUPCToPOProduct = async (product, upc) => {
 
-  // if (!product.upc) {
   if (!upc || upc.trim() === '') {
     throw new Error(`Invalid UPC provided for product ${product.id}`);
   }
   product.upc = upc.trim();
   await product.save();
-  // } 
-  // else {
-  //   console.log(Product ${product.id} already has a valid UPC: ${product.upc});
-  //   throw new Error(Product ${product.id} already has a valid UPC: ${product.upc});
-  // }
+  
 }
 
 exports.addUPC = asyncHandler(async (req, res) => {
