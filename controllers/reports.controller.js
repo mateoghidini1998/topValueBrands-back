@@ -141,13 +141,13 @@ const processReport = async (productsArray) => {
         // Crear nuevo Product y su AmazonProductDetail
         const newProduct = await Product.create({
           product_name: product['product-name'],
+          in_seller_account: true,
         }, { transaction: t });
 
         const newDetail = await AmazonProductDetail.create({
           product_id: newProduct.id,
           ASIN: asin,
           seller_sku: product.sku,
-          in_seller_account: true,
           FBA_available_inventory: parseFloat(product['afn-fulfillable-quantity']),
           reserved_quantity: parseFloat(product['afn-reserved-quantity']),
           Inbound_to_FBA: parseFloat(product['afn-inbound-shipped-quantity']),
