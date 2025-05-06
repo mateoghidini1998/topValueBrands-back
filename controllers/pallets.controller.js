@@ -1,7 +1,21 @@
-const { Product, Pallet, PurchaseOrder, WarehouseLocation, PalletProduct, PurchaseOrderProduct, OutgoingShipmentProduct, sequelize } = require("../models");
-const { createPalletProduct, updatePalletProduct } = require('./palletproducts.controller')
+const {
+  Product,
+  Pallet,
+  PurchaseOrder,
+  WarehouseLocation,
+  PalletProduct,
+  PurchaseOrderProduct,
+  OutgoingShipmentProduct,
+  sequelize,
+} = require("../models");
+const {
+  createPalletProduct,
+  updatePalletProduct,
+} = require("./palletproducts.controller");
 const asyncHandler = require("../middlewares/async");
-const { recalculateWarehouseStock } = require('../utils/warehouse_stock_calculator');
+const {
+  recalculateWarehouseStock,
+} = require("../utils/warehouse_stock_calculator");
 const { Op } = require("sequelize");
 
 //@route    POST api/v1/pallets
@@ -9,13 +23,18 @@ const { Op } = require("sequelize");
 //@access   Private
 
 exports.createPallet = asyncHandler(async (req, res) => {
-  const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
+  const { pallet_number, warehouse_location_id, purchase_order_id, products } =
+    req.body;
 
   const transaction = await sequelize.transaction();
 
   try {
-    const location = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
-    const purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
+    const location = await WarehouseLocation.findOne({
+      where: { id: warehouse_location_id },
+    });
+    const purchase_order = await PurchaseOrder.findOne({
+      where: { id: purchase_order_id },
+    });
 
     let pallet = await Pallet.findOne({ where: { pallet_number } });
 
@@ -66,7 +85,9 @@ exports.createPallet = asyncHandler(async (req, res) => {
         });
 
         if (!purchaseOrderProduct) {
-          throw new Error(`PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`);
+          throw new Error(
+            `PurchaseOrderProduct with ID ${purchaseorderproduct_id} not found.`
+          );
         }
 
         // Añadir el product_id al Set para recalcular warehouse_stock
@@ -78,7 +99,9 @@ exports.createPallet = asyncHandler(async (req, res) => {
         await recalculateWarehouseStock(productId);
       }
     } else {
-      return res.status(400).json({ msg: "No products provided to associate with the pallet." });
+      return res
+        .status(400)
+        .json({ msg: "No products provided to associate with the pallet." });
     }
 
     await transaction.commit();
@@ -100,10 +123,10 @@ exports.getPallets = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
-  const palletNumber = req.query.pallet_number || '';
+  const palletNumber = req.query.pallet_number || "";
   const warehouseLocationId = req.query.warehouse_location_id || null;
-  const orderBy = req.query.orderBy || 'updatedAt';
-  const orderWay = req.query.orderWay || 'DESC';
+  const orderBy = req.query.orderBy || "updatedAt";
+  const orderWay = req.query.orderWay || "DESC";
 
   try {
     const whereConditions = { is_active: true };
@@ -121,31 +144,38 @@ exports.getPallets = asyncHandler(async (req, res) => {
       include: [
         {
           model: PurchaseOrderProduct,
-          as: 'purchaseorderproducts',
+          as: "purchaseorderproducts",
           through: {
             model: PalletProduct,
-            attributes: ['quantity', 'available_quantity'],
+            attributes: ["quantity", "available_quantity"],
           },
-          attributes: ['id'],
+          attributes: ["id"],
           include: [
             {
               model: Product,
-              attributes: ['product_name', 'product_image', 'seller_sku', 'ASIN', 'dangerous_goods'],
+              attributes: ["product_name", "product_image"],
+              include: [
+                {
+                  model: AmazonProductDetail,
+                  as: "AmazonProductDetail",
+                  attributes: ["ASIN", "seller_sku", "dangerous_goods"],
+                },
+              ],
             },
           ],
         },
         {
           model: WarehouseLocation,
-          as: 'warehouseLocation',
-          attributes: ['id', 'location'],
+          as: "warehouseLocation",
+          attributes: ["id", "location"],
         },
         {
           model: PurchaseOrder,
-          as: 'purchaseOrder',
-          attributes: ['id', 'order_number'],
+          as: "purchaseOrder",
+          attributes: ["id", "order_number"],
         },
       ],
-      distinct: true,  // <- Agregado para evitar conteo incorrecto
+      distinct: true, // <- Agregado para evitar conteo incorrecto
       limit,
       offset,
       order: [[orderBy, orderWay]],
@@ -160,22 +190,31 @@ exports.getPallets = asyncHandler(async (req, res) => {
       total: count,
       pages: totalPages,
       currentPage: page,
-      data: pallets.map((pallet) => ({
-        id: pallet.id,
-        pallet_number: pallet.pallet_number,
-        warehouse_location_id: pallet.warehouse_location_id,
-        warehouse_location: pallet.warehouseLocation.location,
-        purchase_order_number: pallet.purchaseOrder.order_number,
-        purchase_order_id: pallet.purchase_order_id,
-        createdAt: pallet.createdAt,
-        updatedAt: pallet.updatedAt,
-        products: pallet.purchaseorderproducts,
-        storage_type: pallet.purchaseorderproducts[0]?.Product.dangerous_goods, // Asignar storage_type al primer producto del pallet
-      })),
+      data: pallets.map((pallet) => {
+        const firstProduct = pallet.purchaseorderproducts[0]?.Product || {};
+        const detail = firstProduct.AmazonProductDetail || {};
+
+        return {
+          id: pallet.id,
+          pallet_number: pallet.pallet_number,
+          warehouse_location_id: pallet.warehouse_location_id,
+          warehouse_location: pallet.warehouseLocation.location,
+          purchase_order_number: pallet.purchaseOrder.order_number,
+          purchase_order_id: pallet.purchase_order_id,
+          createdAt: pallet.createdAt,
+          updatedAt: pallet.updatedAt,
+          products: pallet.purchaseorderproducts,
+          storage_type: detail.dangerous_goods || null,
+        };
+      }),
     });
   } catch (error) {
-    console.error('Error fetching pallets:', error);
-    return res.status(500).json({ success: false, message: 'Error fetching pallets', error: error.message });
+    console.error("Error fetching pallets:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching pallets",
+      error: error.message,
+    });
   }
 });
 
@@ -192,14 +231,25 @@ exports.getPallet = asyncHandler(async (req, res) => {
         include: [
           {
             model: PurchaseOrderProduct,
-            as: 'purchaseOrderProduct',
-            attributes: [
-              'id', 'expire_date'
-            ],
+            as: "purchaseOrderProduct",
+            attributes: ["id", "expire_date"],
             include: [
               {
                 model: Product,
-                attributes: ['product_name', 'product_image', 'seller_sku', "in_seller_account", "upc", "pack_type"],
+                attributes: [
+                  "product_name",
+                  "product_image",
+                  "in_seller_account",
+                  "upc",
+                  "pack_type",
+                ],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    as: "AmazonProductDetail",
+                    attributes: ["ASIN", "seller_sku", "dangerous_goods"],
+                  },
+                ],
               },
             ],
           },
@@ -207,13 +257,13 @@ exports.getPallet = asyncHandler(async (req, res) => {
       },
       {
         model: WarehouseLocation,
-        as: 'warehouseLocation',
-        attributes: ['id', 'location'],
+        as: "warehouseLocation",
+        attributes: ["id", "location"],
       },
       {
         model: PurchaseOrder,
-        as: 'purchaseOrder',
-        attributes: ['id', 'order_number'],
+        as: "purchaseOrder",
+        attributes: ["id", "order_number"],
       },
     ],
   });
@@ -222,23 +272,31 @@ exports.getPallet = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: "Pallet not found" });
   }
 
-  // Convierte a un objeto plano para manipulación
   const palletData = pallet.toJSON();
 
-  // Procesa los datos para incluir los campos de Product directamente en PalletProducts
   const formattedPallet = {
     ...palletData,
     PalletProducts: palletData.PalletProducts.map((palletProduct) => {
-      // const product =
-      //   palletProduct.PurchaseOrderProduct?.Product || {};
+      const product = palletProduct.PurchaseOrderProduct?.Product || {};
+      const detail = product.AmazonProductDetail || {};
+
       return {
         ...palletProduct,
+        product_name: product.product_name || null,
+        product_image: product.product_image || null,
+        seller_sku: detail.seller_sku || null,
+        ASIN: detail.ASIN || null,
+        upc: product.upc || null,
+        pack_type: product.pack_type || null,
+        in_seller_account: product.in_seller_account || null,
+        expire_date: palletProduct.PurchaseOrderProduct?.expire_date || null,
       };
     }),
   };
 
   return res.status(200).json(formattedPallet);
 });
+
 
 //@route    DELETE api/v1/pallets/:id
 //@desc     Delete pallet by id
@@ -250,13 +308,17 @@ exports.deletePallet = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: "Pallet not found" });
   }
 
-  const purchaseOrder = await PurchaseOrder.findOne({ where: { id: pallet.purchase_order_id } });
+  const purchaseOrder = await PurchaseOrder.findOne({
+    where: { id: pallet.purchase_order_id },
+  });
 
   if (!purchaseOrder) {
     return res.status(404).json({ msg: "Purchase Order not found" });
   }
 
-  const palletProducts = await PalletProduct.findAll({ where: { pallet_id: pallet.id } });
+  const palletProducts = await PalletProduct.findAll({
+    where: { pallet_id: pallet.id },
+  });
 
   // Verify that pallet products are not associated with any outgoingshipmentproduct
   for (const palletProduct of palletProducts) {
@@ -265,7 +327,9 @@ exports.deletePallet = asyncHandler(async (req, res) => {
     });
 
     if (outgoingShipmentProduct) {
-      return res.status(400).json({ msg: "Pallet is associated with an outgoing shipment" });
+      return res
+        .status(400)
+        .json({ msg: "Pallet is associated with an outgoing shipment" });
     }
   }
 
@@ -280,13 +344,14 @@ exports.deletePallet = asyncHandler(async (req, res) => {
     }
 
     await purchaseOrderProduct.update({
-      quantity_available: purchaseOrderProduct.quantity_available + palletProduct.quantity,
+      quantity_available:
+        purchaseOrderProduct.quantity_available + palletProduct.quantity,
     });
-
   }
 
-
-  let location = await WarehouseLocation.findOne({ where: { id: pallet.warehouse_location_id } });
+  let location = await WarehouseLocation.findOne({
+    where: { id: pallet.warehouse_location_id },
+  });
 
   if (!location) {
     return res.status(404).json({ msg: "Location not found" });
@@ -304,11 +369,16 @@ exports.deletePallet = asyncHandler(async (req, res) => {
 //@desc     update pallet by id
 //@access   Private
 exports.updatePallet = asyncHandler(async (req, res) => {
-  const { pallet_number, warehouse_location_id, purchase_order_id, products } = req.body;
+  const { pallet_number, warehouse_location_id, purchase_order_id, products } =
+    req.body;
 
   let pallet = await Pallet.findOne({ where: { id: req.params.id } });
-  let newLocation = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
-  let purchase_order = await PurchaseOrder.findOne({ where: { id: purchase_order_id } });
+  let newLocation = await WarehouseLocation.findOne({
+    where: { id: warehouse_location_id },
+  });
+  let purchase_order = await PurchaseOrder.findOne({
+    where: { id: purchase_order_id },
+  });
 
   if (!pallet) {
     return res.status(404).json({ msg: "Pallet not found" });
@@ -322,17 +392,23 @@ exports.updatePallet = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: "Purchase order not found" });
   }
 
-  if (pallet.warehouse_location_id !== warehouse_location_id && newLocation.current_capacity <= 0) {
+  if (
+    pallet.warehouse_location_id !== warehouse_location_id &&
+    newLocation.current_capacity <= 0
+  ) {
     return res.status(400).json({
       msg: `The location with id ${warehouse_location_id} has no space available`,
     });
   }
 
-  let oldLocation = await WarehouseLocation.findOne({ where: { id: pallet.warehouse_location_id } });
+  let oldLocation = await WarehouseLocation.findOne({
+    where: { id: pallet.warehouse_location_id },
+  });
 
   await pallet.update({
     pallet_number: pallet_number || pallet.pallet_number,
-    warehouse_location_id: warehouse_location_id || pallet.warehouse_location_id,
+    warehouse_location_id:
+      warehouse_location_id || pallet.warehouse_location_id,
     purchase_order_id: purchase_order_id || pallet.purchase_order_id,
   });
 
@@ -362,13 +438,13 @@ exports.updatePallet = asyncHandler(async (req, res) => {
 exports.getAvailableLocations = asyncHandler(async (req, res) => {
   try {
     // Leer el parámetro desde la query string
-    const showAvailable = req.query.available === 'true';
+    const showAvailable = req.query.available === "true";
 
     // Buscar las ubicaciones en la base de datos
     const locations = await WarehouseLocation.findAll({
-      attributes: ['id', 'location', 'capacity', 'current_capacity'],
+      attributes: ["id", "location", "capacity", "current_capacity"],
       where: showAvailable ? { current_capacity: { [Op.gt]: 0 } } : {},
-      order: [['location', 'ASC']],
+      order: [["location", "ASC"]],
     });
 
     // Responder con los datos encontrados
@@ -398,8 +474,12 @@ exports.updatePalletLocation = asyncHandler(async (req, res) => {
     return res.status(404).json({ msg: "Pallet not found" });
   }
 
-  let oldLocation = await WarehouseLocation.findOne({ where: { id: pallet.warehouse_location_id } });
-  let newLocation = await WarehouseLocation.findOne({ where: { id: warehouse_location_id } });
+  let oldLocation = await WarehouseLocation.findOne({
+    where: { id: pallet.warehouse_location_id },
+  });
+  let newLocation = await WarehouseLocation.findOne({
+    where: { id: warehouse_location_id },
+  });
 
   if (!oldLocation) {
     return res.status(404).json({ msg: "Old location not found" });
@@ -418,7 +498,6 @@ exports.updatePalletLocation = asyncHandler(async (req, res) => {
 
   newLocation.current_capacity -= 1;
   await newLocation.save();
-
 
   return res.status(200).json({ msg: "Pallet location updated successfully" });
 });

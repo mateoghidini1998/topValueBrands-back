@@ -57,20 +57,6 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "STANDARD",
         allowNull: true,
       },
-      pack_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      is_active: {
-        type: DataTypes.BOOLEAN,
-        allowNull: true,
-        defaultValue: true,
-      },
-      in_seller_account: {
-        type: DataTypes.BOOLEAN,
-        allowNull: true,
-        defaultValue: false,
-      },
     },
     {
       sequelize,

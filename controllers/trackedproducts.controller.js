@@ -69,14 +69,29 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         attributes: ['supplier_name'],
         required: false,
       },
+      {
+        model: AmazonProductDetail,
+        as: 'AmazonProductDetail',
+        attributes: [
+          'ASIN',
+          'seller_sku',
+          'FBA_available_inventory',
+          'reserved_quantity',
+          'Inbound_to_FBA',
+          'dangerous_goods',
+        ],
+      },
     ],
     where: {},
     required: true,
   };
 
+  // Búsqueda por texto
   if (keyword) {
     includeProduct.where[Op.or] = [
       { product_name: { [Op.like]: `%${keyword}%` } },
+      { '$product.AmazonProductDetail.ASIN$': { [Op.like]: `%${keyword}%` } },
+      { '$product.AmazonProductDetail.seller_sku$': { [Op.like]: `%${keyword}%` } },
     ];
   }
 
@@ -143,63 +158,76 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   }
 });
 
+
 exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
-  const products = await PurchaseOrderProduct.findAll({ where: { purchase_order_id: req.params.id } });
-  if (!products) {
+  // 1. Buscar todos los PurchaseOrderProducts del pedido
+  const products = await PurchaseOrderProduct.findAll({
+    where: { purchase_order_id: req.params.id },
+  });
+
+  if (!products || products.length === 0) {
     return res.status(404).json({ message: 'Products not found' });
   }
 
-  const trackedProducts = await TrackedProduct.findAll({ where: { product_id: products.map(product => product.product_id) } });
-  if (!trackedProducts) {
+  const productIds = products.map(product => product.product_id);
+
+  // 2. Buscar los TrackedProducts con sus relaciones
+  const trackedProducts = await TrackedProduct.findAll({
+    where: { product_id: productIds },
+    include: [
+      {
+        model: Product,
+        as: 'product',
+        attributes: [
+          'product_name',
+          'product_image',
+          'product_cost',
+          'in_seller_account',
+          'supplier_id'
+        ],
+        include: [
+          {
+            model: AmazonProductDetail,
+            as: 'AmazonProductDetail',
+            attributes: ['ASIN', 'seller_sku'],
+          },
+          {
+            model: Supplier,
+            as: 'supplier',
+            attributes: ['supplier_name'],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!trackedProducts || trackedProducts.length === 0) {
     return res.status(404).json({ message: 'Tracked products not found' });
   }
 
-  const productsOfTheOrder = await Promise.all(trackedProducts.map(async (trackedProduct) => {
-
-    const product = await Product.findOne({ where: { id: trackedProduct.product_id } });
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    const supplier = await Supplier.findOne({ where: { id: product.supplier_id } });
-    if (!supplier) {
-      return res.status(404).json({ message: 'Supplier not found' });
-    }
+  // 3. Formatear los datos para la tabla
+  const transformed = trackedProducts.map(tp => {
+    const { product, ...tpData } = tp.toJSON();
+    const { AmazonProductDetail, supplier, ...productData } = product;
 
     return {
-      ...trackedProduct.toJSON(),
-      product_name: product.product_name,
-      ASIN: product.ASIN,
-      seller_sku: product.seller_sku,
-      supplier_name: supplier.supplier_name,
-      product_image: product.product_image,
-      product_cost: product.product_cost,
-      in_seller_account: product.in_seller_account
+      ...tpData,
+      product_name: productData.product_name,
+      product_image: productData.product_image,
+      product_cost: productData.product_cost,
+      in_seller_account: productData.in_seller_account,
+      supplier_name: supplier?.supplier_name || null,
+      ASIN: AmazonProductDetail?.ASIN || null,
+      seller_sku: AmazonProductDetail?.seller_sku || null,
     };
-
-  }));
-
-  const transformedTrackedProductsForTable = productsOfTheOrder.map((product) => {
-    const { product_name, ASIN, seller_sku, supplier_name, product_image, product_cost, ...trackedProducts } = product;
-    return {
-      ...trackedProducts,
-      product_name,
-      ASIN,
-      seller_sku,
-      supplier_name,
-      product_image,
-      product_cost
-    };
-  })
-
+  });
 
   return res.status(200).json({
     success: true,
-    data: transformedTrackedProductsForTable
+    data: transformed,
   });
-
-
 });
+
 
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info('Start generateTrackedProductsData');

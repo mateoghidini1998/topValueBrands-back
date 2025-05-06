@@ -39,10 +39,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 0.0,
       },
-      pack_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       is_active: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
