@@ -7,6 +7,7 @@ const {
   Pallet,
   PurchaseOrder,
   WarehouseLocation,
+  AmazonProductDetail,
 } = require("../models");
 const asyncHandler = require("../middlewares/async");
 const { sequelize } = require("../models");
@@ -309,7 +310,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
           "updatedAt",
         ],
         through: {
-          attributes: ["quantity", "id", "is_checked"]
+          attributes: ["quantity", "id", "is_checked"],
         },
         include: [
           {
@@ -323,11 +324,16 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "id",
                   "product_name",
                   "product_image",
-                  "seller_sku",
                   "in_seller_account",
                   "upc",
                   "pack_type",
-                  "ASIN",
+                ],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    as: "AmazonProductDetail",
+                    attributes: ["ASIN", "seller_sku"],
+                  },
                 ],
               },
             ],
@@ -358,6 +364,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
     ...shipmentData,
     PalletProducts: shipmentData.PalletProducts.map((palletProduct) => {
       const product = palletProduct.purchaseOrderProduct?.Product;
+      const amazonDetail = product?.AmazonProductDetail;
 
       return {
         ...palletProduct,
@@ -366,10 +373,10 @@ exports.getShipment = asyncHandler(async (req, res) => {
         pallet_number: palletProduct.Pallet?.pallet_number || null,
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
-        seller_sku: product?.seller_sku || null,
+        seller_sku: amazonDetail?.seller_sku || null,
         upc: product?.upc || null,
         pack_type: parseInt(product?.pack_type) || 1,
-        ASIN: product?.ASIN || null,
+        ASIN: amazonDetail?.ASIN || null,
         in_seller_account: product?.in_seller_account || null,
         purchaseOrderProduct: undefined,
       };
@@ -388,7 +395,6 @@ exports.getShipment = asyncHandler(async (req, res) => {
     }
   });
 
-  // 🔥 NUEVO: Llamamos a la función MySQL por cada pallet
   for (const pallet of uniquePallets) {
     const resultArray = await sequelize.query(
       `SELECT are_all_pallet_products_in_shipment(:pallet_id, :shipment_id) AS allInShipment`,
@@ -397,7 +403,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
           pallet_id: pallet.pallet_id,
           shipment_id: shipment.id,
         },
-        type: sequelize.QueryTypes.SELECT, // 👈 este retorna un array simple
+        type: sequelize.QueryTypes.SELECT,
       }
     );
 
@@ -425,14 +431,12 @@ exports.getShipment = asyncHandler(async (req, res) => {
     );
 
     pallet.allProductsChecked = Boolean(allCheckedResult[0].allChecked);
-
   }
 
   formattedShipment.pallets = uniquePallets;
 
   return res.status(200).json(formattedShipment);
 });
-
 
 //@route    GET api/v1/shipment/:shipment_number
 //@desc     Get outgoing shipment by shipment number
@@ -468,8 +472,14 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
                   "id",
                   "product_name",
                   "product_image",
-                  "seller_sku",
                   "in_seller_account",
+                ],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    as: "AmazonProductDetail",
+                    attributes: ["ASIN", "seller_sku"],
+                  },
                 ],
               },
             ],
@@ -493,18 +503,17 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
 
       const productImage =
         palletProduct.PurchaseOrderProduct?.Product?.product_image || null;
-
-      const sellerSku =
-        palletProduct.PurchaseOrderProduct?.Product?.seller_sku || null;
       const in_seller_account =
         palletProduct.PurchaseOrderProduct?.Product?.in_seller_account || null;
 
+      const detail = product.AmazonProductDetail || {};
+
       return {
         ...palletProduct,
-        product_name: productName,
-        product_image: productImage,
-        seller_sku: sellerSku,
-        in_seller_account: in_seller_account,
+        product_name: product.product_name || null,
+        product_image: product.product_image || null,
+        seller_sku: detail.seller_sku || null,
+        in_seller_account: product.in_seller_account || null,
         PurchaseOrderProduct: undefined,
       };
     }),
@@ -711,7 +720,14 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
             include: [
               {
                 model: Product,
-                attributes: ["seller_sku"],
+                attributes: [],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    as: "AmazonProductDetail",
+                    attributes: ["seller_sku"],
+                  },
+                ],
               },
             ],
           },
@@ -748,18 +764,19 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   shipment.PalletProducts.forEach((product) => {
     const sellerSku =
-      product.purchaseOrderProduct?.Product?.seller_sku || "N/A";
+      product.purchaseOrderProduct?.Product?.AmazonProductDetail?.seller_sku ||
+      "N/A";
     const quantity = product.OutgoingShipmentProduct?.quantity || 0;
 
     // MM/DD/YYYY
     const expireDate = product.purchaseOrderProduct?.expire_date
       ? (() => {
-        const date = new Date(product.purchaseOrderProduct.expire_date);
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Mes (0-based)
-        const day = String(date.getDate()).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${month}-${day}-${year}`;
-      })()
+          const date = new Date(product.purchaseOrderProduct.expire_date);
+          const month = String(date.getMonth() + 1).padStart(2, "0"); // Mes (0-based)
+          const day = String(date.getDate()).padStart(2, "0");
+          const year = date.getFullYear();
+          return `${month}-${day}-${year}`;
+        })()
       : "N/A";
 
     if (aggregatedProducts[sellerSku]) {
@@ -810,14 +827,14 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
   const { purchase_order_id } = req.params;
 
-  // Obtener el purchase order asociado al purchase_order_id
+  // Buscar el Purchase Order
   const purchaseOrder = await PurchaseOrder.findByPk(purchase_order_id);
 
   if (!purchaseOrder) {
     return res.status(404).json({ msg: "Purchase order not found" });
   }
 
-  // Obtener todos los pallets relacionados con el purchase_order_id
+  // Buscar los pallets con productos relacionados
   const pallets = await Pallet.findAll({
     where: { purchase_order_id },
     include: [
@@ -840,12 +857,17 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
                 model: Product,
                 attributes: [
                   "id",
-                  "ASIN",
-                  "seller_sku",
                   "product_image",
                   "product_name",
                   "in_seller_account",
                   "upc",
+                ],
+                include: [
+                  {
+                    model: AmazonProductDetail,
+                    as: "AmazonProductDetail",
+                    attributes: ["ASIN", "seller_sku"],
+                  },
                 ],
               },
             ],
@@ -861,7 +883,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
       .json({ msg: "No pallets found for the given purchase order ID" });
   }
 
-  // Formatear la respuesta para que sea más clara
+  // Formatear la respuesta
   const formattedPallets = pallets.map((pallet) => {
     return {
       purchase_order_number: purchaseOrder.order_number,
@@ -870,16 +892,18 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
       purchase_order_id: pallet.purchase_order_id,
       products: pallet.PalletProducts.map((palletProduct) => {
         const productData = palletProduct.purchaseOrderProduct.Product || {};
+        const detail = productData.AmazonProductDetail || {};
+
         return {
           pallet_product_id: palletProduct.id,
           quantity: palletProduct.quantity,
           product_id: productData.id,
-          ASIN: productData.ASIN,
-          upc: productData.upc,
-          seller_sku: productData.seller_sku,
-          product_image: productData.product_image,
-          product_name: productData.product_name,
-          in_seller_account: productData.in_seller_account,
+          ASIN: detail.ASIN || null,
+          upc: productData.upc || null,
+          seller_sku: detail.seller_sku || null,
+          product_image: productData.product_image || null,
+          product_name: productData.product_name || null,
+          in_seller_account: productData.in_seller_account || null,
           available_quantity: palletProduct.available_quantity,
           pallet_number: pallet.pallet_number,
         };
@@ -938,7 +962,7 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
   try {
     // Ejecutamos todas las requests en paralelo
     const shipmentRequests = SHIPMENT_STATUSES.map(async (status) => {
-      console.log(status)
+      console.log(status);
       try {
         const url = `${baseUrl}?MarketPlaceId=${marketPlace}&LastUpdatedAfter=${lastUpdatedAfter}&ShipmentStatusList=${status}`;
         const response = await axios.get(url, {
@@ -949,7 +973,9 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
         });
 
         const amazonShipments = response.data.payload?.ShipmentData || [];
-        console.log(`Fetched ${amazonShipments.length} shipments for status: ${status}`);
+        console.log(
+          `Fetched ${amazonShipments.length} shipments for status: ${status}`
+        );
 
         // Procesamos los envíos en paralelo para mejorar el rendimiento
         await Promise.all(
@@ -967,14 +993,19 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
           })
         );
       } catch (error) {
-        console.error(`Error fetching shipments for status ${status}:`, error.response?.data || error.message);
+        console.error(
+          `Error fetching shipments for status ${status}:`,
+          error.response?.data || error.message
+        );
       }
     });
 
     // Esperamos a que todas las solicitudes se completen
     await Promise.all(shipmentRequests);
 
-    return res.status(200).json({ msg: "Shipments tracked and updated successfully." });
+    return res
+      .status(200)
+      .json({ msg: "Shipments tracked and updated successfully." });
   } catch (error) {
     logger.error("Error in getShipmentTracking:", error);
     return res.status(500).json({
@@ -983,7 +1014,6 @@ exports.getShipmentTracking = asyncHandler(async (req, res) => {
     });
   }
 });
-
 
 exports.addReferenceId = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -997,7 +1027,7 @@ exports.addReferenceId = asyncHandler(async (req, res) => {
   shipment.reference_id = referenceId;
   await shipment.save();
   return res.status(200).json({ msg: "Reference ID added successfully" });
-})
+});
 
 exports.addFbaShipmentId = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -1088,14 +1118,12 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
     },
   });
 
-
   const prevActivePalletProducts = await PalletProduct.count({
     where: {
       pallet_id: palletProduct.pallet_id,
       is_active: true,
     },
   });
-
 
   if (remainingUnchecked === 0) {
     palletProduct.is_active = false;
@@ -1131,10 +1159,8 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
       });
     }
   } else if (activePalletProducts > 0 && prevActivePalletProducts === 0) {
-
     const pallet = await Pallet.findByPk(palletProduct.pallet_id);
     if (pallet) {
-
       if (warehouse_location.current_capacity === 0) {
         warehouse_location = await WarehouseLocation.findOne({
           where: sequelize.where(
@@ -1147,8 +1173,11 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
           is_active: true,
         });
 
-        const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
-        const new_current_capacity = warehouse_location.capacity - pallets_quantity;
+        const pallets_quantity = await recalculateWarehouseLocation(
+          warehouse_location.id
+        );
+        const new_current_capacity =
+          warehouse_location.capacity - pallets_quantity;
         await warehouse_location.update({
           current_capacity: new_current_capacity,
         });
@@ -1175,8 +1204,7 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
     const pallets_quantity = await recalculateWarehouseLocation(
       warehouse_location.id
     );
-    const new_current_capacity =
-      warehouse_location.capacity - pallets_quantity;
+    const new_current_capacity = warehouse_location.capacity - pallets_quantity;
     await warehouse_location.update({
       current_capacity: new_current_capacity,
     });
@@ -1192,31 +1220,36 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
   const { shipmentId, palletId } = req.params;
 
   if (!shipmentId || !palletId) {
-    return res.status(400).json({ message: "shipmentId y palletId son requeridos." });
+    return res
+      .status(400)
+      .json({ message: "shipmentId y palletId son requeridos." });
   }
 
   // Obtener todos los palletProduct IDs del pallet
   const palletProducts = await PalletProduct.findAll({
     where: { pallet_id: palletId },
-    attributes: ['id'],
+    attributes: ["id"],
   });
 
-  const palletProductIds = palletProducts.map(pp => pp.id);
+  const palletProductIds = palletProducts.map((pp) => pp.id);
 
   if (palletProductIds.length === 0) {
-    return res.status(404).json({ message: "No se encontraron productos en el pallet." });
+    return res
+      .status(404)
+      .json({ message: "No se encontraron productos en el pallet." });
   }
 
   // Verificamos si todos ya están marcados como is_checked = true
-  const { count: totalCount, rows: shipmentProducts } = await OutgoingShipmentProduct.findAndCountAll({
-    where: {
-      outgoing_shipment_id: shipmentId,
-      pallet_product_id: palletProductIds,
-    },
-    attributes: ['id', 'is_checked'],
-  });
+  const { count: totalCount, rows: shipmentProducts } =
+    await OutgoingShipmentProduct.findAndCountAll({
+      where: {
+        outgoing_shipment_id: shipmentId,
+        pallet_product_id: palletProductIds,
+      },
+      attributes: ["id", "is_checked"],
+    });
 
-  const allChecked = shipmentProducts.every(sp => sp.is_checked === true);
+  const allChecked = shipmentProducts.every((sp) => sp.is_checked === true);
 
   // Si todos están marcados, los desmarcamos. Si no, los marcamos todos.
   const newValue = allChecked ? false : true;
@@ -1232,9 +1265,10 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
   );
 
   await Promise.all(
-    palletProductIds.map(palletProductId => updatePalletStatus(palletProductId))
+    palletProductIds.map((palletProductId) =>
+      updatePalletStatus(palletProductId)
+    )
   );
-
 
   return res.status(200).json({
     message: `Productos ${newValue ? "marcados" : "desmarcados"} correctamente`,
@@ -1271,13 +1305,17 @@ async function updatePalletStatus(palletProductId) {
   });
 
   const pallet = await Pallet.findByPk(palletProduct.pallet_id);
-  let warehouse_location = await WarehouseLocation.findByPk(pallet.warehouse_location_id);
+  let warehouse_location = await WarehouseLocation.findByPk(
+    pallet.warehouse_location_id
+  );
 
   if (activePalletProducts === 0) {
     pallet.is_active = false;
     await pallet.save();
 
-    const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+    const pallets_quantity = await recalculateWarehouseLocation(
+      warehouse_location.id
+    );
     const new_current_capacity = warehouse_location.capacity - pallets_quantity;
     await warehouse_location.update({ current_capacity: new_current_capacity });
   } else if (activePalletProducts > 0 && prevActivePalletProducts === 0) {
@@ -1295,7 +1333,9 @@ async function updatePalletStatus(palletProductId) {
       is_active: true,
     });
 
-    const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+    const pallets_quantity = await recalculateWarehouseLocation(
+      warehouse_location.id
+    );
     const new_current_capacity = warehouse_location.capacity - pallets_quantity;
     await warehouse_location.update({ current_capacity: new_current_capacity });
   } else {
@@ -1304,7 +1344,9 @@ async function updatePalletStatus(palletProductId) {
       is_active: true,
     });
 
-    const pallets_quantity = await recalculateWarehouseLocation(warehouse_location.id);
+    const pallets_quantity = await recalculateWarehouseLocation(
+      warehouse_location.id
+    );
     const new_current_capacity = warehouse_location.capacity - pallets_quantity;
     await warehouse_location.update({ current_capacity: new_current_capacity });
   }
@@ -1352,7 +1394,9 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
       shipment.status = shipmentStatus;
       await shipment.save();
 
-      const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
+      const productIds = shipmentProducts
+        .map((sp) => sp.product_id)
+        .filter((id) => id);
 
       for (const productId of productIds) {
         console.log(`we are talking about our product with id: ${productId}`);
@@ -1366,7 +1410,6 @@ const updateShipmentStatus = async (shipment, shipmentStatus) => {
     );
   }
 };
-
 
 const getLastMonthDate = () => {
   const now = new Date();

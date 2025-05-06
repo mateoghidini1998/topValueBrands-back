@@ -17,18 +17,19 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'product_id',
         as: 'purchaseorderproducts',
       });
+
+      Product.hasOne(models.AmazonProductDetail, {
+        foreignKey: 'product_id',
+        as: 'AmazonProductDetail',
+      });
+      
     }
   }
   Product.init(
     {
-      ASIN: DataTypes.STRING,
       product_image: DataTypes.STRING,
       product_name: DataTypes.STRING,
-      seller_sku: DataTypes.STRING.BINARY,
       warehouse_stock: DataTypes.INTEGER,
-      FBA_available_inventory: DataTypes.INTEGER,
-      reserved_quantity: DataTypes.INTEGER,
-      Inbound_to_FBA: DataTypes.INTEGER,
       supplier_id: DataTypes.INTEGER,
       supplier_item_number: DataTypes.STRING,
       upc: DataTypes.STRING,
@@ -39,9 +40,6 @@ module.exports = (sequelize, DataTypes) => {
       pack_type: DataTypes.STRING,
       is_active: DataTypes.BOOLEAN,
       in_seller_account: DataTypes.BOOLEAN,
-      dangerous_goods: DataTypes.STRING,
-      is_hazmat: DataTypes.BOOLEAN,
-      hazmat_value: DataTypes.STRING,
     },
     {
       sequelize,

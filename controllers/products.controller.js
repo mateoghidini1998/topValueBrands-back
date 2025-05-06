@@ -1,15 +1,9 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async');
 const axios = require('axios');
-const { Supplier, TrackedProduct, Product, User, SupressedListing } = require('../models');
-const fs = require('fs');
-const path = require('path');
+const { Supplier, TrackedProduct, Product, SupressedListing } = require('../models');
 const dotenv = require('dotenv');
-const { where, Op } = require('sequelize');
 const productService = require('../services/products.service');
-
-const { clerkClient, getAuth } = require('@clerk/express');
-const req = require('express/lib/request');
 
 dotenv.config({
   path: './.env',
@@ -133,17 +127,14 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@route    GET api/products/
 //@desc     Get products
 //@access   Private
-//@route    GET api/products/
-//@desc     Get products
-//@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 10000 || parseInt(req.query.limit) || 50;
     const keyword = req.query.keyword || '';
     const supplier = req.query.supplier || null;
-    const orderBy = req.query.orderBy || 'updatedAt';
-    const orderWay = req.query.orderWay || 'DESC';
+    const orderBy = req.query.orderBy;
+    const orderWay = req.query.orderWay;
 
     const products = await productService.findAllProducts({ page, limit, keyword, supplier, orderBy, orderWay });
     return res.status(200).json({
@@ -263,17 +254,12 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
 
 exports.addUPCToPOProduct = async (product, upc) => {
 
-  // if (!product.upc) {
   if (!upc || upc.trim() === '') {
     throw new Error(`Invalid UPC provided for product ${product.id}`);
   }
   product.upc = upc.trim();
   await product.save();
-  // } 
-  // else {
-  //   console.log(Product ${product.id} already has a valid UPC: ${product.upc});
-  //   throw new Error(Product ${product.id} already has a valid UPC: ${product.upc});
-  // }
+
 }
 
 exports.addUPC = asyncHandler(async (req, res) => {
