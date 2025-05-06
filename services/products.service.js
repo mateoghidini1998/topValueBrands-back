@@ -58,11 +58,11 @@ const createProduct = async (productData, accessToken) => {
   }
 };
 
-const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, orderBy = 'updatedAt', orderWay = 'DESC' }) => {
+const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, orderBy = 'product_name', orderWay = 'ASC' }) => {
   const offset = (page - 1) * limit;
 
-  const allowedOrderBy = ['p.updatedAt', 'product_name', 'product_cost', 'supplier_item_number', 'pack_type', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA', 'warehouse_stock', 'ASIN', 'seller_sku'];
-  if (!allowedOrderBy.includes(orderBy)) orderBy = 'p.updatedAt';
+  const allowedOrderBy = ['product_name', 'product_cost', 'supplier_item_number', 'pack_type', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA', 'warehouse_stock', 'ASIN', 'seller_sku'];
+  // if (!allowedOrderBy.includes(orderBy)) orderBy = 'p.updatedAt';
 
   const allowedOrderWay = ['ASC', 'DESC'];
   if (!allowedOrderWay.includes(orderWay)) orderWay = 'DESC';
@@ -100,7 +100,7 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
   const cleanedProducts = products.map((product) => {
     const isAmazon = product.amazon_asin !== null;
     const isWalmart = product.walmart_gtin !== null;
-  
+
     const base = {
       id: product.id,
       product_name: product.product_name,
@@ -114,11 +114,12 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
       warehouse_stock: product.warehouse_stock,
       is_active: product.is_active,
       in_seller_account: product.in_seller_account,
+      updatedAt: isAmazon ? product.amazon_updatedAt : product.walmart_updatedAt,
       marketplace: isAmazon && isWalmart ? "both" : isAmazon ? "amazon" : isWalmart ? "walmart" : null
     };
-  
+
     if (isAmazon) {
-        base.asin = product.amazon_asin,
+      base.asin = product.amazon_asin,
         base.seller_sku = product.amazon_seller_sku,
         base.warehouse_stock = product.amazon_warehouse_stock,
         base.fba_available_inventory = product.amazon_fba_available_inventory,
@@ -129,17 +130,17 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
         base.hazmat_value = product.hazmat_value
 
     }
-  
+
     if (isWalmart) {
-        base.available_to_sell_qty = product.walmart_available_to_sell_qty,
+      base.available_to_sell_qty = product.walmart_available_to_sell_qty,
         base.price = product.walmart_price,
         base.gtin = product.walmart_gtin,
         base.seller_sku = product.walmart_seller_sku
     }
-  
+
     return base;
   });
-  
+
   return {
     total,
     pages: Math.ceil(total / limit),

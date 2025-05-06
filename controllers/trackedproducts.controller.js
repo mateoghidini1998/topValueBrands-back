@@ -1,5 +1,5 @@
 const { LIMIT_PRODUCTS, OFFSET_PRODUCTS, ASINS_PER_GROUP, BATCH_SIZE_FEES, MS_DELAY_FEES, MAX_RETRIES } = require('../utils/constants/constants');
-const { Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
+const { AmazonProductDetail, Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport, generateStorageReport } = require('../utils/utils');
@@ -24,51 +24,59 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
   logger.info('Executing getTrackedProducts...');
 
   const page = parseInt(req.query.page) || 1;
-  const limit = 10000 || parseInt(req.query.limit) || 10;
+  const limit = 10000;
   const offset = (page - 1) * limit;
   const keyword = req.query.keyword || '';
   const supplier_id = req.query.supplier || null;
   const orderBy = req.query.orderBy || 'updatedAt';
   const orderWay = req.query.orderWay || 'ASC';
 
+  const whereConditions = {
+    is_active: true,
+  };
+
   const includeProduct = {
     model: Product,
     as: 'product',
     attributes: [
+      'id',
       'product_name',
-      'ASIN',
-      'seller_sku',
       'product_cost',
       'product_image',
       'supplier_id',
       'in_seller_account',
-      'FBA_available_inventory',
-      'reserved_quantity',
-      'Inbound_to_FBA',
       'supplier_item_number',
       'warehouse_stock',
       'pack_type',
-      'dangerous_goods',
     ],
     include: [
+      {
+        model: AmazonProductDetail,
+        as: 'AmazonProductDetail',
+        attributes: [
+          'ASIN',
+          'seller_sku',
+          'FBA_available_inventory',
+          'reserved_quantity',
+          'Inbound_to_FBA',
+          'dangerous_goods',
+        ],
+        required: false,
+      },
       {
         model: Supplier,
         as: 'supplier',
         attributes: ['supplier_name'],
+        required: false,
       },
     ],
     where: {},
-  };
-
-  const whereConditions = {
-    is_active: true,
+    required: true,
   };
 
   if (keyword) {
     includeProduct.where[Op.or] = [
       { product_name: { [Op.like]: `%${keyword}%` } },
-      { ASIN: { [Op.like]: `%${keyword}%` } },
-      { seller_sku: { [Op.like]: `%${keyword}%` } },
     ];
   }
 
@@ -79,10 +87,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     };
   }
 
-  // Verificar si el campo de ordenación pertenece a la tabla Product
   const isProductField = ['product_cost', 'product_name', 'ASIN', 'seller_sku'].includes(orderBy);
-
-  // Construir la ordenación dinámicamente
   const order = isProductField
     ? [[literal(`product.${orderBy}`), orderWay]]
     : [[orderBy, orderWay]];
@@ -94,27 +99,38 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       order,
       where: whereConditions,
       include: [includeProduct],
+      distinct: true,
+      subQuery: false,
     });
+
+    const seen = new Set();
+    const uniqueRows = [];
+
+    for (const trackedProduct of trackedProducts.rows) {
+      const { product, ...trackedProductData } = trackedProduct.toJSON();
+      if (!product || seen.has(product.id)) continue;
+
+      seen.add(product.id);
+
+      const { supplier, AmazonProductDetail, ...productData } = product;
+
+      uniqueRows.push({
+        ...trackedProductData,
+        ...productData,
+        ...AmazonProductDetail,
+        supplier_name: supplier ? supplier.supplier_name : null,
+        roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
+      });
+    }
 
     const totalPages = Math.ceil(trackedProducts.count / limit);
 
-    const flattenedTrackedProducts = trackedProducts.rows.map((trackedProduct) => {
-      const { product, ...trackedProductData } = trackedProduct.toJSON();
-      const { supplier, ...productData } = product;
-      return {
-        ...trackedProductData,
-        ...productData,
-        supplier_name: supplier ? supplier.supplier_name : null,
-        roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
-      };
-    });
-
     res.status(200).json({
       success: true,
-      total: trackedProducts.count,
+      total: uniqueRows.length,
       pages: totalPages,
       currentPage: page,
-      data: flattenedTrackedProducts,
+      data: uniqueRows,
     });
 
     logger.info('Tracked products sent successfully');
@@ -264,7 +280,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
 
     logger.info('Fetched related products successfully');
-  
+
     logger.info(`Batch size fees: ${BATCH_SIZE_FEES}`);
 
     for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
@@ -456,7 +472,7 @@ const saveOrdersWithoutAvgPrice = async (req, res, next, products) => {
   const filteredOrders = jsonData.filter(
     (item) =>
       (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
-      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000 
+      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000
   );
 
   // Agrupar por SKU y calcular cantidades por cada rango

@@ -133,8 +133,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const limit = 10000 || parseInt(req.query.limit) || 50;
     const keyword = req.query.keyword || '';
     const supplier = req.query.supplier || null;
-    const orderBy = req.query.orderBy || 'updatedAt';
-    const orderWay = req.query.orderWay || 'DESC';
+    const orderBy = req.query.orderBy;
+    const orderWay = req.query.orderWay;
 
     const products = await productService.findAllProducts({ page, limit, keyword, supplier, orderBy, orderWay });
     return res.status(200).json({
@@ -259,7 +259,7 @@ exports.addUPCToPOProduct = async (product, upc) => {
   }
   product.upc = upc.trim();
   await product.save();
-  
+
 }
 
 exports.addUPC = asyncHandler(async (req, res) => {

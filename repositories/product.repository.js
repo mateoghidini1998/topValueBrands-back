@@ -24,23 +24,25 @@ const FindAllProducts = async ({
       p.warehouse_stock,
       p.is_active,
       p.in_seller_account,
+      p.warehouse_stock AS amazon_warehouse_stock,
       
       -- Datos de AmazonProductDetail
       apd.ASIN AS amazon_asin,
       apd.seller_sku AS amazon_seller_sku,
-      apd.warehouse_stock AS amazon_warehouse_stock,
       apd.FBA_available_inventory AS amazon_fba_available_inventory,
       apd.reserved_quantity AS amazon_reserved_quantity,
       apd.Inbound_to_FBA AS amazon_inbound_to_fba,
       apd.dangerous_goods AS dangerous_goods,
       apd.is_hazmat AS is_hazmat,
       apd.hazmat_value AS hazmat_value,
+      apd.updatedAt AS amazon_updatedAt,
       
       -- Datos de WalmartProductDetail
       wpd.available_to_sell_qty AS walmart_available_to_sell_qty,
       wpd.price AS walmart_price,
       wpd.gtin AS walmart_gtin,
-      wpd.seller_sku AS walmart_seller_sku
+      wpd.seller_sku AS walmart_seller_sku,
+      wpd.updatedAt AS walmart_updatedAt
 
     FROM products p
     LEFT JOIN suppliers s ON p.supplier_id = s.id
