@@ -1,5 +1,5 @@
 const { LIMIT_PRODUCTS, OFFSET_PRODUCTS, ASINS_PER_GROUP, BATCH_SIZE_FEES, MS_DELAY_FEES, MAX_RETRIES } = require('../utils/constants/constants');
-const { AmazonProductDetail, Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
+const { AmazonProductDetail, WalmartProductDetail, Product, TrackedProduct, Supplier, PurchaseOrderProduct } = require('../models');
 const axios = require('axios');
 const asyncHandler = require('../middlewares/async');
 const { generateOrderReport, generateStorageReport } = require('../utils/utils');
@@ -69,18 +69,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         attributes: ['supplier_name'],
         required: false,
       },
-      {
-        model: AmazonProductDetail,
-        as: 'AmazonProductDetail',
-        attributes: [
-          'ASIN',
-          'seller_sku',
-          'FBA_available_inventory',
-          'reserved_quantity',
-          'Inbound_to_FBA',
-          'dangerous_goods',
-        ],
-      },
     ],
     where: {},
     required: true,
@@ -122,23 +110,26 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     const uniqueRows = [];
 
     for (const trackedProduct of trackedProducts.rows) {
-      const { product, ...trackedProductData } = trackedProduct.toJSON();
+      // const { product, ...trackedProductData } = trackedProduct.toJSON();
+      const product = trackedProduct.toJSON();
       if (!product || seen.has(product.id)) continue;
 
       seen.add(product.id);
 
-      const { supplier, AmazonProductDetail, ...productData } = product;
+      // const { supplier, AmazonProductDetail, ...productData } = product;
 
-      uniqueRows.push({
-        ...trackedProductData,
-        ...productData,
-        ...AmazonProductDetail,
-        supplier_name: supplier ? supplier.supplier_name : null,
-        roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
-      });
+      // uniqueRows.push({
+      //   ...trackedProductData,
+      //   ...productData,
+      //   ...AmazonProductDetail,
+      //   supplier_name: supplier ? supplier.supplier_name : null,
+      //   roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
+      // });
+
+      uniqueRows.push(product)
     }
 
-    const totalPages = Math.ceil(trackedProducts.count / limit);
+    const totalPages = Math.ceil(uniqueRows.length / limit);
 
     res.status(200).json({
       success: true,
