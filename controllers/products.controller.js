@@ -292,7 +292,6 @@ const addImageToProducts = async (products, accessToken) => {
 exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   const newProducts = await Product.findAll({
     where: { product_image: null } || { product_image: '' },
-    limit: 50,
   });
 
   const result = await addImageToProducts(newProducts, accessToken);
