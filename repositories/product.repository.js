@@ -77,7 +77,6 @@ const FindAllProducts = async ({
   };
 };
 
-
 const FindProductById = async (id) => {
   return await Product.findByPk(id);
 };

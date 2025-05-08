@@ -17,7 +17,6 @@ const logger = require('../logger/logger');
 //@desc    Generate new report
 //@access  private
 exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
-
   logger.info('fetching new token for sync db with amazon...');
   let accessToken = await fetchNewTokenForFees();
   console.log(accessToken);
