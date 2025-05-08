@@ -472,11 +472,11 @@ const getProductsTrackedData = async (products) => {
     const processedData = keepaResponses.flatMap((response) =>
       response.products.flatMap((product) => {
         const matchingProducts = uniqueProductsMap[product.asin];
-        const lowestPrice = product.stats.buyBoxPrice > 0
-          ? product.stats.buyBoxPrice
-          : product.stats.current[10] > 0
-            ? product.stats.current[10]
-            : product.stats.current[7];
+        const lowestPrice = product.stats.current[10] > 0
+        ? product.stats.current[10]
+        : product.stats.current[7] > 0
+        ? product.stats.current[7]
+        : product.stats.buyBoxPrice;
 
         return matchingProducts.map((matchingProduct) => ({
           product_id: matchingProduct.id,
