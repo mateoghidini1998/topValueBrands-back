@@ -37,9 +37,6 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     supplier_item_number,
     product_cost,
     pack_type,
-    FBA_available_inventory,
-    reserved_quantity,
-    Inbound_to_FBA,
     ASIN,
     gtin,
     seller_sku
@@ -84,15 +81,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
         product.AmazonProductDetail.ASIN = ASIN;
         product.AmazonProductDetail.seller_sku = seller_sku;
       };
-      if( FBA_available_inventory !== undefined) {
-        product.AmazonProductDetail.FBA_available_inventory = FBA_available_inventory;
-      }
-      if (reserved_quantity !== undefined) {
-        product.AmazonProductDetail.reserved_quantity = reserved_quantity;
-      }
-      if (Inbound_to_FBA !== undefined) {
-        product.AmazonProductDetail.Inbound_to_FBA = Inbound_to_FBA;
-      }
+
       await product.AmazonProductDetail.save();
     }
 
