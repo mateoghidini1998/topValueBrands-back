@@ -4,6 +4,7 @@ const {
   PalletProduct,
   WarehouseLocation,
   Product,
+  AmazonProductDetail,
   PurchaseOrder,
 } = require("../models");
 const asyncHandler = require("../middlewares/async");
@@ -135,14 +136,8 @@ exports.getPalletProductByPurchaseOrderProductId = asyncHandler(
 );
 
 exports.getAllPalletProducts = asyncHandler(async (req, res) => {
-  // Obtener todos los Pallets junto con su información relacionada
   const pallets = await Pallet.findAll({
-    attributes: [
-      "id",
-      "pallet_number",
-      "warehouse_location_id",
-      "purchase_order_id",
-    ],
+    attributes: ["id", "pallet_number", "warehouse_location_id", "purchase_order_id"],
     include: [
       {
         model: WarehouseLocation,
@@ -152,9 +147,8 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       {
         model: PurchaseOrder,
         as: "purchaseOrder",
-        attributes: ["id", "order_number", "updatedAt"], // Ajusta según tu modelo
+        attributes: ["id", "order_number", "updatedAt"],
         order: [["updatedAt", "DESC"]],
-        // where: { is_active: true }, // Ajusta según tu modelo
       },
       {
         model: PalletProduct,
@@ -167,13 +161,13 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
           "updatedAt",
           "pallet_id",
         ],
-        where: { available_quantity: { [Op.gt]: 0 }, is_active: true }, // Ajusta según tu modelo
+        where: { available_quantity: { [Op.gt]: 0 }, is_active: true },
         include: [
           {
             model: PurchaseOrderProduct,
             as: "purchaseOrderProduct",
             attributes: ["id"],
-            where: { is_active: true }, // Ajusta según tu modelo
+            where: { is_active: true },
             include: [
               {
                 model: Product,
@@ -198,7 +192,6 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
     ],
   });
 
-  // Reorganizar datos agrupados por PurchaseOrder
   const groupedByPurchaseOrder = pallets.reduce((acc, pallet) => {
     const purchaseOrder = pallet.purchaseOrder;
     const purchaseOrderId = purchaseOrder?.id;
@@ -207,7 +200,6 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
       acc[purchaseOrderId] = {
         id: purchaseOrder.id,
         order_number: purchaseOrder.order_number,
-        updatedAt: purchaseOrder.updatedAt,
         pallets: [],
       };
     }
@@ -221,17 +213,20 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
         const detail = product.AmazonProductDetail || {};
 
         return {
-          pallet_id: palletProduct.pallet_id,
           id: palletProduct.id,
           purchaseorderproduct_id: palletProduct.purchaseorderproduct_id,
           quantity: palletProduct.quantity,
           available_quantity: palletProduct.available_quantity,
           createdAt: palletProduct.createdAt,
           updatedAt: palletProduct.updatedAt,
+          pallet_id: palletProduct.pallet_id,
           product: {
-            ...product,
-            seller_sku: detail.seller_sku || null,
-            ASIN: detail.ASIN || null,
+            product_name: product.product_name,
+            product_image: product.product_image || null,
+            seller_sku: detail.seller_sku || "",
+            ASIN: detail.ASIN || "",
+            in_seller_account: !!product.in_seller_account,
+            upc: product.upc || null,
           },
         };
       }),
@@ -240,13 +235,13 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
     return acc;
   }, {});
 
-  // Convertir el objeto agrupado en un array
   const response = Object.values(groupedByPurchaseOrder).sort(
-    (a, b) => b.updatedAt - a.updatedAt
+    (a, b) => b.pallets[0]?.palletProducts[0]?.updatedAt - a.pallets[0]?.palletProducts[0]?.updatedAt
   );
 
   return res.status(200).json(response);
 });
+
 
 exports.getPalletProducts = asyncHandler(async (req, res) => {
   const palletProducts = await PalletProduct.findAll({

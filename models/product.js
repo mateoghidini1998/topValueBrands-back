@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'product_id',
         as: 'AmazonProductDetail',
       });
+      Product.hasOne(models.WalmartProductDetail, {
+        foreignKey: 'product_id',
+        as: 'WalmartProductDetail',
+      });
       
     }
   }
