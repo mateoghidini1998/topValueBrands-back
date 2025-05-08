@@ -244,7 +244,6 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
   });
 });
 
-
 exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info('Start generateTrackedProductsData');
 

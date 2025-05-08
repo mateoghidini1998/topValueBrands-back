@@ -1029,6 +1029,57 @@ exports.addReferenceId = asyncHandler(async (req, res) => {
   return res.status(200).json({ msg: "Reference ID added successfully" });
 });
 
+exports.addFbaShipmentId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { fbaShipmentId } = req.body;
+  const shipment = await OutgoingShipment.findOne({
+    where: { id },
+  });
+  if (!shipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+  shipment.fba_shipment_id = fbaShipmentId;
+  await shipment.save();
+  return res.status(200).json({ msg: "Reference ID added successfully" });
+})
+
+exports.updateFbaShipmentStatusToShipped = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const shipment = await OutgoingShipment.findOne({
+    where: { id },
+  });
+  if (!shipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+  const shipmentProducts = await sequelize.query(
+    `
+      SELECT osp.*, 
+      pp.*, 
+      pop.product_id
+      FROM outgoingshipmentproducts osp
+      LEFT JOIN palletproducts pp ON osp.pallet_product_id = pp.id
+      LEFT JOIN purchaseorderproducts pop ON pp.purchaseorderproduct_id = pop.id
+      WHERE osp.outgoing_shipment_id = :shipmentId
+    `,
+    {
+      type: sequelize.QueryTypes.SELECT,
+      replacements: { shipmentId: shipment.id },
+    }
+  );
+  shipment.status = 'SHIPPED';
+  await shipment.save();
+
+  const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
+
+  for (const productId of productIds) {
+    console.log(`we are talking about our product with id: ${productId}`);
+    await recalculateWarehouseStock(productId);
+  }
+  return res.status(200).json({ msg: "Shipment status updated and warehouse stock recalculated successfully" });
+})
+
+
+
 exports.toggleProductChecked = asyncHandler(async (req, res) => {
   const { outgoingShipmentProductId } = req.params;
 
