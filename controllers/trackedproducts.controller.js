@@ -109,34 +109,80 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     const seen = new Set();
     const uniqueRows = [];
 
-    for (const trackedProduct of trackedProducts.rows) {
-      // const { product, ...trackedProductData } = trackedProduct.toJSON();
-      const product = trackedProduct.toJSON();
-      if (!product || seen.has(product.id)) continue;
+    // for (const trackedProduct of trackedProducts.rows) {
+    //   // const { product, ...trackedProductData } = trackedProduct.toJSON();
+    //   const product = trackedProduct.toJSON();
+    //   if (!product || seen.has(product.id)) continue;
 
-      seen.add(product.id);
+    //   seen.add(product.id);
 
-      // const { supplier, AmazonProductDetail, ...productData } = product;
+    //   // const { supplier, AmazonProductDetail, ...productData } = product;
 
-      // uniqueRows.push({
-      //   ...trackedProductData,
-      //   ...productData,
-      //   ...AmazonProductDetail,
-      //   supplier_name: supplier ? supplier.supplier_name : null,
-      //   roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
-      // });
+    //   // uniqueRows.push({
+    //   //   ...trackedProductData,
+    //   //   ...productData,
+    //   //   ...AmazonProductDetail,
+    //   //   supplier_name: supplier ? supplier.supplier_name : null,
+    //   //   roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
+    //   // });
 
-      uniqueRows.push(product)
-    }
+    //   uniqueRows.push(product)
+    // }
 
-    const totalPages = Math.ceil(uniqueRows.length / limit);
+    const totalPages = Math.ceil(trackedProducts.length / limit);
 
     res.status(200).json({
       success: true,
-      total: uniqueRows.length,
+      total: trackedProducts.length,
       pages: totalPages,
       currentPage: page,
-      data: uniqueRows,
+      data: trackedProducts.rows.map((p) => {
+        const product = p.product;
+        const amazonDetail = product?.AmazonProductDetail;
+        const supplier = product?.supplier;
+
+        return {
+          // Atributos directos de trackedProduct
+          id: p.id,
+          product_id: p.product_id,
+          current_rank: p.current_rank,
+          thirty_days_rank: p.thirty_days_rank,
+          ninety_days_rank: p.ninety_days_rank,
+          units_sold: p.units_sold,
+          product_velocity: p.product_velocity,
+          product_velocity_2: p.product_velocity_2,
+          product_velocity_7: p.product_velocity_7,
+          product_velocity_15: p.product_velocity_15,
+          product_velocity_60: p.product_velocity_60,
+          avg_selling_price: p.avg_selling_price,
+          lowest_fba_price: p.lowest_fba_price,
+          fees: p.fees,
+          profit: p.profit,
+          is_active: p.is_active,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+
+          // Atributos del producto
+          product_name: product.product_name,
+          product_cost: product.product_cost,
+          product_image: product.product_image,
+          supplier_id: product.supplier_id,
+          in_seller_account: product.in_seller_account,
+          supplier_item_number: product.supplier_item_number,
+          warehouse_stock: product.warehouse_stock,
+          pack_type: product.pack_type,
+
+          // Atributos de AmazonProductDetail (si existen)
+          ASIN: amazonDetail?.ASIN ?? null,
+          seller_sku: amazonDetail?.seller_sku ?? null,
+          FBA_available_inventory: amazonDetail?.FBA_available_inventory ?? null,
+          reserved_quantity: amazonDetail?.reserved_quantity ?? null,
+          Inbound_to_FBA: amazonDetail?.Inbound_to_FBA ?? null,
+          dangerous_goods: amazonDetail?.dangerous_goods ?? null,
+
+          supplier_name: supplier?.supplier_name ?? null
+        };
+      }),
     });
 
     logger.info('Tracked products sent successfully');

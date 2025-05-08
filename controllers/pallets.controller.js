@@ -4,6 +4,7 @@ const {
   PurchaseOrder,
   WarehouseLocation,
   PalletProduct,
+  AmazonProductDetail,
   PurchaseOrderProduct,
   OutgoingShipmentProduct,
   sequelize,

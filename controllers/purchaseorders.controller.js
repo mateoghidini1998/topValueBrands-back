@@ -997,11 +997,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
             attributes: ["ASIN", "seller_sku", "dangerous_goods"]
           },
           {
-            model: WalmartProductDetail,
-            as: "WalmartProductDetail",
-            attributes: ["gtin", "seller_sku"]
-          },
-          {
             model: Supplier,
             as: "supplier",
             attributes: ["supplier_name"]
@@ -1020,10 +1015,10 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     const amazonDetail = product.AmazonProductDetail || null;
     const walmartDetail = product.WalmartProductDetail || null;
     const orderProduct = purchaseOrder.purchaseOrderProducts.find(p => p.product_id === tp.product_id);
-  
+
     const roi = orderProduct.product_cost ? ((orderProduct.profit / orderProduct.product_cost) * 100) : 0;
     const marketplace = amazonDetail ? 'Amazon' : walmartDetail ? 'Walmart' : 'Unknown';
-  
+
     return {
       id: product.id,
       product_name: product.product_name,
@@ -1040,7 +1035,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       warehouse_stock: product.warehouse_stock,
       dg_item: amazonDetail?.dangerous_goods || walmartDetail?.dangerous_goods || false,
       marketplace, // ← agregado aquí
-  
+
       product_velocity: tp.product_velocity,
       units_sold: tp.units_sold,
       thirty_days_rank: tp.thirty_days_rank,
@@ -1050,7 +1045,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       roi: parseFloat(roi.toFixed(2)),
       updatedAt: tp.updatedAt,
       sellable_quantity: tp.sellable_quantity,
-  
+
       product_id: orderProduct.product_id,
       product_cost: parseFloat(orderProduct.product_cost),
       purchase_order_product_id: orderProduct.id,
@@ -1065,7 +1060,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       profit: parseFloat(orderProduct.profit)
     };
   });
-  
+
 
   // Ordenar: productos peligrosos al final
   productsData.sort((a, b) => (a.dg_item === b.dg_item) ? 0 : a.dg_item ? 1 : -1);
