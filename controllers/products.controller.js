@@ -39,7 +39,8 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     pack_type,
     ASIN,
     gtin,
-    seller_sku
+    seller_sku,
+    upc
   } = req.body;
 
   const product = await Product.findOne({
@@ -74,6 +75,7 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     product.supplier_item_number = supplier_item_number;
     product.product_cost = product_cost;
     product.pack_type = pack_type;
+    product.upc = upc || null;
     await product.save();
 
     if (product.AmazonProductDetail) {
