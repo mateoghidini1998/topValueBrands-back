@@ -23,7 +23,7 @@ router.post('/', roleMiddleware(['admin', 'warehouse']), addAccessTokenHeader, c
 
 router.patch(
   '/addExtraInfoToProduct',
-  roleMiddleware(['admin', 'warehouse']),
+  /* roleMiddleware(['admin', 'warehouse']), */
 
   addExtraInfoToProduct
 );

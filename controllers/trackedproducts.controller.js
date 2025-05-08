@@ -108,27 +108,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
 
     const seen = new Set();
     const uniqueRows = [];
-
-    // for (const trackedProduct of trackedProducts.rows) {
-    //   // const { product, ...trackedProductData } = trackedProduct.toJSON();
-    //   const product = trackedProduct.toJSON();
-    //   if (!product || seen.has(product.id)) continue;
-
-    //   seen.add(product.id);
-
-    //   // const { supplier, AmazonProductDetail, ...productData } = product;
-
-    //   // uniqueRows.push({
-    //   //   ...trackedProductData,
-    //   //   ...productData,
-    //   //   ...AmazonProductDetail,
-    //   //   supplier_name: supplier ? supplier.supplier_name : null,
-    //   //   roi: product.product_cost > 0 ? (trackedProductData.profit / product.product_cost) * 100 : 0
-    //   // });
-
-    //   uniqueRows.push(product)
-    // }
-
     const totalPages = Math.ceil(trackedProducts.length / limit);
 
     res.status(200).json({
@@ -521,80 +500,6 @@ const getKeepaData = async (asinGroup, retryCount = 0) => {
   }
 };
 
-const saveOrdersWithoutAvgPrice = async (req, res, next, products) => {
-  console.log("Executing saveOrders...");
-  logger.info("Executing saveOrders...");
-
-  const jsonData = await generateOrderReport(req, res, next);
-
-  if (!jsonData) {
-    logger.error('Generating order report failed');
-    throw new Error('Failed to retrieve orders');
-  }
-
-  const now = new Date();
-
-  const filteredOrders = jsonData.filter(
-    (item) =>
-      (item['order-status'] === 'Shipped' || item['order-status'] === 'Pending') &&
-      now - new Date(item['purchase-date']) <= 30 * 24 * 60 * 60 * 1000
-  );
-
-  // Agrupar por SKU y calcular cantidades por cada rango
-  const skuQuantities = {};
-
-  filteredOrders.forEach(item => {
-    const { sku, quantity, asin } = item;
-    const qty = parseInt(quantity, 10);
-    const purchaseDate = new Date(item['purchase-date']);
-    const diffDays = Math.floor((now - purchaseDate) / (1000 * 60 * 60 * 24));
-
-    if (!skuQuantities[sku]) {
-      skuQuantities[sku] = {
-        asin,
-        total: 0,
-        last2: 0,
-        last7: 0,
-        last15: 0,
-        last30: 0,
-      };
-    }
-
-    skuQuantities[sku].total += qty;
-    if (diffDays <= 30) skuQuantities[sku].last30 += qty;
-    if (diffDays <= 15) skuQuantities[sku].last15 += qty;
-    if (diffDays <= 7) skuQuantities[sku].last7 += qty;
-    if (diffDays <= 2) skuQuantities[sku].last2 += qty;
-  });
-
-  // Relacionar ASIN con product_id
-  const asinToProductId = products.reduce((acc, product) => {
-    if (!acc[product.ASIN]) {
-      acc[product.ASIN] = [];
-    }
-    acc[product.ASIN].push(product.id);
-    return acc;
-  }, {});
-
-  // Generar json final con velocidades
-  const finalJson = Object.entries(skuQuantities).flatMap(([sku, data]) => {
-    const { asin, last2, last7, last15, last30 } = data;
-    return (asinToProductId[asin] || []).map(productId => ({
-      sku,
-      product_id: productId,
-      quantity: data.total,
-      velocity: data.total / 30,
-      velocity_2_days: last2 / 2,
-      velocity_7_days: last7 / 7,
-      velocity_15_days: last15 / 15,
-      velocity_30_days: last30 / 30,
-    }));
-  });
-
-  // logger.info("The final json is: ", finalJson);
-  return finalJson;
-};
-
 const saveOrders = async (req, res, next, products) => {
   console.log("Executing saveOrders...");
   logger.info("Executing saveOrders...");
@@ -894,3 +799,55 @@ const getNewAccessToken = async () => {
     throw new Error('Failed to refresh token');
   }
 };
+
+exports.addProductVelocityAndUnitsSold = asyncHandler(
+  async (req, res, next) => {
+    logger.info("Executing addProductVelocity...");
+
+    // 1. Obtenemos todos los tracked products
+    const products = await TrackedProduct.findAll();
+    logger.info("TrackedProducts found: " + products.length);
+    if (!products) {
+      throw new Error("No tracked products found");
+    }
+
+    // 2. Generamos el reporte de orders
+    const jsonData = await generateOrderReport(req, res, next);
+    if (!jsonData) {
+      throw new Error("Failed to retrieve orders");
+    }
+
+    const filteredOrders = jsonData.filter(
+      (item) =>
+        (item["order-status"] === "Shipped" ||
+          item["order-status"] === "Pending") &&
+        new Date() - new Date(item["purchase-date"]) <= 30 * 24 * 60 * 60 * 1000
+    );
+
+    const skuQuantities = filteredOrders.reduce((acc, item) => {
+      const { sku, quantity, asin } = item;
+      const qty = parseInt(quantity, 10);
+      if (!acc[sku]) {
+        acc[sku] = { quantity: qty, asin };
+      } else {
+        acc[sku].quantity += qty;
+      }
+      return acc;
+    }, {});
+
+    const asinToProductId = products.reduce((acc, product) => {
+      acc[product.ASIN] = product.id;
+      return acc;
+    }, {});
+
+    const finalJson = Object.entries(skuQuantities).map(
+      ([sku, { quantity, asin }]) => ({
+        sku,
+        product_id: asinToProductId[asin],
+        quantity,
+        velocity: quantity / 30,
+      })
+    );
+
+  }
+);
