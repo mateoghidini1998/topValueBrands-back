@@ -938,7 +938,7 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
 exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
 
-  // Obtener la orden de compra con productos y estado
+  // 1. Obtener la orden con productos y estado
   const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId, {
     where: { is_active: true },
     include: [
@@ -946,7 +946,11 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
-        attributes: ["product_id", "quantity_purchased", "quantity_received", "quantity_missing", "quantity_available", "product_cost", "total_amount", "id", 'reason_id', "expire_date", "profit"],
+        attributes: [
+          "product_id", "quantity_purchased", "quantity_received",
+          "quantity_missing", "quantity_available", "product_cost",
+          "total_amount", "id", "reason_id", "expire_date", "profit"
+        ],
         include: {
           model: PurchaseOrderProductReason,
           attributes: ["description"]
@@ -971,7 +975,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
 
   const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
 
-  // Obtener productos rastreados con información de producto y proveedor
+  // 2. TrackedProducts con Amazon info
   const trackedProducts = await TrackedProduct.findAll({
     where: { product_id: { [Op.in]: productIds } },
     include: [
@@ -979,16 +983,9 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: Product,
         as: "product",
         attributes: [
-          "product_name",
-          "id",
-          "supplier_id",
-          "product_image",
-          "product_cost",
-          "in_seller_account",
-          "supplier_item_number",
-          "pack_type",
-          "upc",
-          "warehouse_stock",
+          "product_name", "id", "supplier_id", "product_image",
+          "product_cost", "in_seller_account", "supplier_item_number",
+          "pack_type", "upc", "warehouse_stock"
         ],
         include: [
           {
@@ -1006,51 +1003,79 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     ]
   });
 
-  if (!trackedProducts.length) {
-    return res.status(404).json({ message: "Tracked products not found" });
-  }
+  // 3. Walmart products (para los que no tienen TrackedProduct)
+  const walmartProducts = await Product.findAll({
+    where: { id: { [Op.in]: productIds } },
+    include: [
+      {
+        model: WalmartProductDetail,
+        as: "WalmartProductDetail",
+        attributes: ["gtin", "seller_sku"]
+      },
+      {
+        model: Supplier,
+        as: "supplier",
+        attributes: ["supplier_name"]
+      }
+    ]
+  });
 
-  const productsData = trackedProducts.map(tp => {
-    const product = tp.product;
-    const amazonDetail = product.AmazonProductDetail || null;
-    const walmartDetail = product.WalmartProductDetail || null;
-    const orderProduct = purchaseOrder.purchaseOrderProducts.find(p => p.product_id === tp.product_id);
+  // 4. Crear mapas de lookup
+  const trackedMap = new Map();
+  trackedProducts.forEach(tp => trackedMap.set(tp.product_id, tp));
 
-    const roi = orderProduct.product_cost ? ((orderProduct.profit / orderProduct.product_cost) * 100) : 0;
-    const marketplace = amazonDetail ? 'Amazon' : walmartDetail ? 'Walmart' : 'Unknown';
+  const productMap = new Map();
+  walmartProducts.forEach(p => productMap.set(p.id, p));
+
+  // 5. Armar la respuesta basada en purchaseOrderProducts
+  const productsData = purchaseOrder.purchaseOrderProducts.map(orderProduct => {
+    const tracked = trackedMap.get(orderProduct.product_id);
+    const product = tracked?.product || productMap.get(orderProduct.product_id);
+    const amazonDetail = tracked?.product?.AmazonProductDetail || null;
+    const walmartDetail = product?.WalmartProductDetail || null;
+
+    const roi = orderProduct.product_cost
+      ? ((orderProduct.profit / orderProduct.product_cost) * 100)
+      : 0;
+
+    const marketplace = amazonDetail
+      ? 'Amazon'
+      : walmartDetail
+        ? 'Walmart'
+        : 'Unknown';
 
     return {
-      id: product.id,
-      product_name: product.product_name,
-      in_seller_account: product.in_seller_account,
+      id: product?.id,
+      product_name: product?.product_name,
+      in_seller_account: product?.in_seller_account,
       ASIN: amazonDetail?.ASIN || null,
       GTIN: walmartDetail?.gtin || null,
       seller_sku: amazonDetail?.seller_sku || walmartDetail?.seller_sku || null,
-      supplier_name: product.supplier?.supplier_name || null,
-      supplier_id: product.supplier_id,
-      pack_type: parseInt(product.pack_type),
-      product_image: product.product_image,
-      supplier_item_number: product.supplier_item_number,
-      upc: product.upc,
-      warehouse_stock: product.warehouse_stock,
-      dg_item: amazonDetail?.dangerous_goods || walmartDetail?.dangerous_goods || false,
-      marketplace, // ← agregado aquí
+      supplier_name: product?.supplier?.supplier_name || null,
+      supplier_id: product?.supplier_id,
+      pack_type: parseInt(product?.pack_type),
+      product_image: product?.product_image,
+      supplier_item_number: product?.supplier_item_number,
+      upc: product?.upc,
+      warehouse_stock: product?.warehouse_stock,
+      dg_item: amazonDetail?.dangerous_goods || false,
+      marketplace,
 
-      product_velocity: tp.product_velocity,
-      units_sold: tp.units_sold,
-      thirty_days_rank: tp.thirty_days_rank,
-      ninety_days_rank: tp.ninety_days_rank,
-      lowest_fba_price: tp.lowest_fba_price,
-      fees: parseFloat(tp.fees),
+      product_velocity: tracked?.product_velocity || null,
+      units_sold: tracked?.units_sold || null,
+      thirty_days_rank: tracked?.thirty_days_rank || null,
+      ninety_days_rank: tracked?.ninety_days_rank || null,
+      lowest_fba_price: tracked?.lowest_fba_price || null,
+      fees: parseFloat(tracked?.fees || 0),
       roi: parseFloat(roi.toFixed(2)),
-      updatedAt: tp.updatedAt,
-      sellable_quantity: tp.sellable_quantity,
+      updatedAt: tracked?.updatedAt || product?.updatedAt || null,
+      sellable_quantity: tracked?.sellable_quantity || null,
 
       product_id: orderProduct.product_id,
       product_cost: parseFloat(orderProduct.product_cost),
       purchase_order_product_id: orderProduct.id,
       total_amount: parseFloat(orderProduct?.total_amount ?? "0"),
-      quantity_purchased: parseInt((orderProduct?.quantity_purchased ?? 0).toString()),
+      quantity_purchased: parseInt(orderProduct?.quantity_purchased ?? 0),
       quantity_received: orderProduct.quantity_received,
       quantity_missing: orderProduct.quantity_missing,
       quantity_available: orderProduct.quantity_available,
@@ -1061,12 +1086,11 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     };
   });
 
-
-  // Ordenar: productos peligrosos al final
+  // 6. Ordenar: productos peligrosos al final
   productsData.sort((a, b) => (a.dg_item === b.dg_item) ? 0 : a.dg_item ? 1 : -1);
 
-  // Promedio ROI
-  const averageRoi = productsData.reduce((sum, p) => sum + parseFloat(p.roi), 0) / productsData.length;
+  // 7. Promedio ROI
+  const averageRoi = productsData.reduce((sum, p) => sum + parseFloat(p.roi || 0), 0) / productsData.length;
   purchaseOrder.setDataValue("average_roi", averageRoi.toFixed(2));
 
   return res.status(200).json({
@@ -1088,6 +1112,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+
 
 exports.updatePONumber = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
