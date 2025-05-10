@@ -1,6 +1,6 @@
 const { fetchNewTokenForFees } = require("../middlewares/lwa_token");
 const productService = require("../services/products.service");
-
+const logger = require("../logger/logger");
 
 const API_URL_BASE = "https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items";
 const MARKETPLACE_ID = "ATVPDKIKX0DER";
@@ -50,25 +50,6 @@ const loopPeticiones = async () => {
       id: p.id
     }
   });
-
-  // const asins = [
-  //   {
-  //     asin: "B000HHM9WI",
-  //     id: 1
-  //   },
-  //   {
-  //     asin: "B000HHM9WI",
-  //     id: 2
-  //   },
-  //   {
-  //     asin: "B005GX6NKM",
-  //     id: 3
-  //   },
-  //   {
-  //     asin: "B01IADWJT8",
-  //     id: 2696
-  //   },
-  // ]
 
   let token = await fetchNewTokenForFees();
 
