@@ -5,7 +5,7 @@ const readline = require('readline/promises');
 const zlib = require('zlib');
 const asyncHandler = require('../middlewares/async');
 const inventory = require('../data/Inventory.json');
-const { Product, SupressedListing } = require('../models');
+const { Product, SupressedListing, AmazonProductDetail } = require('../models');
 const { sequelize } = require('../models');
 const logger = require('../logger/logger');
 
@@ -151,6 +151,62 @@ const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
   const reportData = await getReportById(
     req,
     'GET_MERCHANTS_LISTINGS_FYP_REPORT'
+  );
+
+  if (!reportData) {
+    logger.error("Error getting report by id");
+    throw new Error('Report data is invalid or missing reportDocumentId');
+  }
+
+  const documentId = reportData;
+
+  const response = await axios.get(
+    `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': req.headers['x-amz-access-token'],
+      },
+    }
+  );
+
+  if (!response.data || !response.data.url) {
+    logger.error(`Error getting the report with documentId: ${documentId}`);
+    throw new Error('Failed to retrieve document URL from response');
+  }
+
+  const documentUrl = response.data.url;
+  const compressionAlgorithm = response.data.compressionAlgorithm;
+
+  // Obtener el contenido del documento desde la URL
+  const documentResponse = await axios.get(documentUrl, {
+    responseType: 'arraybuffer',
+  });
+
+  // Descomprimir y decodificar los datos si es necesario
+  let decodedData;
+  if (compressionAlgorithm === 'GZIP') {
+    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+  } else {
+    decodedData = Buffer.from(documentResponse.data);
+  }
+
+  // Convertir los datos decodificados a string
+  const dataString = decodedData.toString('utf-8');
+
+  // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
+  if (!dataString) {
+    throw new Error('Failed to decode report data');
+  }
+
+  const jsonData = parseReportToJSON(dataString);
+  return jsonData;
+});
+
+const generateAmazonListingsData = asyncHandler(async (req, res, next) => {
+  const reportData = await getReportById(
+    req,
+    'GET_MERCHANT_LISTINGS_ALL_DATA'
   );
 
   if (!reportData) {
@@ -563,6 +619,41 @@ const updateSupressedListings = asyncHandler(async (reqSupressedListings, res, n
   }
 });
 
+const updateProductsListingStatus = asyncHandler(async (reqeListingsData, res, next) => {
+  logger.info("Executing updateSupressedListings...");
+
+  const listingsData = await generateAmazonListingsData(reqeListingsData, res, next);
+
+  if (!listingsData) {
+    logger.error('Generating order report failed');
+  }
+
+  try {
+    //Update every listing
+    for (const listing of listingsData) {
+      await AmazonProductDetail.update(
+        { isActiveListing: listing["status"] === 'Active' },
+        { where: { ASIN: listing["asin1"] } }
+      );
+    }
+
+    return res.status(200).json({
+      msg: "Listings status updated successfully",
+      success: true,
+      totalItems: listingsData.length,
+    });
+
+  } catch (error) {
+    logger.error(`Error in updateListings: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update Listings data information",
+      error: error.message,
+    });
+  }
+});
+
+
 
 
 
@@ -577,5 +668,6 @@ module.exports = {
   importJSON,
   downloadCSVReport,
   updateDangerousGoodsFromReport,
-  updateSupressedListings
+  updateSupressedListings,
+  updateProductsListingStatus
 };
