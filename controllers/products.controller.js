@@ -129,6 +129,10 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
 //@desc     Update is_active as a toggle field of products
 //@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
+
+  const accessToken = req.headers['x-amz-access-token'];
+  const productId = req.body.id;
+
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
@@ -153,8 +157,17 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
     if (trackedProduct) {
       trackedProduct.is_active = !trackedProduct.is_active;
-      await trackedProduct.save();
+      const deletedProduct = await trackedProduct.save();
+
+      // If the products was deleted successfully, return the deleted product
+      if (deletedProduct) {
+        console.log(deletedProduct)
+        await productService.deleteProduct(productId, accessToken);
+      }
+
     }
+
+
 
     res.status(200).json(product);
   } catch (error) {
