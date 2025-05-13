@@ -162,7 +162,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         const supplier = product?.supplier;
 
         return {
-          // Atributos directos de trackedProduct
           id: p.id,
           product_id: p.product_id,
           current_rank: p.current_rank,
@@ -183,7 +182,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           updatedAt: p.updatedAt,
           roi: ((p.profit / product.product_cost) * 100) || null,
 
-          // Atributos del producto
           product_name: product.product_name,
           product_cost: product.product_cost,
           product_image: product.product_image,
@@ -659,7 +657,7 @@ const saveOrders = async (req, res, next, products) => {
     }
 
     skuQuantities[sku].total += qty;
-    skuQuantities[sku].totalPrice += price;
+    skuQuantities[sku].totalPrice += price * qty;
     skuQuantities[sku].totalQty += qty;
 
     if (diffDays <= 30) skuQuantities[sku].last30 += qty;
@@ -845,9 +843,6 @@ const processBatch = async (
   }, {});
 
   const finalData = feeEstimates.map((feeEstimate) => {
-    // const combinedItem = combinedData.find((item) => item.product_id === feeEstimate.product_id).catch((error) => {
-    //   logger.error(`Error finding combined item for product id ${feeEstimate.product_id}: ${error.message}`);
-    // })
     const combinedItem = combinedData.find(
       (item) => item.product_id === feeEstimate.product_id
     );
