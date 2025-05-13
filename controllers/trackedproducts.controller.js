@@ -181,6 +181,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           is_active: p.is_active,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
+          roi: ((p.profit / product.product_cost) * 100) || null,
 
           // Atributos del producto
           product_name: product.product_name,
@@ -290,7 +291,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info("Start generateTrackedProductsData");
 
   try {
-    const products = await fetchProducts({ limit: 200 });
+    const products = await fetchProducts();
 
     const productsWithASIN = products
       .filter(
@@ -325,8 +326,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     logger.info("Fetched order data and keepa data successfully");
 
     const combinedData = keepaData.map((keepaItem) => {
-      const orderItem =
-        orderData.find((o) => o.product_id === keepaItem.product_id) || {};
+      const orderItem = orderData.find((o) => o.product_id === keepaItem.product_id) || {};
       const unitsSold = orderItem.quantity || 0;
       const productVelocity = orderItem.velocity || 0;
       const lowestFbaPriceInDollars = keepaItem.lowestFbaPrice
