@@ -259,6 +259,63 @@ const generateAmazonListingsData = asyncHandler(async (req, res, next) => {
   return jsonData;
 });
 
+const generateBreakdownForReservedInventory = asyncHandler(async (req, res, next) => {
+  // const reportData = await getReportById(
+  //   req,
+  //   'GET_RESTOCK_INVENTORY_RECOMMENDATIONS_REPORT'
+  // );
+
+  // if (!reportData) {
+  //   logger.error("Error getting report by id");
+  //   throw new Error('Report data is invalid or missing reportDocumentId');
+  // }
+
+  // const documentId = reportData;
+  const documentId = 'amzn1.spdoc.1.4.na.e3b22cc4-981e-479e-aec5-1fe7956d44db.T3UASII812MA19.94300';
+
+  const response = await axios.get(
+    `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-amz-access-token': req.headers['x-amz-access-token'],
+      },
+    }
+  );
+
+  if (!response.data || !response.data.url) {
+    logger.error(`Error getting the report with documentId: ${documentId}`);
+    throw new Error('Failed to retrieve document URL from response');
+  }
+
+  const documentUrl = response.data.url;
+  const compressionAlgorithm = response.data.compressionAlgorithm;
+
+  // Obtener el contenido del documento desde la URL
+  const documentResponse = await axios.get(documentUrl, {
+    responseType: 'arraybuffer',
+  });
+
+  // Descomprimir y decodificar los datos si es necesario
+  let decodedData;
+  if (compressionAlgorithm === 'GZIP') {
+    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+  } else {
+    decodedData = Buffer.from(documentResponse.data);
+  }
+
+  // Convertir los datos decodificados a string
+  const dataString = decodedData.toString('utf-8');
+
+  // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
+  if (!dataString) {
+    throw new Error('Failed to decode report data');
+  }
+
+  const jsonData = parseReportToJSON(dataString);
+  return jsonData;
+});
+
 const generateInventoryReport = asyncHandler(async (req, res, next) => {
   logger.info('Executing generateInventoryReport...');
   console.log('Executing generateInventoryReport...');
@@ -279,7 +336,6 @@ const generateInventoryReport = asyncHandler(async (req, res, next) => {
   console.log('Report document generated');
   return documentUrl;
 });
-
 const downloadCSVReport = asyncHandler(async (req, res, next) => {
   logger.info('Executing downloadCSVReport...');
   console.log('Executing downloadCSVReport...');
@@ -619,10 +675,10 @@ const updateSupressedListings = asyncHandler(async (reqSupressedListings, res, n
   }
 });
 
-const updateProductsListingStatus = asyncHandler(async (reqeListingsData, res, next) => {
+const updateProductsListingStatus = asyncHandler(async (reqListingsData, res, next) => {
   logger.info("Executing updateSupressedListings...");
 
-  const listingsData = await generateAmazonListingsData(reqeListingsData, res, next);
+  const listingsData = await generateAmazonListingsData(reqListingsData, res, next);
 
   if (!listingsData) {
     logger.error('Generating order report failed');
@@ -653,6 +709,46 @@ const updateProductsListingStatus = asyncHandler(async (reqeListingsData, res, n
   }
 });
 
+const updateBreakdownForReservedInventory = asyncHandler(async (reqBreakdown, res, next) => {
+  logger.info("Executing updateBreakdownForReservedInventory...");
+
+  const breakdown = await generateBreakdownForReservedInventory(reqBreakdown, res, next);
+
+  if (!breakdown) {
+    logger.error('Generating order report failed');
+  }
+
+  try {
+    //Update every listing
+    for (const item of breakdown) {
+      console.log(`Updating ASIN: ${item["ASIN"]}`);
+      await AmazonProductDetail.update(
+        {
+          fc_transfer: item["FC transfer"],
+          fc_processing: item["FC Processing"],
+          customer_order: item["Customer Order"]
+        },
+        { where: { ASIN: item["ASIN"] } }
+      );
+    }
+
+
+    return res.status(200).json({
+      msg: "Breakdown updated successfully",
+      success: true,
+      totalItems: breakdown.length,
+    });
+
+  } catch (error) {
+    logger.error(`Error in update breakdown: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update breakdown data",
+      error: error.message,
+    });
+  }
+});
+
 
 
 
@@ -669,5 +765,6 @@ module.exports = {
   downloadCSVReport,
   updateDangerousGoodsFromReport,
   updateSupressedListings,
-  updateProductsListingStatus
+  updateProductsListingStatus,
+  updateBreakdownForReservedInventory
 };

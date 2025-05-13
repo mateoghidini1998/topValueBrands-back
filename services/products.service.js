@@ -127,7 +127,8 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
         base.inbound_to_fba = product.amazon_inbound_to_fba,
         base.dangerous_goods = product.dangerous_goods,
         base.is_hazmat = product.is_hazmat,
-        base.hazmat_value = product.hazmat_value
+        base.hazmat_value = product.hazmat_value,
+        base.isActiveListing = product.isActiveListing
 
     }
 

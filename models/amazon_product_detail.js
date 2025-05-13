@@ -57,6 +57,26 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "STANDARD",
         allowNull: true,
       },
+      fc_transfer: {
+        type: DataTypes.STRING,
+        defaultValue: null,
+        allowNull: true,
+      },
+      fc_processing: {
+        type: DataTypes.STRING,
+        defaultValue: null,
+        allowNull: true,
+      },
+      customer_order: {
+        type: DataTypes.STRING,
+        defaultValue: null,
+        allowNull: true,
+      },
+      isActiveListing: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: null,
+        allowNull: true,
+      },
     },
     {
       sequelize,

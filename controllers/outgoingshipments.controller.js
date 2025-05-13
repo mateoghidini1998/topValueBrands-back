@@ -332,7 +332,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku"],
+                    attributes: ["ASIN", "seller_sku", "dangerous_goods"],
                   },
                 ],
               },
@@ -379,6 +379,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
         ASIN: amazonDetail?.ASIN || null,
         in_seller_account: product?.in_seller_account || null,
         purchaseOrderProduct: undefined,
+        dg_item: amazonDetail?.dangerous_goods || null,
       };
     }),
   };

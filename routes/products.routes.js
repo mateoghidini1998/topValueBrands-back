@@ -32,7 +32,7 @@ router.get('/supressed', roleMiddleware(['admin', 'warehouse']), getSupressedLis
 
 router.patch('/dg-type/:productId', updateDGType)
 
-router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
+router.patch('/disable', toggleShowProduct);
 
 router.delete('/:id', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, deleteProduct)
 
