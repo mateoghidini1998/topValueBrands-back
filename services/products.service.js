@@ -129,6 +129,9 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
         base.is_hazmat = product.is_hazmat,
         base.hazmat_value = product.hazmat_value,
         base.isActiveListing = product.isActiveListing
+        base.fc_transfer = product.fc_transfer
+        base.fc_processing = product.fc_processing
+        base.customer_order = product.customer_order
 
     }
 

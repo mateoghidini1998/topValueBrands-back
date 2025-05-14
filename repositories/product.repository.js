@@ -37,6 +37,10 @@ const FindAllProducts = async ({
       apd.hazmat_value AS hazmat_value,
       apd.updatedAt AS amazon_updatedAt,
       apd.isActiveListing AS isActiveListing,
+      apd.fc_transfer AS fc_transfer,
+      apd.fc_processing AS fc_processing,
+      apd.customer_order AS customer_order,
+
       
       -- Datos de WalmartProductDetail
       wpd.available_to_sell_qty AS walmart_available_to_sell_qty,
