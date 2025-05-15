@@ -1581,7 +1581,23 @@ const generatePDF = (data) => {
     doc.text("TOTAL", TABLE_LEFT + 400, TABLE_TOP, { bold: true });
 
     let position = TABLE_TOP + itemDistanceY;
-    data.products.forEach((product, index) => {
+
+    // group products by supplier_item_number
+    const groupedProducts = [];
+
+    data.products.forEach((product) => {
+      const existingProduct = groupedProducts.find((p) => p.supplier_item_number && p.supplier_item_number === product.supplier_item_number);
+      if (existingProduct) {
+        existingProduct.quantity_purchased += product.quantity_purchased;
+        existingProduct.total_amount += product.total_amount;
+      } else {
+        groupedProducts.push(product);
+      }
+    });
+
+    console.log(groupedProducts);
+
+    groupedProducts.forEach((product, index) => {
       if (index % 2 === 0) {
         doc.rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY).fill("#f2f2f2").stroke();
       }
