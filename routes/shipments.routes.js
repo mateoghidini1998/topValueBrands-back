@@ -16,14 +16,12 @@ const {
     addReferenceId,
     addFbaShipmentId,
     updateFbaShipmentStatusToShipped,
-    getShipmentTracking,
     checkAllShipmentProductsOfAPallet
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 router.post('/', createShipment)
 router.post('/po/:id', protect, createShipmentByPurchaseOrder)
-router.get('/tracking', addAccessTokenHeader, getShipmentTracking)
 router.get('/', getShipments)
 router.get('/:id', getShipment)
 router.delete('/:id', deleteShipment)
