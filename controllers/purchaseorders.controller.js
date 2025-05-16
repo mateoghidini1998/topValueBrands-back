@@ -15,6 +15,8 @@ const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const { where, Transaction, or, Op } = require("sequelize");
+
+const MarkdownIt = require('markdown-it');
 const {
   getTrackedProductsFromAnOrder,
 } = require("./trackedproducts.controller");
@@ -1462,171 +1464,213 @@ exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
 });
 
 // Método para descargar la orden de compra
+const md = new MarkdownIt();
+
+// Handler para descargar la orden de compra en PDF
 exports.downloadPurchaseOrder = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
+  // Traer orden y productos activos
   const purchaseOrder = await PurchaseOrder.findByPk(id, {
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: "purchaseOrderProducts",
-        where: { is_active: true },
-      },
-    ],
+    include: [{
+      model: PurchaseOrderProduct,
+      as: 'purchaseOrderProducts',
+      where: { is_active: true }
+    }]
   });
+  if (!purchaseOrder) return res.status(404).json({ message: 'Purchase Order not found' });
 
-  if (!purchaseOrder) {
-    return res.status(404).json({ message: "Purchase Order not found" });
-  }
+  // Obtener datos de producto en una sola consulta
+  const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
+  const productsData = await Product.findAll({ where: { id: productIds } });
+  const productMap = new Map(productsData.map(p => [p.id, p]));
 
-  const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
-  let totalQuantity = purchaseOrderProducts.reduce(
-    (total, product) => total + Number(product.quantity_purchased),
-    0
-  );
-
-  let totalAmount = purchaseOrderProducts.reduce(
-    (total, product) => total + parseFloat(product.total_amount),
-    0
-  );
-
-  // Obtener información de los productos en una sola consulta
-  const productIds = purchaseOrderProducts.map((p) => p.product_id);
-  const productsData = await Product.findAll({
-    where: { id: productIds },
-  });
-
-  // Crear un mapa de productos para acceder más rápido
-  const productMap = new Map(productsData.map((p) => [p.id, p]));
-
-  const products = purchaseOrderProducts.map((product) => {
-    const productData = productMap.get(product.product_id);
-    if (!productData) return null;
-
-    const packType = Number(productData.pack_type) || 1;
-    const product_cost = product.dataValues.product_cost / packType;
-    const quantity_purchased = product.dataValues.quantity_purchased * packType;
-    const total_amount = product_cost * quantity_purchased;
+  // Mapear items con cálculos numéricos puros
+  const items = purchaseOrder.purchaseOrderProducts.map((poProd, i) => {
+    const pd = productMap.get(poProd.product_id);
+    const packType = Number(pd.pack_type) || 1;
+    const unitCost = poProd.product_cost / (packType || 1);
+    const qty = Number(poProd.quantity_purchased) * (packType || 1);
     return {
-      ASIN: productData.ASIN,
-      product_id: product.dataValues.product_id,
-      product_cost: product_cost.toFixed(2),
-      quantity_purchased,
-      total_amount: total_amount,
-      pack_type: packType,
-      supplier_item_number: productData.supplier_item_number,
+      supplier_item_number: pd.supplier_item_number || 'n/a - ' + (i + 1),
+      product_id: pd.id,
+      unitCost,       // number
+      quantity: qty,  // number
+      total: unitCost * qty // number
     };
-  }).filter((p) => p !== null);
+  });
 
-  // Obtener el nombre del proveedor
+  // Obtener proveedor
   const supplier = await Supplier.findByPk(purchaseOrder.supplier_id);
-  if (!supplier) {
-    return res.status(404).json({ message: "Supplier not found" });
-  }
+  if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
 
+  // Datos que pasaremos al generador
   const pdfData = {
-    purchaseOrder: {
-      id: purchaseOrder.id,
-      order_number: purchaseOrder.order_number,
-      supplier_name: supplier.supplier_name,
-      status: purchaseOrder.purchase_order_status_id,
-      total_price: Number(purchaseOrder.total_price).toFixed(2),
-      total_quantity: totalQuantity,
-      total_amount: parseFloat(totalAmount).toFixed(2),
-      notes: purchaseOrder.notes || "",
+    order: {
+      number: purchaseOrder.order_number,
+      date: new Date(),
+      supplierName: supplier.supplier_name,
+      notes: purchaseOrder.notes || ''
     },
-    products,
+    items
   };
 
-  // Generar PDF
+  // Generar buffer y enviarlo
   const pdfBuffer = await generatePDF(pdfData);
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=purchase-order.pdf");
-  res.send(pdfBuffer);
+  res
+    .setHeader('Content-Type', 'application/pdf')
+    .setHeader('Content-Disposition', 'attachment; filename=purchase-order.pdf')
+    .send(pdfBuffer);
 });
 
-const generatePDF = (data) => {
+/**
+ * Genera el PDF a partir de los datos pasados.
+ * @param {{order: {number:string,date:Date,supplierName:string,notes:string}, items:Array}} data
+ * @returns {Promise<Buffer>}
+ */
+function generatePDF(data) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ size: 'A4', margins: { top: 60, bottom: 60, left: 50, right: 50 } });
     const buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-    doc.on("data", buffers.push.bind(buffers));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    // --- HEADER ---
+    const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
+    const logoWidth = 200;
+    doc.image(logoPath, (doc.page.width - logoWidth) / 2, 20, { width: logoWidth });
+    doc.moveDown(4);
 
-    const logoPath = path.join(__dirname, "../data/top_values_brand_logo.jpg");
+    // Fecha y Order ID a la derecha
+    doc.fontSize(10)
+      .text(`DATE: ${data.order.date.toLocaleDateString()}`, { align: 'right' })
+      .text(`Order ID: ${data.order.number}`, { align: 'right' });
 
-    doc.image(logoPath, 200, 10, { width: 200, align: "center" });
-    doc.moveDown(8);
-    doc.text(`DATE: ${new Date().toLocaleDateString()}`);
-    doc.moveDown(1);
-    doc.fontSize(12).text("ISSUED TO:", { bold: true });
-    doc.moveDown(1);
-    doc.text(`${data.purchaseOrder.supplier_name}`);
-    doc.text("Top Value Brands 1141 Holland Dr 8 Boca Raton");
-    doc.text("FL 33487 USA");
-    doc.moveDown();
-    doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.order_number}`);
-    doc.moveDown(3);
+    doc.moveDown(2);
+    doc.fontSize(12).font('Helvetica-Bold').text('ISSUED TO:');
+    doc.moveDown(0.5)
+      .font('Helvetica').fontSize(10)
+      .text(data.order.supplierName)
+      .text('Top Value Brands 1141 Holland Dr 8 Boca Raton')
+      .text('FL 33487 USA');
+    doc.moveDown(2);
 
-    const TABLE_LEFT = 70;
-    const TABLE_TOP = 350;
-    const itemDistanceY = 20;
+    // --- TABLE HEADER ---
+    const columnWidths = { itemNo: 120, unitPrice: 120, qty: 120, total: 120 };
+    const tableWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0);
+    const startX = doc.page.margins.left + ((doc.page.width - doc.page.margins.left - doc.page.margins.right - tableWidth) / 2);
 
-    // Table Headers
-    doc.fillColor("blue").fontSize(12);
-    doc.text("ITEM NO.", TABLE_LEFT, TABLE_TOP, { bold: true });
-    doc.text("UNIT PRICE", TABLE_LEFT + 180, TABLE_TOP, { bold: true });
-    doc.text("QUANTITY", TABLE_LEFT + 300, TABLE_TOP, { bold: true });
-    doc.text("TOTAL", TABLE_LEFT + 400, TABLE_TOP, { bold: true });
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#004080');
+    const headerY = doc.y;
+    doc.text('ITEM NO.', startX, headerY, { width: columnWidths.itemNo });
+    doc.text('UNIT PRICE', startX + columnWidths.itemNo, headerY, { width: columnWidths.unitPrice, align: 'right' });
+    doc.text('QUANTITY', startX + columnWidths.itemNo + columnWidths.unitPrice, headerY, { width: columnWidths.qty, align: 'right' });
+    doc.text('TOTAL', startX + columnWidths.itemNo + columnWidths.unitPrice + columnWidths.qty, headerY, { width: columnWidths.total, align: 'right' });
 
-    let position = TABLE_TOP + itemDistanceY;
+    const headerBottomY = headerY + 15;
+    doc.moveTo(startX, headerBottomY)
+      .lineTo(startX + tableWidth, headerBottomY)
+      .stroke();
+    doc.y = headerBottomY + 5;
 
-    // group products by supplier_item_number
-    const groupedProducts = [];
-
-    data.products.forEach((product) => {
-      const existingProduct = groupedProducts.find((p) => p.supplier_item_number && p.supplier_item_number === product.supplier_item_number);
-      if (existingProduct) {
-        existingProduct.quantity_purchased += product.quantity_purchased;
-        existingProduct.total_amount += product.total_amount;
+    // --- AGRUPAR ITEMS ---
+    const grouped = [];
+    data.items.forEach(item => {
+      let g = grouped.find(x => x.supplier_item_number === item.supplier_item_number);
+      if (g) {
+        g.quantity += item.quantity;
+        g.total += item.total;
       } else {
-        groupedProducts.push(product);
+        grouped.push({ ...item });
       }
     });
 
-    console.log(groupedProducts);
+    // --- TABLE ROWS ---
+    doc.font('Helvetica').fontSize(10).fillColor('black');
+    const rowHeight = 20;
+    let y = doc.y;
 
-    groupedProducts.forEach((product, index) => {
-      if (index % 2 === 0) {
-        doc.rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY).fill("#f2f2f2").stroke();
+    grouped.forEach((row, i) => {
+      if (y + rowHeight > doc.page.height - doc.page.margins.bottom - 60) {
+        doc.addPage();
+        y = doc.page.margins.top;
       }
-      doc.fillColor("black");
-      doc.text(product.supplier_item_number, TABLE_LEFT, position);
-      doc.text(`$${product.product_cost}`, TABLE_LEFT + 180, position);
-      doc.text(product.quantity_purchased, TABLE_LEFT + 300, position);
-      doc.text(`$${product.total_amount}`, TABLE_LEFT + 400, position);
-      position += itemDistanceY;
+      if (i % 2 === 0) {
+        doc.rect(startX, y - 2, tableWidth, rowHeight)
+          .fill('#f9f9f9')
+          .fillColor('black');
+      }
+      const itemNo = row.supplier_item_number || row.asin || row.product_id;
+      // Imprimir valores con separadores de miles
+      doc.text(itemNo.toString(), startX, y, { width: columnWidths.itemNo });
+      doc.text(
+        `$${row.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        startX + columnWidths.itemNo,
+        y,
+        { width: columnWidths.unitPrice, align: 'right' }
+      );
+      doc.text(
+        row.quantity.toLocaleString('en-US'),
+        startX + columnWidths.itemNo + columnWidths.unitPrice,
+        y,
+        { width: columnWidths.qty, align: 'right' }
+      );
+      doc.text(
+        `$${row.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        startX + columnWidths.itemNo + columnWidths.unitPrice + columnWidths.qty,
+        y,
+        { width: columnWidths.total, align: 'right' }
+      );
+
+      y += rowHeight;
+      doc.y = y;
     });
 
-    // Subtotal y Total
-    doc.moveDown(3);
-    doc.fillColor("black").text(`SUBTOTAL: $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
+    // --- SUBTOTAL ---
+    const subTotal = grouped.reduce((sum, r) => sum + r.total, 0);
+    doc.moveDown(2)
+      .font('Helvetica-Bold')
+      .text(
+        `SUBTOTAL: $${subTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        { align: 'right' }
+      );
 
-    // Notas de la orden
-    if (data.purchaseOrder.notes) {
-      doc.moveDown(2);
-      doc.text("ORDER NOTES:", TABLE_LEFT);
-      doc.moveDown();
-      doc.text(data.purchaseOrder.notes);
+    // --- ORDER NOTES (Markdown simple) ---
+    if (data.order.notes) {
+      doc.moveDown(2)
+        .font('Helvetica-Bold')
+        .fontSize(10)
+        .text('ORDER NOTES:');
+      doc.moveDown(0.5)
+        .font('Helvetica')
+        .fontSize(10);
+      const lines = data.order.notes.split(/\r?\n/);
+      lines.forEach(line => {
+        if (!line.trim()) {
+          doc.moveDown(0.5);
+        } else if (/^#+\s/.test(line)) {
+          const text = line.replace(/^#+\s/, '');
+          doc.font('Helvetica-Bold').fontSize(12).text(text);
+          doc.font('Helvetica').fontSize(10);
+        } else if (/^-\s/.test(line)) {
+          const text = line.replace(/^-+\s/, '');
+          doc.text(`• ${text}`, { indent: 20 });
+        } else {
+          doc.text(line);
+        }
+      });
     }
 
-    doc.text("Thank you for your business!", { bold: true, align: "center" });
-    doc.text("www.topvaluebrands.com", { bold: true, align: "center" });
+    // --- FOOTER ---
+    const footerY = doc.page.height - doc.page.margins.bottom - 40;
+    doc.font('Helvetica-Bold').fontSize(10);
+    doc.text('Thank you for your business!', 0, footerY, { align: 'center' });
+    doc.text('www.topvaluebrands.com', 0, footerY + 15, { align: 'center' });
 
     doc.end();
   });
-};
+}
+
 
 
 exports.fixPurchaseOrderProductsProfit = asyncHandler(async (req, res, next) => {
