@@ -15,9 +15,7 @@ const {
 } = require("../models");
 const axios = require("axios");
 const asyncHandler = require("../middlewares/async");
-const {
-  generateOrderReport,
-} = require("../utils/utils");
+const { generateOrderReport } = require("../utils/utils");
 const dotenv = require("dotenv");
 const logger = require("../logger/logger");
 const { Op, literal } = require("sequelize");
@@ -28,13 +26,8 @@ dotenv.config({ path: "./.env" });
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const fetchProducts = async ({
-  limit = LIMIT_PRODUCTS,
-  offset = OFFSET_PRODUCTS,
-}) => {
+const fetchProducts = async () => {
   const products = await Product.findAll({
-    limit,
-    offset,
     include: [
       {
         model: AmazonProductDetail,
@@ -178,7 +171,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           is_active: p.is_active,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
-          roi: ((p.profit / product.product_cost) * 100) || null,
+          roi: (p.profit / product.product_cost) * 100 || null,
 
           product_name: product.product_name,
           product_cost: product.product_cost,
@@ -322,7 +315,8 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     logger.info("Fetched order data and keepa data successfully");
 
     const combinedData = keepaData.map((keepaItem) => {
-      const orderItem = orderData.find((o) => o.product_id === keepaItem.product_id) || {};
+      const orderItem =
+        orderData.find((o) => o.product_id === keepaItem.product_id) || {};
       const unitsSold = orderItem.quantity || 0;
       const productVelocity = orderItem.velocity || 0;
       const lowestFbaPriceInDollars = keepaItem.lowestFbaPrice
@@ -601,8 +595,7 @@ const saveOrders = async (req, res, next, products) => {
 
   const filteredOrders = jsonData.filter(
     (item) =>
-      (item["order-status"] === "Shipped" ||
-        item["order-status"] === "Pending")
+      item["order-status"] === "Shipped" || item["order-status"] === "Pending"
   );
 
   const skuQuantities = {};
