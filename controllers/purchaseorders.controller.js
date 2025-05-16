@@ -15,7 +15,6 @@ const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const { where, Transaction, or, Op } = require("sequelize");
-
 const MarkdownIt = require('markdown-it');
 const {
   getTrackedProductsFromAnOrder,
