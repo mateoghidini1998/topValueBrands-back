@@ -8,7 +8,6 @@ const {
 } = require("../utils/constants/constants");
 const {
   AmazonProductDetail,
-  WalmartProductDetail,
   Product,
   TrackedProduct,
   Supplier,
@@ -18,7 +17,6 @@ const axios = require("axios");
 const asyncHandler = require("../middlewares/async");
 const {
   generateOrderReport,
-  generateStorageReport,
 } = require("../utils/utils");
 const dotenv = require("dotenv");
 const logger = require("../logger/logger");
@@ -415,30 +413,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     logger.info(
       "Response sent successfully with 200 status code. " +
         JSON.stringify(combinedData.length) +
-        " items tracked."
-    );
-  } catch (error) {
-    logger.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-      error: error.stack,
-    });
-  }
-});
-
-exports.getStorageReport = asyncHandler(async (req, res) => {
-  try {
-    const storageReport = await generateStorageReport(req, res);
-    res.status(200).json({
-      message: "Storage report generated successfully.",
-      success: true,
-      data: storageReport,
-      itemsQuantity: storageReport.length,
-    });
-    logger.info(
-      "Response sent successfully with 200 status code. " +
-        JSON.stringify(storageReport.length) +
         " items tracked."
     );
   } catch (error) {
@@ -967,54 +941,3 @@ const getNewAccessToken = async () => {
     throw new Error("Failed to refresh token");
   }
 };
-
-exports.addProductVelocityAndUnitsSold = asyncHandler(
-  async (req, res, next) => {
-    logger.info("Executing addProductVelocity...");
-
-    // 1. Obtenemos todos los tracked products
-    const products = await TrackedProduct.findAll();
-    logger.info("TrackedProducts found: " + products.length);
-    if (!products) {
-      throw new Error("No tracked products found");
-    }
-
-    // 2. Generamos el reporte de orders
-    const jsonData = await generateOrderReport(req, res, next);
-    if (!jsonData) {
-      throw new Error("Failed to retrieve orders");
-    }
-
-    const filteredOrders = jsonData.filter(
-      (item) =>
-        (item["order-status"] === "Shipped" ||
-          item["order-status"] === "Pending") &&
-        new Date() - new Date(item["purchase-date"]) <= 30 * 24 * 60 * 60 * 1000
-    );
-
-    const skuQuantities = filteredOrders.reduce((acc, item) => {
-      const { sku, quantity, asin } = item;
-      const qty = parseInt(quantity, 10);
-      if (!acc[sku]) {
-        acc[sku] = { quantity: qty, asin };
-      } else {
-        acc[sku].quantity += qty;
-      }
-      return acc;
-    }, {});
-
-    const asinToProductId = products.reduce((acc, product) => {
-      acc[product.ASIN] = product.id;
-      return acc;
-    }, {});
-
-    const finalJson = Object.entries(skuQuantities).map(
-      ([sku, { quantity, asin }]) => ({
-        sku,
-        product_id: asinToProductId[asin],
-        quantity,
-        velocity: quantity / 30,
-      })
-    );
-  }
-);

@@ -333,7 +333,6 @@ exports.addUPC = asyncHandler(async (req, res) => {
 })
 
 exports.updateDGType = asyncHandler(async (req, res) => {
-
   const { productId } = req.params;
   const { dgType } = req.body;
 

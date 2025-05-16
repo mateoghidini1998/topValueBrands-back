@@ -40,18 +40,14 @@ router.get('/:id', getPurchaseOrderById);
 
 router.patch('/incoming-order-notes/:orderId', updateIncomingOrderNotes)
 
-// change purchase order status
 router.patch('/:id/status', updatePurchaseOrderStatus);
 
-// download purchase order
 router.get('/download/:id', downloadPurchaseOrder);
 
-// delete purchase order
 router.delete('/delete/:id', deletePurchaseOrder);
 
 router.get('/summary/:id', getPurchaseOrderSummary);
 
-// delete purchase order product of and order by ID
 router.delete(
   '/purchaseorderproduct/:purchaseOrderProductId',
   deletePurchaseOrderProductFromAnOrder
@@ -59,10 +55,8 @@ router.delete(
 
 router.patch('/update-incoming-order/:id', updateIncomingOrderProducts)
 
-// add products to existing purchase order
 router.post('/add-products/:id', addOrUpdateProductInPurchaseOrder);
 
-//update purchase order number
 
 router.patch('/orderNumber/:id', updatePONumber);
 

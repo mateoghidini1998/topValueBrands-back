@@ -2,7 +2,7 @@ const { parentPort, workerData, isMainThread } = require('worker_threads');
 const { syncDBWithAmazon } = require('../controllers/reports.controller');
 const { generateTrackedProductsData } = require('../controllers/trackedproducts.controller');
 const logger = require('../logger/logger');
-const { updateDangerousGoodsFromReport, updateSupressedListings, updateProductsListingStatus, updateBreakdownForReservedInventory } = require('../utils/utils');
+const { updateProductsListingStatus, updateBreakdownForReservedInventory } = require('../utils/utils');
 const moment = require('moment');
 
 (async () => {

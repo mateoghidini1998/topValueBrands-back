@@ -1,34 +1,34 @@
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline/promises');
-const zlib = require('zlib');
-const asyncHandler = require('../middlewares/async');
-const inventory = require('../data/Inventory.json');
-const { Product, SupressedListing, AmazonProductDetail } = require('../models');
-const { sequelize } = require('../models');
-const logger = require('../logger/logger');
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline/promises");
+const zlib = require("zlib");
+const asyncHandler = require("../middlewares/async");
+const inventory = require("../data/Inventory.json");
+const { Product, SupressedListing, AmazonProductDetail } = require("../models");
+const { sequelize } = require("../models");
+const logger = require("../logger/logger");
 
 const createReport = asyncHandler(async (req) => {
-  logger.info('Executing createReport...');
-  console.log('Executing createReport...');
+  logger.info("Executing createReport...");
+  console.log("Executing createReport...");
 
-  console.log('Body: ', req.body);
+  console.log("Body: ", req.body);
 
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports`;
   try {
     const response = await axios.post(url, req.body, {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
+        "Content-Type": "application/json",
+        "x-amz-access-token": req.headers["x-amz-access-token"],
       },
     });
 
     if (!response.data || !response.data.reportId) {
-      throw new Error('Error creating report');
+      throw new Error("Error creating report");
     }
 
-    logger.info('Report created successfully');
+    logger.info("Report created successfully");
     console.log("Report ID:", response.data.reportId);
     return response.data.reportId;
   } catch (error) {
@@ -39,25 +39,25 @@ const createReport = asyncHandler(async (req) => {
 });
 
 const pollReportStatus = async (reportId, accessToken) => {
-  logger.info('Executing pollReportStatus...');
-  console.log('Executing pollReportStatus...');
+  logger.info("Executing pollReportStatus...");
+  console.log("Executing pollReportStatus...");
   const url = `${process.env.AMZ_BASE_URL}/reports/2021-06-30/reports/${reportId}`;
-  console.log('URL: ', url)
-  let reportStatus = '';
-  let reportDocument = '';
+  console.log("URL: ", url);
+  let reportStatus = "";
+  let reportDocument = "";
 
-  while (reportStatus !== 'DONE') {
-    if (reportStatus === 'FATAL' || reportStatus === 'CANCELLED') {
+  while (reportStatus !== "DONE") {
+    if (reportStatus === "FATAL" || reportStatus === "CANCELLED") {
       console.log(reportStatus);
-      logger.error('Error fetching report with status' + reportStatus);
-      console.log('Error fetching report with status' + reportStatus);
-      return new Error('Error fetching report');
+      logger.error("Error fetching report with status" + reportStatus);
+      console.log("Error fetching report with status" + reportStatus);
+      return new Error("Error fetching report");
     }
 
     const response = await axios.get(url, {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': accessToken,
+        "Content-Type": "application/json",
+        "x-amz-access-token": accessToken,
       },
     });
     console.log(reportStatus);
@@ -69,35 +69,35 @@ const pollReportStatus = async (reportId, accessToken) => {
 };
 
 const getReportById = asyncHandler(async (req, reportType) => {
-  logger.info('Executing getReportById...');
-  console.log('Executing getReportById...');
-  console.log('Report Type: ', reportType);
+  logger.info("Executing getReportById...");
+  console.log("Executing getReportById...");
+  console.log("Report Type: ", reportType);
   const reportId = await createReport(req);
-  const accessToken = req.headers['x-amz-access-token'];
+  const accessToken = req.headers["x-amz-access-token"];
 
   try {
     // Poll the report status until it's DONE
     const reportResponse = await pollReportStatus(reportId, accessToken);
-    console.log('REPORT RESPONSE: ', reportResponse);
-    console.log('Obtuvimos el reporte');
+    console.log("REPORT RESPONSE: ", reportResponse);
+    console.log("Obtuvimos el reporte");
     return reportResponse;
   } catch (error) {
-    logger.error('Error fetching report:', error);
-    console.error('Error fetching report:', error);
+    logger.error("Error fetching report:", error);
+    console.error("Error fetching report:", error);
   }
 });
 
 const generateOrderReport = asyncHandler(async (req, res, next) => {
-  logger.info('Executing generateOrderReport...');
-  console.log('Executing generateOrderReport...');
+  logger.info("Executing generateOrderReport...");
+  console.log("Executing generateOrderReport...");
   const reportData = await getReportById(
     req,
-    'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL'
+    "GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_GENERAL"
   );
 
   if (!reportData) {
     logger.error("Error getting report by id");
-    throw new Error('Report data is invalid or missing reportDocumentId');
+    throw new Error("Report data is invalid or missing reportDocumentId");
   }
 
   const documentId = reportData;
@@ -106,15 +106,15 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
     `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
     {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
+        "Content-Type": "application/json",
+        "x-amz-access-token": req.headers["x-amz-access-token"],
       },
     }
   );
 
   if (!response.data || !response.data.url) {
     logger.error(`Error getting the report with documentId: ${documentId}`);
-    throw new Error('Failed to retrieve document URL from response');
+    throw new Error("Failed to retrieve document URL from response");
   }
 
   const documentUrl = response.data.url;
@@ -122,23 +122,23 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
 
   // Obtener el contenido del documento desde la URL
   const documentResponse = await axios.get(documentUrl, {
-    responseType: 'arraybuffer',
+    responseType: "arraybuffer",
   });
 
   // Descomprimir y decodificar los datos si es necesario
   let decodedData;
-  if (compressionAlgorithm === 'GZIP') {
+  if (compressionAlgorithm === "GZIP") {
     decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
   } else {
     decodedData = Buffer.from(documentResponse.data);
   }
 
   // Convertir los datos decodificados a string
-  const dataString = decodedData.toString('utf-8');
+  const dataString = decodedData.toString("utf-8");
 
   // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
   if (!dataString) {
-    throw new Error('Failed to decode report data');
+    throw new Error("Failed to decode report data");
   }
 
   const jsonData = parseReportToJSON(dataString);
@@ -146,16 +146,16 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
 });
 
 const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
-  logger.info('Executing generateOrderReport...');
-  console.log('Executing generateOrderReport...');
+  logger.info("Executing generateOrderReport...");
+  console.log("Executing generateOrderReport...");
   const reportData = await getReportById(
     req,
-    'GET_MERCHANTS_LISTINGS_FYP_REPORT'
+    "GET_MERCHANTS_LISTINGS_FYP_REPORT"
   );
 
   if (!reportData) {
     logger.error("Error getting report by id");
-    throw new Error('Report data is invalid or missing reportDocumentId');
+    throw new Error("Report data is invalid or missing reportDocumentId");
   }
 
   const documentId = reportData;
@@ -164,15 +164,15 @@ const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
     `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
     {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
+        "Content-Type": "application/json",
+        "x-amz-access-token": req.headers["x-amz-access-token"],
       },
     }
   );
 
   if (!response.data || !response.data.url) {
     logger.error(`Error getting the report with documentId: ${documentId}`);
-    throw new Error('Failed to retrieve document URL from response');
+    throw new Error("Failed to retrieve document URL from response");
   }
 
   const documentUrl = response.data.url;
@@ -180,23 +180,23 @@ const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
 
   // Obtener el contenido del documento desde la URL
   const documentResponse = await axios.get(documentUrl, {
-    responseType: 'arraybuffer',
+    responseType: "arraybuffer",
   });
 
   // Descomprimir y decodificar los datos si es necesario
   let decodedData;
-  if (compressionAlgorithm === 'GZIP') {
+  if (compressionAlgorithm === "GZIP") {
     decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
   } else {
     decodedData = Buffer.from(documentResponse.data);
   }
 
   // Convertir los datos decodificados a string
-  const dataString = decodedData.toString('utf-8');
+  const dataString = decodedData.toString("utf-8");
 
   // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
   if (!dataString) {
-    throw new Error('Failed to decode report data');
+    throw new Error("Failed to decode report data");
   }
 
   const jsonData = parseReportToJSON(dataString);
@@ -204,14 +204,11 @@ const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
 });
 
 const generateAmazonListingsData = asyncHandler(async (req, res, next) => {
-  const reportData = await getReportById(
-    req,
-    'GET_MERCHANT_LISTINGS_ALL_DATA'
-  );
+  const reportData = await getReportById(req, "GET_MERCHANT_LISTINGS_ALL_DATA");
 
   if (!reportData) {
     logger.error("Error getting report by id");
-    throw new Error('Report data is invalid or missing reportDocumentId');
+    throw new Error("Report data is invalid or missing reportDocumentId");
   }
 
   const documentId = reportData;
@@ -220,15 +217,15 @@ const generateAmazonListingsData = asyncHandler(async (req, res, next) => {
     `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
     {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
+        "Content-Type": "application/json",
+        "x-amz-access-token": req.headers["x-amz-access-token"],
       },
     }
   );
 
   if (!response.data || !response.data.url) {
     logger.error(`Error getting the report with documentId: ${documentId}`);
-    throw new Error('Failed to retrieve document URL from response');
+    throw new Error("Failed to retrieve document URL from response");
   }
 
   const documentUrl = response.data.url;
@@ -236,128 +233,132 @@ const generateAmazonListingsData = asyncHandler(async (req, res, next) => {
 
   // Obtener el contenido del documento desde la URL
   const documentResponse = await axios.get(documentUrl, {
-    responseType: 'arraybuffer',
+    responseType: "arraybuffer",
   });
 
   // Descomprimir y decodificar los datos si es necesario
   let decodedData;
-  if (compressionAlgorithm === 'GZIP') {
+  if (compressionAlgorithm === "GZIP") {
     decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
   } else {
     decodedData = Buffer.from(documentResponse.data);
   }
 
   // Convertir los datos decodificados a string
-  const dataString = decodedData.toString('utf-8');
+  const dataString = decodedData.toString("utf-8");
 
   // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
   if (!dataString) {
-    throw new Error('Failed to decode report data');
+    throw new Error("Failed to decode report data");
   }
 
   const jsonData = parseReportToJSON(dataString);
   return jsonData;
 });
 
-const generateBreakdownForReservedInventory = asyncHandler(async (req, res, next) => {
-  // const reportData = await getReportById(
-  //   req,
-  //   'GET_RESTOCK_INVENTORY_RECOMMENDATIONS_REPORT'
-  // );
+const generateBreakdownForReservedInventory = asyncHandler(
+  async (req, res, next) => {
+    // const reportData = await getReportById(
+    //   req,
+    //   'GET_RESTOCK_INVENTORY_RECOMMENDATIONS_REPORT'
+    // );
 
-  // if (!reportData) {
-  //   logger.error("Error getting report by id");
-  //   throw new Error('Report data is invalid or missing reportDocumentId');
-  // }
+    // if (!reportData) {
+    //   logger.error("Error getting report by id");
+    //   throw new Error('Report data is invalid or missing reportDocumentId');
+    // }
 
-  // const documentId = reportData;
-  const documentId = 'amzn1.spdoc.1.4.na.e3b22cc4-981e-479e-aec5-1fe7956d44db.T3UASII812MA19.94300';
+    // const documentId = reportData;
+    const documentId =
+      "amzn1.spdoc.1.4.na.e3b22cc4-981e-479e-aec5-1fe7956d44db.T3UASII812MA19.94300";
 
-  const response = await axios.get(
-    `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
-      },
+    const response = await axios.get(
+      `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-amz-access-token": req.headers["x-amz-access-token"],
+        },
+      }
+    );
+
+    if (!response.data || !response.data.url) {
+      logger.error(`Error getting the report with documentId: ${documentId}`);
+      throw new Error("Failed to retrieve document URL from response");
     }
-  );
 
-  if (!response.data || !response.data.url) {
-    logger.error(`Error getting the report with documentId: ${documentId}`);
-    throw new Error('Failed to retrieve document URL from response');
+    const documentUrl = response.data.url;
+    const compressionAlgorithm = response.data.compressionAlgorithm;
+
+    // Obtener el contenido del documento desde la URL
+    const documentResponse = await axios.get(documentUrl, {
+      responseType: "arraybuffer",
+    });
+
+    // Descomprimir y decodificar los datos si es necesario
+    let decodedData;
+    if (compressionAlgorithm === "GZIP") {
+      decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+    } else {
+      decodedData = Buffer.from(documentResponse.data);
+    }
+
+    // Convertir los datos decodificados a string
+    const dataString = decodedData.toString("utf-8");
+
+    // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
+    if (!dataString) {
+      throw new Error("Failed to decode report data");
+    }
+
+    const jsonData = parseReportToJSON(dataString);
+    return jsonData;
   }
-
-  const documentUrl = response.data.url;
-  const compressionAlgorithm = response.data.compressionAlgorithm;
-
-  // Obtener el contenido del documento desde la URL
-  const documentResponse = await axios.get(documentUrl, {
-    responseType: 'arraybuffer',
-  });
-
-  // Descomprimir y decodificar los datos si es necesario
-  let decodedData;
-  if (compressionAlgorithm === 'GZIP') {
-    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
-  } else {
-    decodedData = Buffer.from(documentResponse.data);
-  }
-
-  // Convertir los datos decodificados a string
-  const dataString = decodedData.toString('utf-8');
-
-  // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
-  if (!dataString) {
-    throw new Error('Failed to decode report data');
-  }
-
-  const jsonData = parseReportToJSON(dataString);
-  return jsonData;
-});
+);
 
 const generateInventoryReport = asyncHandler(async (req, res, next) => {
-  logger.info('Executing generateInventoryReport...');
-  console.log('Executing generateInventoryReport...');
-  const report = await getReportById(req, 'GET_FBA_MYI_ALL_INVENTORY_DATA');
+  logger.info("Executing generateInventoryReport...");
+  console.log("Executing generateInventoryReport...");
+  const report = await getReportById(req, "GET_FBA_MYI_ALL_INVENTORY_DATA");
 
   const documentId = report;
-  console.log('Document ID : ', documentId);
+  console.log("Document ID : ", documentId);
   const response = await axios.get(
     `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
     {
       headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
+        "Content-Type": "application/json",
+        "x-amz-access-token": req.headers["x-amz-access-token"],
       },
     }
   );
   let documentUrl = response.data.url;
-  console.log('Report document generated');
+  console.log("Report document generated");
   return documentUrl;
 });
+
 const downloadCSVReport = asyncHandler(async (req, res, next) => {
-  logger.info('Executing downloadCSVReport...');
-  console.log('Executing downloadCSVReport...');
+  logger.info("Executing downloadCSVReport...");
+  console.log("Executing downloadCSVReport...");
   try {
     let documentUrl = await generateInventoryReport(req, res, next);
 
     const response = await axios.get(documentUrl, {
-      responseType: 'arraybuffer',
+      responseType: "arraybuffer",
     });
 
     let responseData = response.data;
 
     if (responseData.compressionAlgorithm) {
       try {
-        responseData = require('zlib').gunzipSync(responseData);
+        responseData = require("zlib").gunzipSync(responseData);
       } catch (error) {
         // console.error(error.message);
-        return res.status(500).send('Error while decompressing data');
+        return res.status(500).send("Error while decompressing data");
       }
     }
 
-    const csvDirectory = path.resolve('./reports');
+    const csvDirectory = path.resolve("./reports");
     if (!fs.existsSync(csvDirectory)) {
       fs.mkdirSync(csvDirectory);
     }
@@ -370,26 +371,26 @@ const downloadCSVReport = asyncHandler(async (req, res, next) => {
     // Write CSV data to file
     fs.writeFileSync(csvFilePath, responseData);
 
-    console.log('Se descargo el documento como CSV');
-    logger.info('Se descargo el documento como CSV');
-    logger.info('CSV file path:', csvFilePath);
+    console.log("Se descargo el documento como CSV");
+    logger.info("Se descargo el documento como CSV");
+    logger.info("CSV file path:", csvFilePath);
     return csvFilePath;
   } catch (error) {
-    logger.error('Error downloading CSV report: ' + error.message);
+    logger.error("Error downloading CSV report: " + error.message);
     // console.error(error);
-    return res.status(500).send('Internal Server Error');
+    return res.status(500).send("Internal Server Error");
   }
 });
 
 const parseReportToJSON = (dataString) => {
-  logger.info('Executing parseReportToJSON...');
-  console.log('Executing parseReportToJSON...');
+  logger.info("Executing parseReportToJSON...");
+  console.log("Executing parseReportToJSON...");
   const results = [];
-  const lines = dataString.split('\n');
-  const keys = lines[0].split('\t');
+  const lines = dataString.split("\n");
+  const keys = lines[0].split("\t");
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split('\t');
+    const values = lines[i].split("\t");
     if (values.length === keys.length) {
       const obj = {};
       keys.forEach((key, index) => {
@@ -397,16 +398,15 @@ const parseReportToJSON = (dataString) => {
       });
       results.push(obj);
     }
-
   }
-  console.log('parseReportToJSON results: ' + results.length)
-  logger.info('parseReportToJSON results: ' + results.length)
+  console.log("parseReportToJSON results: " + results.length);
+  logger.info("parseReportToJSON results: " + results.length);
   return results;
 };
 
 const sendCSVasJSON = asyncHandler(async (req, res, next) => {
-  logger.info('Executing sendCSVasJSON...');
-  console.log('Executing sendCSVasJSON...');
+  logger.info("Executing sendCSVasJSON...");
+  console.log("Executing sendCSVasJSON...");
   try {
     const csvFile = await downloadCSVReport(req, res, next);
     // For testing
@@ -416,17 +416,17 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
     let keys = [];
 
     const rl = readline.createInterface({
-      input: fs.createReadStream(csvFile, { encoding: 'utf8' }),
+      input: fs.createReadStream(csvFile, { encoding: "utf8" }),
       crlfDelay: Infinity,
     });
 
     for await (const line of rl) {
       if (!keys.length) {
         // La primera línea contiene los nombres de las claves
-        keys = line.split('\t');
+        keys = line.split("\t");
       } else {
         // Las siguientes líneas contienen los valores
-        const values = line.split('\t');
+        const values = line.split("\t");
         const obj = {};
         keys.forEach((key, index) => {
           obj[key] = values[index];
@@ -435,323 +435,155 @@ const sendCSVasJSON = asyncHandler(async (req, res, next) => {
       }
     }
     // res.json({ count: results.length, items: results });
-    console.log(`Se envio el documento como JSON correctamente con ${results.length} registros`);
-    logger.info(`Se envio el documento como JSON correctamente con ${results.length} registros`);
+    console.log(
+      `Se envio el documento como JSON correctamente con ${results.length} registros`
+    );
+    logger.info(
+      `Se envio el documento como JSON correctamente con ${results.length} registros`
+    );
     return results;
   } catch (error) {
     // console.error(error.message);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send("Internal Server Error");
   }
 });
 
-const importJSON = asyncHandler(async (req, res, next) => {
-  logger.info('Executing importJSON...');
-  console.log('Executing importJSON...');
 
-  try {
-    for (const item of inventory) {
-      await Product.update(
-        {
-          supplier_item_number: item.MPN,
-          supplier_id: item.Supplier,
-          product_cost: item.Cost,
-        },
-        {
-          where: {
-            seller_sku: item.SKU,
+const updateSupressedListings = asyncHandler(
+  async (reqSupressedListings, res, next) => {
+    logger.info("Executing updateSupressedListings...");
+
+    const supressedData = await generateSupressedListingItems(
+      reqSupressedListings,
+      res,
+      next
+    );
+
+    if (!supressedData) {
+      logger.error("Generating order report failed");
+      throw new Error("Failed to retrieve supressed listings");
+    }
+
+    try {
+      // 1. Borrar todos los registros existentes
+      await SupressedListing.destroy({
+        where: {},
+        truncate: true,
+      });
+
+      // 2. Insertar los nuevos datos
+      await SupressedListing.bulkCreate(
+        supressedData.map((item) => ({
+          ASIN: item.ASIN,
+          reason: item["Reason"],
+          seller_sku: item.SKU,
+          product_name: item["Product name"],
+          condition: item.Condition,
+          status_change_date: item["Status Change Date"],
+          issue_description: item["Issue Description"],
+        }))
+      );
+
+      logger.info("Supressed listings updated successfully");
+
+      return res.status(200).json({
+        msg: "Supressed listings updated successfully",
+        success: true,
+        totalItems: supressedData.length,
+      });
+    } catch (error) {
+      logger.error(`Error in updateSupressedListings: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update supressed listings information",
+        error: error.message,
+      });
+    }
+  }
+);
+
+const updateProductsListingStatus = asyncHandler(
+  async (reqListingsData, res, next) => {
+    logger.info("Executing updateSupressedListings...");
+
+    const listingsData = await generateAmazonListingsData(
+      reqListingsData,
+      res,
+      next
+    );
+
+    if (!listingsData) {
+      logger.error("Generating order report failed");
+    }
+
+    try {
+      //Update every listing
+      for (const listing of listingsData) {
+        await AmazonProductDetail.update(
+          { isActiveListing: listing["status"] === "Active" },
+          { where: { ASIN: listing["asin1"] } }
+        );
+      }
+
+      return res.status(200).json({
+        msg: "Listings status updated successfully",
+        success: true,
+        totalItems: listingsData.length,
+      });
+    } catch (error) {
+      logger.error(`Error in updateListings: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update Listings data information",
+        error: error.message,
+      });
+    }
+  }
+);
+
+const updateBreakdownForReservedInventory = asyncHandler(
+  async (reqBreakdown, res, next) => {
+    logger.info("Executing updateBreakdownForReservedInventory...");
+
+    const breakdown = await generateBreakdownForReservedInventory(
+      reqBreakdown,
+      res,
+      next
+    );
+
+    if (!breakdown) {
+      logger.error("Generating order report failed");
+    }
+
+    try {
+      //Update every listing
+      for (const item of breakdown) {
+        console.log(`Updating ASIN: ${item["ASIN"]}`);
+        await AmazonProductDetail.update(
+          {
+            fc_transfer: item["FC transfer"],
+            fc_processing: item["FC Processing"],
+            customer_order: item["Customer Order"],
           },
-        }
-      );
-      // console.log(`Actualizado el producto con ASIN: ${item.SKU}`);
-    }
-    return res
-      .status(200)
-      .json({ message: 'Productos actualizados correctamente' });
-  } catch (error) {
-    // console.error('Error al actualizar los productos:', error);
-  }
-});
-
-const generateStorageReport = asyncHandler(async (req, res, next) => {
-  logger.info('Executing generateStorageReport...');
-  console.log('Executing generateStorageReport...');
-  const reportData = await getReportById(
-    req,
-    'GET_FBA_STORAGE_FEE_CHARGES_DATA'
-  );
-
-  if (!reportData) {
-    logger.error("Error getting report by id");
-    throw new Error('Report data is invalid or missing reportDocumentId');
-  }
-
-  const documentId = reportData;
-
-  const response = await axios.get(
-    `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-amz-access-token': req.headers['x-amz-access-token'],
-      },
-    }
-  );
-
-  if (!response.data || !response.data.url) {
-    logger.error(`Error getting the report with documentId: ${documentId}`);
-    throw new Error('Failed to retrieve document URL from response');
-  }
-
-  const documentUrl = response.data.url;
-  const compressionAlgorithm = response.data.compressionAlgorithm;
-
-  const documentResponse = await axios.get(documentUrl, {
-    responseType: 'arraybuffer',
-  });
-
-  let decodedData;
-  if (compressionAlgorithm === 'GZIP') {
-    decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
-  } else {
-    decodedData = Buffer.from(documentResponse.data);
-  }
-
-  const dataString = decodedData.toString('utf-8');
-
-  if (!dataString) {
-    throw new Error('Failed to decode report data');
-  }
-
-  const jsonData = parseReportToJSON(dataString);
-  return jsonData;
-});
-
-/**
- * Updates the dangerous_goods field for products in the database
- * using data from the storage report
- */
-const updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
-  logger.info("Executing updateDangerousGoodsFromReport...")
-
-  try {
-    // Fetch the storage report data
-    const storageReportResponse = await generateStorageReport(req, res, next)
-
-    if (!storageReportResponse || storageReportResponse.length === 0) {
-      logger.error("No valid items found in storage report")
-      return res.status(400).json({
-        success: false,
-        message: "No valid items found in storage report",
-      })
-    }
-
-    logger.info(`Processing ${storageReportResponse.length} items from storage report`)
-
-    const stats = {
-      total: storageReportResponse.length,
-      updated: 0,
-      notFound: 0,
-      errors: 0,
-    }
-
-    // Extract unique ASINs from the report
-    const uniqueAsins = [...new Set(storageReportResponse.map((item) => item.asin).filter(Boolean))]
-
-    if (uniqueAsins.length === 0) {
-      logger.warn("No ASINs found in report")
-      return res.status(400).json({
-        success: false,
-        message: "No ASINs found in report",
-      })
-    }
-
-    // Fetch all products that match the ASINs in a single query
-    const products = await Product.findAll({
-      where: { ASIN: uniqueAsins },
-    })
-
-    console.log({
-      productsToUpdate: products.length
-    })
-
-    // Create a map of ASIN -> Storage Report Item for quick lookups
-    // Using lowercase asin as key for consistency
-    const storageItemMap = new Map(
-      storageReportResponse.map((item) => [item.asin.toUpperCase(), item])
-    )
-
-    // Prepare batch updates
-    const updates = []
-
-    for (const product of products) {
-      if (!product.ASIN) continue
-
-      const storageItem = storageItemMap.get(product.ASIN)
-      if (!storageItem) {
-        stats.notFound++
-        continue
+          { where: { ASIN: item["ASIN"] } }
+        );
       }
 
-      const dangerousGoodsValue = storageItem.dangerous_goods_storage_type
-
-      // Only update if the value is different
-      if (product.dangerous_goods !== dangerousGoodsValue) {
-        updates.push({
-          ASIN: product.ASIN,
-          dangerous_goods: dangerousGoodsValue,
-        })
-        stats.updated++
-      }
+      return res.status(200).json({
+        msg: "Breakdown updated successfully",
+        success: true,
+        totalItems: breakdown.length,
+      });
+    } catch (error) {
+      logger.error(`Error in update breakdown: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update breakdown data",
+        error: error.message,
+      });
     }
-
-    // Perform batch update
-    if (updates.length > 0) {
-      await sequelize.transaction(async (t) => {
-        for (const update of updates) {
-          await Product.update(
-            { dangerous_goods: update.dangerous_goods },
-            { where: { ASIN: update.ASIN }, transaction: t }
-          )
-        }
-      })
-    }
-
-    logger.info(`Updated ${stats.updated} products`)
-
-    return res.status(200).json(stats)
-  } catch (error) {
-    logger.error(`Error in updateDangerousGoodsFromReport: ${error.message}`)
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update dangerous goods information",
-      error: error.message,
-    })
   }
-})
-
-const updateSupressedListings = asyncHandler(async (reqSupressedListings, res, next) => {
-  logger.info("Executing updateSupressedListings...");
-
-  const supressedData = await generateSupressedListingItems(reqSupressedListings, res, next);
-
-  if (!supressedData) {
-    logger.error('Generating order report failed');
-    throw new Error('Failed to retrieve supressed listings');
-  }
-
-  try {
-    // 1. Borrar todos los registros existentes
-    await SupressedListing.destroy({
-      where: {},
-      truncate: true,
-    });
-
-    // 2. Insertar los nuevos datos
-    await SupressedListing.bulkCreate(supressedData.map((item) => ({
-      ASIN: item.ASIN,
-      reason: item['Reason'],
-      seller_sku: item.SKU,
-      product_name: item['Product name'],
-      condition: item.Condition,
-      status_change_date: item['Status Change Date'],
-      issue_description: item['Issue Description'],
-    })));
-
-    logger.info("Supressed listings updated successfully");
-
-    return res.status(200).json({
-      msg: "Supressed listings updated successfully",
-      success: true,
-      totalItems: supressedData.length,
-    });
-
-  } catch (error) {
-    logger.error(`Error in updateSupressedListings: ${error.message}`);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update supressed listings information",
-      error: error.message,
-    });
-  }
-});
-
-const updateProductsListingStatus = asyncHandler(async (reqListingsData, res, next) => {
-  logger.info("Executing updateSupressedListings...");
-
-  const listingsData = await generateAmazonListingsData(reqListingsData, res, next);
-
-  if (!listingsData) {
-    logger.error('Generating order report failed');
-  }
-
-  try {
-    //Update every listing
-    for (const listing of listingsData) {
-      await AmazonProductDetail.update(
-        { isActiveListing: listing["status"] === 'Active' },
-        { where: { ASIN: listing["asin1"] } }
-      );
-    }
-
-    return res.status(200).json({
-      msg: "Listings status updated successfully",
-      success: true,
-      totalItems: listingsData.length,
-    });
-
-  } catch (error) {
-    logger.error(`Error in updateListings: ${error.message}`);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update Listings data information",
-      error: error.message,
-    });
-  }
-});
-
-const updateBreakdownForReservedInventory = asyncHandler(async (reqBreakdown, res, next) => {
-  logger.info("Executing updateBreakdownForReservedInventory...");
-
-  const breakdown = await generateBreakdownForReservedInventory(reqBreakdown, res, next);
-
-  if (!breakdown) {
-    logger.error('Generating order report failed');
-  }
-
-  try {
-    //Update every listing
-    for (const item of breakdown) {
-      console.log(`Updating ASIN: ${item["ASIN"]}`);
-      await AmazonProductDetail.update(
-        {
-          fc_transfer: item["FC transfer"],
-          fc_processing: item["FC Processing"],
-          customer_order: item["Customer Order"]
-        },
-        { where: { ASIN: item["ASIN"] } }
-      );
-    }
-
-
-    return res.status(200).json({
-      msg: "Breakdown updated successfully",
-      success: true,
-      totalItems: breakdown.length,
-    });
-
-  } catch (error) {
-    logger.error(`Error in update breakdown: ${error.message}`);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update breakdown data",
-      error: error.message,
-    });
-  }
-});
-
-
-
-
+);
 
 module.exports = {
   createReport,
@@ -761,10 +593,8 @@ module.exports = {
   sendCSVasJSON,
   parseReportToJSON,
   generateInventoryReport,
-  importJSON,
   downloadCSVReport,
-  updateDangerousGoodsFromReport,
   updateSupressedListings,
   updateProductsListingStatus,
-  updateBreakdownForReservedInventory
+  updateBreakdownForReservedInventory,
 };
