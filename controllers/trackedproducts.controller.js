@@ -599,16 +599,14 @@ const saveOrders = async (req, res, next, products) => {
     throw new Error("Failed to retrieve orders");
   }
 
-  const now = new Date();
-
   const filteredOrders = jsonData.filter(
     (item) =>
       (item["order-status"] === "Shipped" ||
-        item["order-status"] === "Pending") &&
-      now - new Date(item["purchase-date"]) <= 30 * 24 * 60 * 60 * 1000
+        item["order-status"] === "Pending")
   );
 
   const skuQuantities = {};
+  const now = new Date();
 
   filteredOrders.forEach((item) => {
     const { sku, quantity, asin } = item;
