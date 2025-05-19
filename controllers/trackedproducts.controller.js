@@ -71,6 +71,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       "supplier_item_number",
       "warehouse_stock",
       "pack_type",
+      "upc",
     ],
     include: [
       {
@@ -180,6 +181,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           in_seller_account: product.in_seller_account,
           supplier_item_number: product.supplier_item_number,
           warehouse_stock: product.warehouse_stock,
+          upc: product.upc,
           pack_type: product.pack_type,
 
           // Atributos de AmazonProductDetail (si existen)
@@ -406,8 +408,8 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     });
     logger.info(
       "Response sent successfully with 200 status code. " +
-        JSON.stringify(combinedData.length) +
-        " items tracked."
+      JSON.stringify(combinedData.length) +
+      " items tracked."
     );
   } catch (error) {
     logger.error(error.message);
@@ -501,16 +503,14 @@ const getProductsTrackedData = async (products) => {
         }
       } catch (error) {
         logger.error(
-          `getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${
-            error.message
+          `getKeepaData failed for group ${index + 1}. Group: ${asinGroup}: ${error.message
           }`
         );
       }
 
       if (tokensLeft <= REQUIRED_TOKENS && index + 1 !== asinGroups.length) {
         logger.info(
-          `Waiting ${
-            (REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000
+          `Waiting ${(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000
           } ms to refill tokens`
         );
         await delay(Math.ceil(REQUIRED_TOKENS / TOKENS_PER_MIN) * 60000);
@@ -531,8 +531,8 @@ const getProductsTrackedData = async (products) => {
           product.stats.current[10] > 0
             ? product.stats.current[10]
             : product.stats.current[7] > 0
-            ? product.stats.current[7]
-            : product.stats.buyBoxPrice;
+              ? product.stats.current[7]
+              : product.stats.buyBoxPrice;
 
         return matchingProducts.map((matchingProduct) => ({
           product_id: matchingProduct.id,
@@ -565,8 +565,7 @@ const getKeepaData = async (asinGroup, retryCount = 0) => {
       if (retryCount < MAX_RETRIES) {
         const waitTime = retryCount === MAX_RETRIES - 1 ? 60000 : 5000;
         logger.error(
-          `429 Error: Retry ${
-            retryCount + 1
+          `429 Error: Retry ${retryCount + 1
           }/${MAX_RETRIES}. Waiting for ${waitTime} ms before retry.`
         );
         await delay(waitTime);
@@ -796,8 +795,7 @@ const processBatch = async (
     attributes: ["id", "product_cost"],
   }).catch((error) => {
     throw new Error(
-      `Product.findAll failed for product costs in batch ${batchIndex + 1}: ${
-        error.message
+      `Product.findAll failed for product costs in batch ${batchIndex + 1}: ${error.message
       }`
     );
   });
@@ -843,20 +841,17 @@ const processBatch = async (
   })
     .then((instances) => {
       logger.info(
-        `TrackedProduct.bulkCreate succeeded for batch ${batchIndex + 1}. ${
-          instances.length
+        `TrackedProduct.bulkCreate succeeded for batch ${batchIndex + 1}. ${instances.length
         } records saved.`
       );
     })
     .catch((error) => {
       logger.error(
-        `TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${
-          error.message
+        `TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message
         }`
       );
       throw new Error(
-        `TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${
-          error.message
+        `TrackedProduct.bulkCreate failed for batch ${batchIndex + 1}: ${error.message
         }`
       );
     });
