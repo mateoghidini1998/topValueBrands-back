@@ -1,5 +1,5 @@
 const { parentPort, workerData, isMainThread } = require("worker_threads");
-const { syncDBWithAmazon } = require("../controllers/reports.controller");
+const { syncDBWithAmazon } = require("../controllers/amazon.controller");
 const {
   generateTrackedProductsData,
 } = require("../controllers/trackedproducts.controller");
@@ -19,10 +19,13 @@ const moment = require("moment");
       throw new Error("No valid access token received in worker.");
     }
 
-    const today = moment().format("YYYY-MM-DDTHH:mm:ssZ");
+    const ZONE = "America/New_York";
+
+    const today = moment().tz(ZONE).startOf("day");
     const todayMinus30Days = moment()
+      .tz(ZONE)
       .subtract(30, "days")
-      .format("YYYY-MM-DDTHH:mm:ssZ");
+      .startOf("day");
 
     const reqProducts = {
       body: {
@@ -79,8 +82,8 @@ const moment = require("moment");
         throw err;
       }
     };
-    await updateProductsListingStatus(reqListingsData, res, next);
-    await updateBreakdownForReservedInventory(reqBreakdownData, res, next);
+    /* await updateProductsListingStatus(reqListingsData, res, next);
+    await updateBreakdownForReservedInventory(reqBreakdownData, res, next); */
     await syncDBWithAmazon(reqProducts, res, next);
     await generateTrackedProductsData(reqOrders, res, next);
 

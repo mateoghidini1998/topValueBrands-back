@@ -145,6 +145,55 @@ const generateOrderReport = asyncHandler(async (req, res, next) => {
   return jsonData;
 });
 
+const generateOrderReportV2 = async (req, res, next) => {
+  try {
+    const response = await axios.get(
+      `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/amzn1.spdoc.1.4.na.144f9538-3513-4d09-955f-b2179e36bab4.T3UDVRD6SUG0GL.2409`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-amz-access-token": req.headers["x-amz-access-token"],
+        },
+      }
+    );
+
+    if (!response.data || !response.data.url) {
+      logger.error(`Error getting the report with documentId: ${documentId}`);
+      throw new Error("Failed to retrieve document URL from response");
+    }
+
+    const documentUrl = response.data.url;
+    const compressionAlgorithm = response.data.compressionAlgorithm;
+
+    // Obtener el contenido del documento desde la URL
+    const documentResponse = await axios.get(documentUrl, {
+      responseType: "arraybuffer",
+    });
+
+    // Descomprimir y decodificar los datos si es necesario
+    let decodedData;
+    if (compressionAlgorithm === "GZIP") {
+      decodedData = zlib.gunzipSync(Buffer.from(documentResponse.data));
+    } else {
+      decodedData = Buffer.from(documentResponse.data);
+    }
+
+    // Convertir los datos decodificados a string
+    const dataString = decodedData.toString("utf-8");
+
+    // Verificar que dataString no sea nulo ni indefinido antes de devolverlo
+    if (!dataString) {
+      throw new Error("Failed to decode report data");
+    }
+
+    const jsonData = parseReportToJSON(dataString);
+    return jsonData;
+  } catch (error) {
+    logger.error('Error in generateOrderReportV2:', error);
+    throw error;
+  }
+};
+
 const generateSupressedListingItems = asyncHandler(async (req, res, next) => {
   logger.info("Executing generateOrderReport...");
   console.log("Executing generateOrderReport...");
@@ -597,4 +646,5 @@ module.exports = {
   updateSupressedListings,
   updateProductsListingStatus,
   updateBreakdownForReservedInventory,
+  generateOrderReportV2,
 };

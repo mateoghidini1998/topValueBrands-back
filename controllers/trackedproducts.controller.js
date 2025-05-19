@@ -26,8 +26,10 @@ dotenv.config({ path: "./.env" });
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const fetchProducts = async () => {
+const fetchProducts = async ({ limit = LIMIT_PRODUCTS, offset = OFFSET_PRODUCTS } = {}) => {
   const products = await Product.findAll({
+    limit,
+    offset,
     include: [
       {
         model: AmazonProductDetail,
@@ -36,9 +38,10 @@ const fetchProducts = async () => {
       },
     ],
   });
-
+  console.log(products)
   return products;
 };
+
 
 //@route GET api/v1/pogenerator/trackedproducts
 //@desc  Get all tracked products
@@ -282,43 +285,54 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info("Start generateTrackedProductsData");
 
   try {
-    const products = await fetchProducts();
+    // 1. Fetch products with validation
+    const products = await fetchProducts({
+      limit: 100,
+      offset: 0,
+    });
 
+    if (!products || products.length === 0) {
+      throw new Error("No products found to process");
+    }
+
+    // 2. Filter and validate products with ASIN
     const productsWithASIN = products
-      .filter(
-        (p) =>
-          p.AmazonProductDetail &&
-          typeof p.AmazonProductDetail.ASIN === "string"
-      )
-      .map((p) => ({
+      .filter(p => p.AmazonProductDetail && typeof p.AmazonProductDetail.ASIN === "string")
+      .map(p => ({
         ...p.get({ plain: true }),
         ASIN: p.AmazonProductDetail.ASIN,
         seller_sku: p.AmazonProductDetail.seller_sku,
       }));
 
-    logger.info("Fetched products successfully");
+    if (productsWithASIN.length === 0) {
+      throw new Error("No products with valid ASIN found");
+    }
 
+    logger.info(`Processing ${productsWithASIN.length} products with valid ASIN`);
+
+    // 3. Execute parallel operations with error handling
     const [orderData, keepaData] = await Promise.all([
-      saveOrders(req, res, next, productsWithASIN).catch((error) => {
+      saveOrders(req, res, next, productsWithASIN).catch(error => {
         logger.error("saveOrders failed", {
           error: error.message,
           stack: error.stack,
         });
         throw new Error(`saveOrders failed: ${error.message}`);
       }),
-      getProductsTrackedData(productsWithASIN).catch((error) => {
-        logger.error("getProductsTrackedData failed line 118", {
+      getProductsTrackedData(productsWithASIN).catch(error => {
+        logger.error("getProductsTrackedData failed", {
           error: error.message,
           stack: error.stack,
         });
         throw new Error(`getProductsTrackedData failed: ${error.message}`);
       }),
     ]);
-    logger.info("Fetched order data and keepa data successfully");
 
-    const combinedData = keepaData.map((keepaItem) => {
-      const orderItem =
-        orderData.find((o) => o.product_id === keepaItem.product_id) || {};
+    logger.info("Successfully fetched order data and keepa data");
+
+    // 4. Combine and validate data
+    const combinedData = keepaData.map(keepaItem => {
+      const orderItem = orderData.find(o => o.product_id === keepaItem.product_id) || {};
       const unitsSold = orderItem.quantity || 0;
       const productVelocity = orderItem.velocity || 0;
       const lowestFbaPriceInDollars = keepaItem.lowestFbaPrice
@@ -342,52 +356,42 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       };
     });
 
-    await TrackedProduct.bulkCreate(combinedData, {
-      updateOnDuplicate: [
-        "current_rank",
-        "thirty_days_rank",
-        "ninety_days_rank",
-        "units_sold",
-        "product_velocity",
-        "product_velocity_2",
-        "product_velocity_7",
-        "product_velocity_15",
-        "product_velocity_60",
-        "avg_selling_price",
-        "lowest_fba_price",
-      ],
-    }).catch((error) => {
-      throw new Error(
-        `TrackedProduct.bulkCreate failed during initial save: ${error.message}`
-      );
-    });
-    logger.info("Combined data saved successfully");
+    // 5. Batch process database updates
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < combinedData.length; i += BATCH_SIZE) {
+      const batch = combinedData.slice(i, i + BATCH_SIZE);
+      await TrackedProduct.bulkCreate(batch, {
+        updateOnDuplicate: [
+          "current_rank",
+          "thirty_days_rank",
+          "ninety_days_rank",
+          "units_sold",
+          "product_velocity",
+          "product_velocity_2",
+          "product_velocity_7",
+          "product_velocity_15",
+          "product_velocity_60",
+          "avg_selling_price",
+          "lowest_fba_price",
+        ],
+      });
+      logger.info(`Processed batch ${i / BATCH_SIZE + 1} of ${Math.ceil(combinedData.length / BATCH_SIZE)}`);
+    }
 
-    const trackedProductIds = combinedData.map((item) => item.product_id);
-
+    // 6. Process fees in batches
+    const trackedProductIds = combinedData.map(item => item.product_id);
     const relatedProducts = await Product.findAll({
-      where: {
-        id: trackedProductIds,
-      },
-    }).catch((error) => {
-      throw new Error(
-        `Product.findAll failed for related products: ${error.message}`
-      );
+      where: { id: trackedProductIds },
     });
 
-    logger.info("Fetched related products successfully");
-
-    logger.info(`Batch size fees: ${BATCH_SIZE_FEES}`);
+    logger.info(`Processing fees for ${relatedProducts.length} products`);
 
     for (let i = 0; i < relatedProducts.length; i += BATCH_SIZE_FEES) {
       const productBatch = relatedProducts.slice(i, i + BATCH_SIZE_FEES);
       logger.info(
-        `Fetching estimate fees for batch ${i / BATCH_SIZE_FEES + 1} / ${(
-          relatedProducts.length / BATCH_SIZE_FEES
-        ).toFixed(0)} with ${productBatch.length} products`
+        `Processing fees batch ${i / BATCH_SIZE_FEES + 1} of ${Math.ceil(relatedProducts.length / BATCH_SIZE_FEES)}`
       );
       await delay(MS_DELAY_FEES);
-
       await addAccessTokenAndProcessBatch(
         req,
         res,
@@ -398,21 +402,19 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       );
     }
 
-    logger.info("All batches saved successfully");
+    logger.info("All batches processed successfully");
 
     res.status(200).json({
       message: "Data combined and saved successfully.",
       success: true,
-      // data: combinedData,
       itemsQuantity: combinedData.length,
     });
-    logger.info(
-      "Response sent successfully with 200 status code. " +
-      JSON.stringify(combinedData.length) +
-      " items tracked."
-    );
+
   } catch (error) {
-    logger.error(error.message);
+    logger.error("Error in generateTrackedProductsData:", {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       success: false,
       message: error.message,
@@ -594,7 +596,7 @@ const saveOrders = async (req, res, next, products) => {
 
   const filteredOrders = jsonData.filter(
     (item) =>
-      item["order-status"] === "Shipped" || item["order-status"] === "Pending"
+      (item["order-status"] === "Shipped" || item["order-status"] === "Pending") && item["sales-channel"] == "Amazon.com"
   );
 
   const skuQuantities = {};
@@ -788,15 +790,28 @@ const processBatch = async (
     `Start proccess of combining data keepa + orders + fees to generete the complete tracked product`
   );
 
+  // Validar que tenemos datos para procesar
+  if (!productBatch || !Array.isArray(productBatch) || productBatch.length === 0) {
+    throw new Error('Invalid or empty product batch');
+  }
+
+  // Validar que los IDs de productos son válidos
+  const validProductIds = productBatch
+    .filter(product => product && product.id)
+    .map(product => product.id);
+
+  if (validProductIds.length === 0) {
+    throw new Error('No valid product IDs found in batch');
+  }
+
   const productCosts = await Product.findAll({
     where: {
-      id: productBatch.map((product) => product.id),
+      id: validProductIds,
     },
     attributes: ["id", "product_cost"],
   }).catch((error) => {
     throw new Error(
-      `Product.findAll failed for product costs in batch ${batchIndex + 1}: ${error.message
-      }`
+      `Product.findAll failed for product costs in batch ${batchIndex + 1}: ${error.message}`
     );
   });
 
@@ -805,25 +820,44 @@ const processBatch = async (
     return acc;
   }, {});
 
-  const finalData = feeEstimates.map((feeEstimate) => {
-    const combinedItem = combinedData.find(
-      (item) => item.product_id === feeEstimate.product_id
-    );
-    const fees = feeEstimate.fees || 0;
-    const productCost = costMap[feeEstimate.product_id] || 0;
-    const profit = combinedItem.lowest_fba_price - fees - productCost;
+  // Validar que tenemos los datos necesarios
+  if (!feeEstimates || !Array.isArray(feeEstimates)) {
+    throw new Error('Invalid or missing fee estimates data');
+  }
 
-    return {
-      ...combinedItem,
-      fees: fees,
-      profit: profit,
-      updatedAt: new Date(),
-    };
-  });
+  if (!combinedData || !Array.isArray(combinedData)) {
+    throw new Error('Invalid or missing combined data');
+  }
 
-  logger.info(
-    `finish proccess of combining data keepa + orders + fees to generete the complete tracked product`
-  );
+  const finalData = feeEstimates
+    .filter(feeEstimate => feeEstimate && feeEstimate.product_id) // Filtrar feeEstimates inválidos
+    .map((feeEstimate) => {
+      const combinedItem = combinedData.find(
+        (item) => item && item.product_id === feeEstimate.product_id
+      );
+
+      if (!combinedItem) {
+        logger.warn(`No combined data found for product_id: ${feeEstimate.product_id}`);
+        return null;
+      }
+
+      const fees = feeEstimate.fees || 0;
+      const productCost = costMap[feeEstimate.product_id] || 0;
+      const profit = combinedItem.lowest_fba_price - fees - productCost;
+
+      return {
+        ...combinedItem,
+        fees: fees,
+        profit: profit,
+        updatedAt: new Date(),
+      };
+    })
+    .filter(item => item !== null); // Eliminar items nulos
+
+  if (finalData.length === 0) {
+    logger.warn(`No valid data could be combined for batch ${batchIndex + 1}`);
+  }
+
   logger.info(`Saving the tracked products for batch ${batchIndex + 1}...`);
 
   await TrackedProduct.bulkCreate(finalData, {

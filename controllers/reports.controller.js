@@ -1,4 +1,3 @@
-
 const { sequelize, AmazonProductDetail } = require('../models');
 const path = require('path');
 const fs = require('fs');
@@ -7,7 +6,6 @@ const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
 const { sendCSVasJSON, updateDangerousGoodsFromReport } = require('../utils/utils');
 const {
-
   addImageToNewProducts,
 } = require('../controllers/products.controller');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
@@ -16,44 +14,11 @@ const logger = require('../logger/logger');
 //@route   POST api/reports
 //@desc    Generate new report
 //@access  private
-exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
-  logger.info('fetching new token for sync db with amazon...');
-  let accessToken = await fetchNewTokenForFees();
-  console.log(accessToken);
-
-  try {
-
-    if (!accessToken) {
-      logger.info('fetching new token for sync db with amazon...');
-      accessToken = await fetchNewTokenForFees();
-      req.headers['x-amz-access-token'] = accessToken;
-    } else {
-      logger.info('Token is still valid...');
-    }
-
-
-    // Call createReport and get the reportId
-    const report = await sendCSVasJSON(req, res, next);
-    logger.info('Finish creating report');
-    // Continue with the rest of the code after sendCSVasJSON has completed
-    const newSync = await processReport(report);
-    const imageSyncResult = await addImageToNewProducts(accessToken);
-
-    res.json({ newSync, imageSyncResult });
-    return { newSync, imageSyncResult };
-  } catch (error) {
-    next(error);
-  }
-});
-
-
 exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
-
   logger.info('fetching new token for sync db with amazon...');
   let accessToken = await fetchNewTokenForFees();
 
   try {
-
     if (!accessToken) {
       logger.info('fetching new token for sync db with amazon...');
       accessToken = await fetchNewTokenForFees();
@@ -184,7 +149,6 @@ const processReport = async (productsArray) => {
   }
 };
 
-
 // @route    GET api/reports/download/:filename
 // @desc     Download a CSV file
 // @access   Private
@@ -208,5 +172,4 @@ exports.downloadReport = asyncHandler(async (req, res) => {
       res.status(500).json({ msg: 'Error downloading file' });
     }
   });
-});
-// 
+}); 

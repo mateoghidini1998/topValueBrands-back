@@ -4,6 +4,8 @@ const axios = require('axios');
 const { Supplier, TrackedProduct, Product, SupressedListing, AmazonProductDetail, WalmartProductDetail } = require('../models');
 const dotenv = require('dotenv');
 const productService = require('../services/products.service');
+const logger = require('../logger/logger')
+const { Op } = require('sequelize');
 
 dotenv.config({
   path: './.env',
@@ -230,7 +232,19 @@ const addImageToProducts = async (products, accessToken) => {
     const remainingProducts = products.slice(index, index + maxRequests);
 
     for (const product of remainingProducts) {
-      const { ASIN } = product;
+      // Obtener el ASIN desde AmazonProductDetail
+      const amazonDetail = await AmazonProductDetail.findOne({
+        where: { product_id: product.id }
+      });
+
+      if (!amazonDetail || !amazonDetail.ASIN) {
+        logger.warn(`No ASIN found for product ID: ${product.id}`);
+        productsWithoutImage.push(product);
+        index++;
+        continue;
+      }
+
+      const { ASIN } = amazonDetail;
       const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=${'ATVPDKIKX0DER'}&includedData=images`;
 
       try {
@@ -248,7 +262,7 @@ const addImageToProducts = async (products, accessToken) => {
 
         await Product.update(
           { product_image: image.link },
-          { where: { ASIN: ASIN } }
+          { where: { id: product.id } }
         );
       } catch (error) {
         errorCount++;
@@ -256,19 +270,22 @@ const addImageToProducts = async (products, accessToken) => {
         if (error.response) {
           switch (error.response.status) {
             case 404:
+              logger.warn(`Image not found for ASIN: ${ASIN}`);
               break;
             case 403:
               error403Count++;
+              logger.error(`Access denied for ASIN: ${ASIN}`);
               break;
             case 429:
               error429Count++;
+              logger.error(`Rate limit exceeded for ASIN: ${ASIN}`);
               break;
             default:
-              console.error({ msg: error.message });
+              logger.error(`Error fetching image for ASIN ${ASIN}: ${error.message}`);
               break;
           }
         } else {
-          console.error('Request error without response:', error.message);
+          logger.error(`Request error without response for ASIN ${ASIN}: ${error.message}`);
         }
 
         productsWithoutImage.push(product);
@@ -295,7 +312,16 @@ const addImageToProducts = async (products, accessToken) => {
 
 exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   const newProducts = await Product.findAll({
-    where: { product_image: null } || { product_image: '' },
+    where: {
+      [Op.or]: [
+        { product_image: null },
+        { product_image: '' }
+      ]
+    },
+    include: [{
+      model: AmazonProductDetail,
+      required: true
+    }]
   });
 
   const result = await addImageToProducts(newProducts, accessToken);

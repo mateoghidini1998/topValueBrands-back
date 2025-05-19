@@ -78,7 +78,7 @@ app.listen(PORT, () => {
 
   // Cron job to sync database with Amazon
    cron.schedule(
-     "55 6,13,22 * * *",
+     "0 17 * * *",
      async () => {
        logger.info("Starting Amazon sync cron job...");
        try {
@@ -97,7 +97,7 @@ app.listen(PORT, () => {
        }
      },
      {
-       timezone: "America/New_York",
+       timezone: "America/Argentina/Buenos_Aires",
        scheduled: true,
      }
    );

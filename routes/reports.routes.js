@@ -1,13 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
-
-const {
-    syncDBWithAmazon,
-    downloadReport,
-} = require('../controllers/reports.controller');
-
-
+const { downloadReport } = require('../controllers/reports.controller');
+const { syncDBWithAmazon } = require('../controllers/amazon.controller');
+const { generateOrderReportV2 } = require('../utils/utils');
+const asyncHandler = require('../middlewares/async');
 /**
  * @swagger
  * /api/v1/reports/sync:
@@ -47,6 +44,5 @@ const {
  */
 router.get('/sync', addAccessTokenHeader, syncDBWithAmazon);
 router.get('/download/:filename', downloadReport);
-
-
+router.get('/generate-order-report', addAccessTokenHeader, asyncHandler(generateOrderReportV2));
 module.exports = router;
