@@ -181,7 +181,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku"],
+                    attributes: ["ASIN", "seller_sku", "dangerous_goods"],
                   },
                 ],
               },
@@ -207,6 +207,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
     acc[purchaseOrderId].pallets.push({
       id: pallet.id,
       pallet_number: pallet.pallet_number,
+      is_hazmat: pallet.PalletProducts[0]?.purchaseOrderProduct.Product?.AmazonProductDetail?.dangerous_goods,
       warehouse_location: pallet.warehouseLocation?.location || null,
       palletProducts: pallet.PalletProducts.map((palletProduct) => {
         const product = palletProduct.purchaseOrderProduct?.Product || {};
