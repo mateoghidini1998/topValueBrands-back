@@ -878,6 +878,14 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
           })
         );
 
+        const activeProducts = purchaseOrder.purchaseOrderProducts.filter((purchaseOrderProduct) => purchaseOrderProduct.is_active);
+
+        const hasMissingQuantities = activeProducts.some(
+          (purchaseOrderProduct) => purchaseOrderProduct.quantity_purchased > (purchaseOrderProduct.quantity_received || 0)
+        )
+
+        purchaseOrder.setDataValue("hasMissingQuantities", hasMissingQuantities);
+
         const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
         const trackedProducts = await TrackedProduct.findAll({
           where: { product_id: productIds },
