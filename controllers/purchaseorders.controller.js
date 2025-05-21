@@ -994,7 +994,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         attributes: [
           "product_name", "id", "supplier_id", "product_image",
           "product_cost", "in_seller_account", "supplier_item_number",
-          "pack_type", "upc", "warehouse_stock"
+          "pack_type", "upc", "warehouse_stock","seller_sku"
         ],
         include: [
           {
