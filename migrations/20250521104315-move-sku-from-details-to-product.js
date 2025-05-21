@@ -3,9 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // First add the seller_sku column to products table
+    await queryInterface.addColumn('products', 'seller_sku', {
+      type: Sequelize.STRING,
+      allowNull: true
+    });
 
-    // seller_sku ya existia en products como null.
-
+    // Then update the values from amz_product_details
     await queryInterface.sequelize.query(`
       UPDATE products p
       JOIN amz_product_details a
@@ -14,7 +18,7 @@ module.exports = {
       WHERE a.seller_sku IS NOT NULL
     `);
 
-
+    // Update from wmt_product_details for any remaining null values
     await queryInterface.sequelize.query(`
       UPDATE products p
       JOIN wmt_product_details w
@@ -24,24 +28,23 @@ module.exports = {
         AND w.seller_sku IS NOT NULL
     `);
 
-
+    // Remove the columns from detail tables
     await queryInterface.removeColumn('amz_product_details', 'seller_sku');
     await queryInterface.removeColumn('wmt_product_details', 'seller_sku');
   },
 
   async down(queryInterface, Sequelize) {
+    // Add columns back to detail tables
     await queryInterface.addColumn('amz_product_details', 'seller_sku', {
       type: Sequelize.STRING,
-      allowNull: false,
-      defaultValue: ''
+      allowNull: true
     });
     await queryInterface.addColumn('wmt_product_details', 'seller_sku', {
       type: Sequelize.STRING,
-      allowNull: false,
-      defaultValue: ''
+      allowNull: true
     });
 
-    // 2. Rellenar desde Products
+    // Copy data back to detail tables
     await queryInterface.sequelize.query(`
       UPDATE amz_product_details a
       JOIN products p ON p.id = a.product_id
@@ -53,7 +56,7 @@ module.exports = {
       SET w.seller_sku = p.seller_sku
     `);
 
-    // 3. Quitar la columna de Products
+    // Remove the column from products table
     await queryInterface.removeColumn('products', 'seller_sku');
   }
 };
