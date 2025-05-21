@@ -34,7 +34,7 @@ const fetchProducts = async ({ limit = LIMIT_PRODUCTS, offset = OFFSET_PRODUCTS 
       {
         model: AmazonProductDetail,
         as: "AmazonProductDetail",
-        attributes: ["ASIN", "seller_sku"],
+        attributes: ["ASIN"],
       },
     ],
   });
@@ -75,6 +75,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       "warehouse_stock",
       "pack_type",
       "upc",
+      "seller_sku",
     ],
     include: [
       {
@@ -82,7 +83,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         as: "AmazonProductDetail",
         attributes: [
           "ASIN",
-          "seller_sku",
           "FBA_available_inventory",
           "reserved_quantity",
           "Inbound_to_FBA",
@@ -107,7 +107,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       { product_name: { [Op.like]: `%${keyword}%` } },
       { "$product.AmazonProductDetail.ASIN$": { [Op.like]: `%${keyword}%` } },
       {
-        "$product.AmazonProductDetail.seller_sku$": {
+        "$product.seller_sku$": {
           [Op.like]: `%${keyword}%`,
         },
       },
@@ -186,10 +186,10 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           warehouse_stock: product.warehouse_stock,
           upc: product.upc,
           pack_type: product.pack_type,
+          seller_sku: product?.seller_sku ?? null,
 
           // Atributos de AmazonProductDetail (si existen)
           ASIN: amazonDetail?.ASIN ?? null,
-          seller_sku: amazonDetail?.seller_sku ?? null,
           FBA_available_inventory:
             amazonDetail?.FBA_available_inventory ?? null,
           reserved_quantity: amazonDetail?.reserved_quantity ?? null,
@@ -237,12 +237,13 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
           "product_cost",
           "in_seller_account",
           "supplier_id",
+          'seller_sku',
         ],
         include: [
           {
             model: AmazonProductDetail,
             as: "AmazonProductDetail",
-            attributes: ["ASIN", "seller_sku"],
+            attributes: ["ASIN"],
           },
           {
             model: Supplier,
@@ -269,9 +270,9 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
       product_image: productData.product_image,
       product_cost: productData.product_cost,
       in_seller_account: productData.in_seller_account,
+      seller_sku: productData?.seller_sku || null,
       supplier_name: supplier?.supplier_name || null,
       ASIN: AmazonProductDetail?.ASIN || null,
-      seller_sku: AmazonProductDetail?.seller_sku || null,
     };
   });
 
@@ -301,7 +302,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       .map(p => ({
         ...p.get({ plain: true }),
         ASIN: p.AmazonProductDetail.ASIN,
-        seller_sku: p.AmazonProductDetail.seller_sku,
+        seller_sku: p.seller_sku,
       }));
 
     if (productsWithASIN.length === 0) {

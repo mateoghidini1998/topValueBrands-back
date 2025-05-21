@@ -1000,7 +1000,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
           {
             model: AmazonProductDetail,
             as: "AmazonProductDetail",
-            attributes: ["ASIN", "seller_sku", "dangerous_goods"]
+            attributes: ["ASIN", "dangerous_goods"]
           },
           {
             model: Supplier,
@@ -1019,7 +1019,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       {
         model: WalmartProductDetail,
         as: "WalmartProductDetail",
-        attributes: ["gtin", "seller_sku"]
+        attributes: ["gtin"]
       },
       {
         model: Supplier,
@@ -1059,7 +1059,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       in_seller_account: product?.in_seller_account,
       ASIN: amazonDetail?.ASIN || null,
       GTIN: walmartDetail?.gtin || null,
-      seller_sku: amazonDetail?.seller_sku || walmartDetail?.seller_sku || null,
+      seller_sku: product?.seller_sku || null,
       supplier_name: product?.supplier?.supplier_name || null,
       supplier_id: product?.supplier_id,
       pack_type: parseInt(product?.pack_type),

@@ -81,7 +81,7 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
       s.supplier_name LIKE :keyword OR 
       p.pack_type LIKE :keyword OR 
       p.product_cost LIKE :keyword OR 
-      apd.seller_sku LIKE :keyword OR 
+      p.seller_sku LIKE :keyword OR 
       apd.ASIN LIKE :keyword OR 
       p.product_name LIKE :keyword
     )`;
@@ -114,13 +114,13 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
       warehouse_stock: product.warehouse_stock,
       is_active: product.is_active,
       in_seller_account: product.in_seller_account,
+      seller_sku: product.seller_sku,
       updatedAt: isAmazon ? product.amazon_updatedAt : product.walmart_updatedAt,
       marketplace: isAmazon && isWalmart ? "both" : isAmazon ? "amazon" : isWalmart ? "walmart" : null
     };
 
     if (isAmazon) {
       base.asin = product.amazon_asin,
-        base.seller_sku = product.amazon_seller_sku,
         base.warehouse_stock = product.amazon_warehouse_stock,
         base.fba_available_inventory = product.amazon_fba_available_inventory,
         base.reserved_quantity = product.amazon_reserved_quantity,
@@ -129,17 +129,16 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
         base.is_hazmat = product.is_hazmat,
         base.hazmat_value = product.hazmat_value,
         base.isActiveListing = product.isActiveListing
-        base.fc_transfer = product.fc_transfer
-        base.fc_processing = product.fc_processing
-        base.customer_order = product.customer_order
+      base.fc_transfer = product.fc_transfer
+      base.fc_processing = product.fc_processing
+      base.customer_order = product.customer_order
 
     }
 
     if (isWalmart) {
       base.available_to_sell_qty = product.walmart_available_to_sell_qty,
         base.price = product.walmart_price,
-        base.gtin = product.walmart_gtin,
-        base.seller_sku = product.walmart_seller_sku
+        base.gtin = product.walmart_gtin
     }
 
     return base;

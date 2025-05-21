@@ -332,7 +332,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku", "dangerous_goods"],
+                    attributes: ["ASIN", "dangerous_goods"],
                   },
                 ],
               },
@@ -373,7 +373,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
         pallet_number: palletProduct.Pallet?.pallet_number || null,
         product_name: product?.product_name || null,
         product_image: product?.product_image || null,
-        seller_sku: amazonDetail?.seller_sku || null,
+        seller_sku: product?.seller_sku || null,
         upc: product?.upc || null,
         pack_type: parseInt(product?.pack_type) || 1,
         ASIN: amazonDetail?.ASIN || null,
@@ -479,7 +479,7 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku"],
+                    attributes: ["ASIN"],
                   },
                 ],
               },
@@ -507,15 +507,18 @@ exports.getShipmentByNumber = asyncHandler(async (req, res) => {
       const in_seller_account =
         palletProduct.PurchaseOrderProduct?.Product?.in_seller_account || null;
 
-      const detail = product.AmazonProductDetail || {};
+      const detail = palletProduct.PurchaseOrderProduct?.Product?.AmazonProductDetail || {};
+
+      const product = palletProduct.PurchaseOrderProduct?.Product || {};
+      const purchaseOrderProduct = palletProduct.PurchaseOrderProduct || {};
 
       return {
         ...palletProduct,
-        product_name: product.product_name || null,
-        product_image: product.product_image || null,
-        seller_sku: detail.seller_sku || null,
-        in_seller_account: product.in_seller_account || null,
-        PurchaseOrderProduct: undefined,
+        product_name: productName || null,
+        product_image: productImage || null,
+        seller_sku: product.seller_sku || null,
+        in_seller_account: in_seller_account || null,
+        PurchaseOrderProduct: purchaseOrderProduct || null,
       };
     }),
   };
@@ -721,14 +724,6 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
             include: [
               {
                 model: Product,
-                attributes: [],
-                include: [
-                  {
-                    model: AmazonProductDetail,
-                    as: "AmazonProductDetail",
-                    attributes: ["seller_sku"],
-                  },
-                ],
               },
             ],
           },
@@ -765,7 +760,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
 
   shipment.PalletProducts.forEach((product) => {
     const sellerSku =
-      product.purchaseOrderProduct?.Product?.AmazonProductDetail?.seller_sku ||
+      product.purchaseOrderProduct?.Product?.seller_sku ||
       "N/A";
     const quantity = product.OutgoingShipmentProduct?.quantity || 0;
 
@@ -867,7 +862,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku"],
+                    attributes: ["ASIN"],
                   },
                 ],
               },
@@ -901,7 +896,7 @@ exports.getPalletsByPurchaseOrder = asyncHandler(async (req, res) => {
           product_id: productData.id,
           ASIN: detail.ASIN || null,
           upc: productData.upc || null,
-          seller_sku: detail.seller_sku || null,
+          seller_sku: productData.seller_sku || null,
           product_image: productData.product_image || null,
           product_name: productData.product_name || null,
           in_seller_account: productData.in_seller_account || null,

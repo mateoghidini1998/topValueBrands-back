@@ -181,7 +181,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku", "dangerous_goods"],
+                    attributes: ["ASIN", "dangerous_goods"],
                   },
                 ],
               },
@@ -224,7 +224,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
           product: {
             product_name: product.product_name,
             product_image: product.product_image || null,
-            seller_sku: detail.seller_sku || "",
+            seller_sku: product.seller_sku || "",
             ASIN: detail.ASIN || "",
             in_seller_account: !!product.in_seller_account,
             upc: product.upc || null,
@@ -259,7 +259,7 @@ exports.getPalletProducts = asyncHandler(async (req, res) => {
               {
                 model: AmazonProductDetail,
                 as: "AmazonProductDetail",
-                attributes: ["ASIN", "seller_sku"],
+                attributes: ["ASIN"],
               },
             ],
           },
@@ -291,7 +291,6 @@ exports.getPalletProducts = asyncHandler(async (req, res) => {
       available_quantity: palletProduct.available_quantity,
       product: {
         ...product,
-        seller_sku: detail.seller_sku || null,
         ASIN: detail.ASIN || null,
       },
       pallet_number: palletProduct.Pallet.pallet_number || null,
