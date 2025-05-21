@@ -327,6 +327,7 @@ exports.getShipment = asyncHandler(async (req, res) => {
                   "in_seller_account",
                   "upc",
                   "pack_type",
+                  "seller_sku"
                 ],
                 include: [
                   {
