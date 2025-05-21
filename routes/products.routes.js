@@ -19,7 +19,7 @@ const router = express.Router();
  */
 router.get('/', getProducts);
 
-router.post('/', roleMiddleware(['admin', 'warehouse']), addAccessTokenHeader, createProduct);
+router.post('/', addAccessTokenHeader, createProduct);
 
 router.patch(
   '/addExtraInfoToProduct',
@@ -34,7 +34,7 @@ router.patch('/dg-type/:productId', updateDGType)
 
 router.patch('/disable', addAccessTokenHeader,toggleShowProduct);
 
-router.delete('/:id', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, deleteProduct)
+router.delete('/:id', addAccessTokenHeader, deleteProduct)
 
 
 module.exports = router;

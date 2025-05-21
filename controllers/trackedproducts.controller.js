@@ -186,7 +186,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           warehouse_stock: product.warehouse_stock,
           upc: product.upc,
           pack_type: product.pack_type,
-          seller_sku: product?.seller_sku ?? null,
+          seller_sku: product.seller_sku,
 
           // Atributos de AmazonProductDetail (si existen)
           ASIN: amazonDetail?.ASIN ?? null,
