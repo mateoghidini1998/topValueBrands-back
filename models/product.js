@@ -37,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       supplier_id: DataTypes.INTEGER,
       supplier_item_number: DataTypes.STRING,
       upc: DataTypes.STRING,
+      seller_sku: DataTypes.STRING,
       product_cost: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,

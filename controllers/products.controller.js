@@ -51,12 +51,12 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
       {
         model: AmazonProductDetail,
         as: 'AmazonProductDetail',
-        attributes: ['id', 'ASIN', 'seller_sku', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA']
+        attributes: ['id', 'ASIN', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA']
       },
       {
         model: WalmartProductDetail,
         as: 'WalmartProductDetail',
-        attributes: ['id', 'gtin', 'seller_sku']
+        attributes: ['id', 'gtin']
       }
     ]
   });
@@ -78,12 +78,12 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     product.product_cost = product_cost;
     product.pack_type = pack_type;
     product.upc = upc || null;
+    product.seller_sku = seller_sku;
     await product.save();
 
     if (product.AmazonProductDetail) {
       if (ASIN !== undefined) {
         product.AmazonProductDetail.ASIN = ASIN;
-        product.AmazonProductDetail.seller_sku = seller_sku;
       };
 
       await product.AmazonProductDetail.save();
@@ -92,7 +92,6 @@ exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
     if (product.WalmartProductDetail) {
       if (gtin !== undefined) {
         product.WalmartProductDetail.gtin = gtin
-        product.WalmartProductDetail.seller_sku = seller_sku;
       };
       await product.WalmartProductDetail.save();
     }

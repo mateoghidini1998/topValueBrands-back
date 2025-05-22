@@ -25,10 +25,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      seller_sku: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
       FBA_available_inventory: {
         type: DataTypes.INTEGER,
         allowNull: true,

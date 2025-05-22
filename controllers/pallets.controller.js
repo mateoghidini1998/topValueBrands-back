@@ -154,12 +154,12 @@ exports.getPallets = asyncHandler(async (req, res) => {
           include: [
             {
               model: Product,
-              attributes: ["product_name", "product_image"],
+              attributes: ["product_name", "product_image","seller_sku"],
               include: [
                 {
                   model: AmazonProductDetail,
                   as: "AmazonProductDetail",
-                  attributes: ["ASIN", "seller_sku", "dangerous_goods"],
+                  attributes: ["ASIN", "dangerous_goods"],
                 },
               ],
             },
@@ -243,12 +243,13 @@ exports.getPallet = asyncHandler(async (req, res) => {
                   "in_seller_account",
                   "upc",
                   "pack_type",
+                  "seller_sku"
                 ],
                 include: [
                   {
                     model: AmazonProductDetail,
                     as: "AmazonProductDetail",
-                    attributes: ["ASIN", "seller_sku", "dangerous_goods"],
+                    attributes: ["ASIN", "dangerous_goods"],
                   },
                 ],
               },
@@ -285,7 +286,7 @@ exports.getPallet = asyncHandler(async (req, res) => {
         ...palletProduct,
         product_name: product.product_name || null,
         product_image: product.product_image || null,
-        seller_sku: detail.seller_sku || null,
+        seller_sku: product.seller_sku || null,
         ASIN: detail.ASIN || null,
         upc: product.upc || null,
         pack_type: product.pack_type || null,

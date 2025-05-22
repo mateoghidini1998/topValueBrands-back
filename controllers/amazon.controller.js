@@ -120,7 +120,6 @@ exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
                 await amazonProductDetail.update({
                   asin: item.asin,
                   fnsku: item.fnsku,
-                  sku: item.seller_sku,
                   condition: item.condition,
                   quantity: quantity,
                   fulfillment_channel: item.fulfillment_channel,

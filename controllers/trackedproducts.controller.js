@@ -34,7 +34,7 @@ const fetchProducts = async ({ limit = LIMIT_PRODUCTS, offset = OFFSET_PRODUCTS 
       {
         model: AmazonProductDetail,
         as: "AmazonProductDetail",
-        attributes: ["ASIN", "seller_sku"],
+        attributes: ["ASIN"],
       },
     ],
   });
@@ -75,6 +75,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       "warehouse_stock",
       "pack_type",
       "upc",
+      "seller_sku",
     ],
     include: [
       {
@@ -82,7 +83,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         as: "AmazonProductDetail",
         attributes: [
           "ASIN",
-          "seller_sku",
           "FBA_available_inventory",
           "reserved_quantity",
           "Inbound_to_FBA",
@@ -101,13 +101,12 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     required: true,
   };
 
-  // Búsqueda por texto
   if (keyword) {
     includeProduct.where[Op.or] = [
       { product_name: { [Op.like]: `%${keyword}%` } },
       { "$product.AmazonProductDetail.ASIN$": { [Op.like]: `%${keyword}%` } },
       {
-        "$product.AmazonProductDetail.seller_sku$": {
+        "$product.seller_sku$": {
           [Op.like]: `%${keyword}%`,
         },
       },
@@ -142,8 +141,6 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       subQuery: false,
     });
 
-    const seen = new Set();
-    const uniqueRows = [];
     const totalPages = Math.ceil(trackedProducts.length / limit);
 
     res.status(200).json({
@@ -186,10 +183,9 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           warehouse_stock: product.warehouse_stock,
           upc: product.upc,
           pack_type: product.pack_type,
+          seller_sku: product.seller_sku,
 
-          // Atributos de AmazonProductDetail (si existen)
           ASIN: amazonDetail?.ASIN ?? null,
-          seller_sku: amazonDetail?.seller_sku ?? null,
           FBA_available_inventory:
             amazonDetail?.FBA_available_inventory ?? null,
           reserved_quantity: amazonDetail?.reserved_quantity ?? null,
@@ -224,7 +220,6 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
 
   const productIds = products.map((product) => product.product_id);
 
-  // 2. Buscar los TrackedProducts con sus relaciones
   const trackedProducts = await TrackedProduct.findAll({
     where: { product_id: productIds },
     include: [
@@ -237,12 +232,13 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
           "product_cost",
           "in_seller_account",
           "supplier_id",
+          'seller_sku',
         ],
         include: [
           {
             model: AmazonProductDetail,
             as: "AmazonProductDetail",
-            attributes: ["ASIN", "seller_sku"],
+            attributes: ["ASIN"],
           },
           {
             model: Supplier,
@@ -258,7 +254,6 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Tracked products not found" });
   }
 
-  // 3. Formatear los datos para la tabla
   const transformed = trackedProducts.map((tp) => {
     const { product, ...tpData } = tp.toJSON();
     const { AmazonProductDetail, supplier, ...productData } = product;
@@ -269,9 +264,9 @@ exports.getTrackedProductsFromAnOrder = asyncHandler(async (req, res) => {
       product_image: productData.product_image,
       product_cost: productData.product_cost,
       in_seller_account: productData.in_seller_account,
+      seller_sku: productData?.seller_sku || null,
       supplier_name: supplier?.supplier_name || null,
       ASIN: AmazonProductDetail?.ASIN || null,
-      seller_sku: AmazonProductDetail?.seller_sku || null,
     };
   });
 
@@ -285,7 +280,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
   logger.info("Start generateTrackedProductsData");
 
   try {
-    // 1. Fetch products with validation
     const products = await fetchProducts({
       limit: 100,
       offset: 0,
@@ -295,13 +289,12 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       throw new Error("No products found to process");
     }
 
-    // 2. Filter and validate products with ASIN
     const productsWithASIN = products
       .filter(p => p.AmazonProductDetail && typeof p.AmazonProductDetail.ASIN === "string")
       .map(p => ({
         ...p.get({ plain: true }),
         ASIN: p.AmazonProductDetail.ASIN,
-        seller_sku: p.AmazonProductDetail.seller_sku,
+        seller_sku: p.seller_sku,
       }));
 
     if (productsWithASIN.length === 0) {
@@ -310,7 +303,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
     logger.info(`Processing ${productsWithASIN.length} products with valid ASIN`);
 
-    // 3. Execute parallel operations with error handling
     const [orderData, keepaData] = await Promise.all([
       saveOrders(req, res, next, productsWithASIN).catch(error => {
         logger.error("saveOrders failed", {
@@ -330,7 +322,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
     logger.info("Successfully fetched order data and keepa data");
 
-    // 4. Combine and validate data
     const combinedData = keepaData.map(keepaItem => {
       const orderItem = orderData.find(o => o.product_id === keepaItem.product_id) || {};
       const unitsSold = orderItem.quantity || 0;
@@ -356,7 +347,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       };
     });
 
-    // 5. Batch process database updates
     const BATCH_SIZE = 50;
     for (let i = 0; i < combinedData.length; i += BATCH_SIZE) {
       const batch = combinedData.slice(i, i + BATCH_SIZE);
@@ -378,7 +368,6 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
       logger.info(`Processed batch ${i / BATCH_SIZE + 1} of ${Math.ceil(combinedData.length / BATCH_SIZE)}`);
     }
 
-    // 6. Process fees in batches
     const trackedProductIds = combinedData.map(item => item.product_id);
     const relatedProducts = await Product.findAll({
       where: { id: trackedProductIds },
@@ -440,7 +429,6 @@ const getProductsTrackedData = async (products) => {
       `Groups of ${ASINS_PER_GROUP} ASINs will be processed in batches of ${ASINS_PER_GROUP} products`
     );
 
-    // Agrupar productos por ASIN para evitar duplicados
     const uniqueProductsMap = products.reduce((acc, product) => {
       if (!acc[product.ASIN]) {
         acc[product.ASIN] = [];
@@ -479,7 +467,7 @@ const getProductsTrackedData = async (products) => {
             `getKeepaData raw response for group ${index + 1}: ${JSON.stringify(
               keepaDataResponse
             )}`
-          ); // <= AGREGAR ACÁ
+          ); 
           keepaResponses.push(keepaDataResponse);
           tokensLeft = keepaDataResponse.tokensLeft;
           totalTokensConsumed += keepaDataResponse.tokensConsumed;
@@ -523,7 +511,7 @@ const getProductsTrackedData = async (products) => {
       if (!response || !response.products) {
         logger.error(
           `Invalid Keepa response at index ${idx}: ${JSON.stringify(response)}`
-        ); // <= AGREGAR ACÁ
+        );
         return [];
       }
 
@@ -735,7 +723,6 @@ const estimateFeesForProduct = async (product, accessToken) => {
       `Error estimating fees for product id ${product.id}. ${error.message}`
     );
 
-    // Log if the error is 403 -> access token expired
     if (error.response && error.response.status === 403) {
       logger.info(
         `Error 403 for product id ${product.id} and refreshing access token...`
@@ -744,7 +731,6 @@ const estimateFeesForProduct = async (product, accessToken) => {
       return estimateFeesForProduct(product, accessToken);
     }
 
-    // Log if the error is 429 -> rate limit
     if (error.response && error.response.status === 429) {
       logger.info(`Error 429 for product id ${product.id}`);
     } else if (error.response && error.response.status === 400) {
@@ -790,12 +776,10 @@ const processBatch = async (
     `Start proccess of combining data keepa + orders + fees to generete the complete tracked product`
   );
 
-  // Validar que tenemos datos para procesar
   if (!productBatch || !Array.isArray(productBatch) || productBatch.length === 0) {
     throw new Error('Invalid or empty product batch');
   }
 
-  // Validar que los IDs de productos son válidos
   const validProductIds = productBatch
     .filter(product => product && product.id)
     .map(product => product.id);
@@ -820,7 +804,6 @@ const processBatch = async (
     return acc;
   }, {});
 
-  // Validar que tenemos los datos necesarios
   if (!feeEstimates || !Array.isArray(feeEstimates)) {
     throw new Error('Invalid or missing fee estimates data');
   }
@@ -830,7 +813,7 @@ const processBatch = async (
   }
 
   const finalData = feeEstimates
-    .filter(feeEstimate => feeEstimate && feeEstimate.product_id) // Filtrar feeEstimates inválidos
+    .filter(feeEstimate => feeEstimate && feeEstimate.product_id)
     .map((feeEstimate) => {
       const combinedItem = combinedData.find(
         (item) => item && item.product_id === feeEstimate.product_id
@@ -852,7 +835,7 @@ const processBatch = async (
         updatedAt: new Date(),
       };
     })
-    .filter(item => item !== null); // Eliminar items nulos
+    .filter(item => item !== null);
 
   if (finalData.length === 0) {
     logger.warn(`No valid data could be combined for batch ${batchIndex + 1}`);
@@ -917,7 +900,6 @@ const addAccessTokenAndProcessBatch = async (
 
     req.headers["x-amz-access-token"] = accessToken;
 
-    // Ejecuta el método processBatch y espera a que termine
     await processBatch(
       req,
       res,
@@ -930,7 +912,6 @@ const addAccessTokenAndProcessBatch = async (
   } catch (error) {
     console.error("Error fetching access token or processing batch:", error);
     logger.error("Error fetching access token or processing batch:", error);
-    // throw error;
   }
 };
 
