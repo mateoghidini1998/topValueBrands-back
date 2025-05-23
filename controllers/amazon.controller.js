@@ -247,59 +247,61 @@ const { FindAmazonProducts } = require("../repositories/product.repository");
 
 } */
 
-const processAmazonListingStatus = async (product, accessToken) => {
-  const url = `${process.env.AMZ_BASE_URL}/listings/2021-08-01/items/${process.env.AMAZON_SELLER_ID}/${product.seller_sku}`;
-  const marketplaceIds = "ATVPDKIKX0DER";
-  const includedData = ["summaries", "issues", "attributes"].join(",");
-
-  const response = await axios.get(url, {
-    headers: {
-      "Content-Type": "application/json",
-      "x-amz-access-token": accessToken,
-    },
-    params: {
-      marketplaceIds,
-      includedData,
-    },
-  });
-
-  const { data } = response;
-  let newStatusId = null;
-
-  // Check for issues
-  if (Array.isArray(data.issues) && data.issues.length > 0) {
-    newStatusId = 3; // LISTING_ERROR
-  }
-  // Check summaries status
-  else if (Array.isArray(data.summaries) && data.summaries.length > 0) {
-    const statuses = data.summaries[0].status;
-    if (statuses.includes("BUYABLE")) {
-      newStatusId = 1; // ACTIVE
-    } else if (statuses.includes("DISCOVERABLE")) {
-      newStatusId = product.warehouse_stock > 0 ? 4 : 2; // IN_WAREHOUSE o OUT_OF_STOCK
+  const processAmazonListingStatus = async (product, accessToken) => {
+    const url = `${process.env.AMZ_BASE_URL}/listings/2021-08-01/items/${process.env.AMAZON_SELLER_ID}/${product.seller_sku}`;
+    const params = {
+      marketplaceIds: "ATVPDKIKX0DER",
+      includedData: ["summaries","issues","attributes"].join(",")
+    };
+  
+    const { data } = await axios.get(url, {
+      headers: { "Content-Type": "application/json", "x-amz-access-token": accessToken },
+      params
+    });
+  
+    let newStatusId = null;
+  
+    // 1) ¿Hay issues de tipo error?
+    const errorCategories = ["QUALIFICATION_REQUIRED", "CATALOG_ITEM_REMOVED"];
+    const hasError = Array.isArray(data.issues)
+      && data.issues.some(issue =>
+        issue.categories.some(cat => errorCategories.includes(cat))
+      );
+  
+    if (hasError) {
+      newStatusId = 3; // LISTING_ERROR
     }
-  }
-
-  if (newStatusId && newStatusId !== product.listing_status_id) {
-    const [count] = await Product.update(
-      { listing_status_id: newStatusId },
-      { where: { id: product.id } }
-    );
-    if (count === 1) {
-      return {
-        success: true,
-        seller_sku: product.seller_sku,
-        updated: {
+    // 2) Si no hay error, chequeamos summaries
+    else if (Array.isArray(data.summaries) && data.summaries.length > 0) {
+      const statuses = data.summaries[0].status;
+      if (statuses.includes("BUYABLE")) {
+        newStatusId = 1; // ACTIVE
+      } else if (statuses.includes("DISCOVERABLE")) {
+        newStatusId = (product.warehouse_stock > 0) ? 4 /*IN_WAREHOUSE*/ : 2 /*OUT_OF_STOCK*/;
+      }
+    }
+  
+    // 3) Actualizamos sólo si cambió
+    if (newStatusId != null && newStatusId !== product.listing_status_id) {
+      const [count] = await Product.update(
+        { listing_status_id: newStatusId },
+        { where: { id: product.id } }
+      );
+      if (count === 1) {
+        return {
+          success: true,
           seller_sku: product.seller_sku,
-          old_status: product.listing_status_id,
-          new_status: newStatusId,
-        }
-      };
+          updated: {
+            old_status: product.listing_status_id,
+            new_status: newStatusId
+          }
+        };
+      }
     }
-  }
-
-  return { success: true, seller_sku: product.seller_sku };
-};
+  
+    return { success: true, seller_sku: product.seller_sku };
+  };
+  
 
 const GetListingStatus = asyncHandler(async (req, res) => {
   const accessToken = req.headers["x-amz-access-token"];
@@ -402,7 +404,3 @@ const GetListingStatus = asyncHandler(async (req, res) => {
 module.exports = {
   GetListingStatus,
 };
-
-/* module.exports = new AmazonController();
- *
-/

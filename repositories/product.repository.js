@@ -108,7 +108,7 @@ const UpdateProductDgType = async (id, dgType) => {
   );
 };
 
-const FindAmazonProducts = async (limit = 10000) => {
+const FindAmazonProducts = async (limit = 100) => {
   return await Product.findAll({
     where: {
       marketplace_id: 1,
