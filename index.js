@@ -1,11 +1,15 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const cookieParser = require('cookie-parser');
-const cron = require('node-cron');
-const { Op } = require('sequelize');
-const logger = require('./logger/logger');
-const { clerkMiddleware, clerkClient, requireAuth, getAuth } = require('@clerk/express');
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser");
+const cron = require("node-cron");
+const logger = require("./logger/logger");
+const {
+  clerkMiddleware,
+  clerkClient,
+  requireAuth,
+  getAuth,
+} = require("@clerk/express");
 const runWorker = require("./workers/workerHandler");
 const { fetchNewTokenForFees } = require("./middlewares/lwa_token");
 
@@ -51,9 +55,9 @@ const suppliers = require("./routes/suppliers.routes");
 const purchaseorders = require("./routes/purchaseorders.routes");
 const outgoingshipment = require("./routes/shipments.routes");
 const pallets = require("./routes/pallets.routes");
+const amazon = require("./routes/amazon.routes");
 const { swaggerDoc } = require("./routes/swagger.routes");
-const loopPeticiones = require('./workers/syncProductsWorker');
-
+const loopPeticiones = require("./workers/syncProductsWorker");
 
 // Mount routers
 app.use("/api/v1/auth", auth);
@@ -65,6 +69,7 @@ app.use("/api/v1/suppliers", suppliers);
 app.use("/api/v1/purchaseorders", purchaseorders);
 app.use("/api/v1/shipments", outgoingshipment);
 app.use("/api/v1/pallets", pallets);
+app.use("/api/v1/amazon", amazon);
 
 // Server setup
 const PORT = process.env.PORT || 5000;
@@ -77,72 +82,99 @@ app.listen(PORT, () => {
   // loopPeticiones(); // <-- Aquí empieza el loop una vez
 
   // Cron job to sync database with Amazon
-   cron.schedule(
-     "0 17 * * *",
-     async () => {
-       logger.info("Starting Amazon sync cron job...");
-       try {
-         logger.info("Fetching new token...");
-         const accessToken = await fetchNewTokenForFees();
-         if (!accessToken) {
-           throw new Error("Failed to fetch a valid access token.");
-         }
-         await runWorker("./syncWorker.js", {
-           accessToken,
-         });
-         logger.info("Amazon sync cron job completed successfully");
-         console.log("Amazon sync cron job completed successfully");
-       } catch (error) {
-         logger.error("Error in Amazon sync cron job:", error);
-       }
-     },
-     {
-       timezone: "America/New_York",
-       scheduled: true,
-     }
-   );
+  cron.schedule(
+    "0 17 * * *",
+    async () => {
+      logger.info("Starting Amazon sync cron job...");
+      try {
+        logger.info("Fetching new token...");
+        const accessToken = await fetchNewTokenForFees();
+        if (!accessToken) {
+          throw new Error("Failed to fetch a valid access token.");
+        }
+        await runWorker("./syncWorker.js", {
+          accessToken,
+        });
+        logger.info("Amazon sync cron job completed successfully");
+        console.log("Amazon sync cron job completed successfully");
+      } catch (error) {
+        logger.error("Error in Amazon sync cron job:", error);
+      }
+    },
+    {
+      timezone: "America/New_York",
+      scheduled: true,
+    }
+  );
 
-   cron.schedule(
-     "0 * * * *",
-     async () => {
-       console.log("Starting shipment tracking cron job...");
-       logger.info("Starting shipment tracking cron job...");
-       try {
-         logger.info("Fetching new token...");
-         const accessToken = await fetchNewTokenForFees();
-         if (!accessToken) {
-           throw new Error("Failed to fetch a valid access token.");
-         }
+  cron.schedule(
+    "0 * * * *",
+    async () => {
+      console.log("Starting shipment tracking cron job...");
+      logger.info("Starting shipment tracking cron job...");
+      try {
+        logger.info("Fetching new token...");
+        const accessToken = await fetchNewTokenForFees();
+        if (!accessToken) {
+          throw new Error("Failed to fetch a valid access token.");
+        }
 
-         logger.info("Access token en el cronjob:", accessToken);
-         await runWorker("./shipmentWorker.js", { accessToken });
-         logger.info("Shipment tracking cron job completed successfully");
-       } catch (error) {
-         logger.error("Error in shipment tracking cron job:", error.message);
-       }
-     },
-     {
-       timezone: "America/New_York",
-       scheduled: true,
-     }
-   );
+        logger.info("Access token en el cronjob:", accessToken);
+        await runWorker("./shipmentWorker.js", { accessToken });
+        logger.info("Shipment tracking cron job completed successfully");
+      } catch (error) {
+        logger.error("Error in shipment tracking cron job:", error.message);
+      }
+    },
+    {
+      timezone: "America/New_York",
+      scheduled: true,
+    }
+  );
 
   //  Cron job to delete old shipments
-   cron.schedule(
-     "0 6 * * *",
-     async () => {
-       console.log("Starting old shipments cleanup cron job...");
-       logger.info("Starting old shipments cleanup cron job...");
-       try {
-         await runWorker("./deleteShipmentWorker.js");
-         console.info("Old shipments cleanup cron job completed successfully");
-       } catch (error) {
-         console.error("Error in old shipments cleanup cron job:", error);
-       }
-     },
-     {
-       timezone: "America/New_York",
-       scheduled: true,
-     }
-   );
+  cron.schedule(
+    "0 6 * * *",
+    async () => {
+      console.log("Starting old shipments cleanup cron job...");
+      logger.info("Starting old shipments cleanup cron job...");
+      try {
+        
+        await runWorker("./deleteShipmentWorker.js");
+        console.info("Old shipments cleanup cron job completed successfully");
+      } catch (error) {
+        console.error("Error in old shipments cleanup cron job:", error);
+      }
+    },
+    {
+      timezone: "America/New_York",
+      scheduled: true,
+    }
+  );
+
+  cron.schedule(
+    "57 23 * * *",
+    async () => {
+      console.log("Starting Listing status update cron job...");
+      logger.info("Starting Listing status update cron job...");
+      try {
+        logger.info("Fetching new token...");
+        const accessToken = await fetchNewTokenForFees();
+        if (!accessToken) {
+          throw new Error("Failed to fetch a valid access token.");
+        }
+
+        logger.info("Access token obtained successfully");
+        await runWorker("./listing_status.js", { accessToken });
+        logger.info("Listing status update cron job completed successfully");
+      } catch (error) {
+        logger.error("Error in Listing status update cron job:", error.message);
+      }
+    },
+    {
+      timezone: "America/Argentina/Buenos_Aires",
+      scheduled: true,
+    }
+  );
+  
 });

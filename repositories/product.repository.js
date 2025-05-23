@@ -108,6 +108,15 @@ const UpdateProductDgType = async (id, dgType) => {
   );
 };
 
+const FindAmazonProducts = async (limit = 10000) => {
+  return await Product.findAll({
+    where: {
+      marketplace_id: 1,
+    },
+    limit,
+    attributes: ["id", "seller_sku", "warehouse_stock", "listing_status_id"],
+  });
+};
 
 module.exports = {
   FindAllProducts,
@@ -116,5 +125,6 @@ module.exports = {
   CreateAmazonProductDetail,
   CreateWalmartProductDetail,
   DeleteProduct,
-  UpdateProductDgType
+  UpdateProductDgType,
+  FindAmazonProducts
 };

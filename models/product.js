@@ -26,7 +26,16 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'product_id',
         as: 'WalmartProductDetail',
       });
-      
+
+      Product.belongsTo(models.Marketplace, {
+        foreignKey: 'marketplace_id',
+        as: 'marketplace'
+      });
+
+      Product.belongsTo(models.ListingStatus, {
+        foreignKey: 'listing_status_id',
+        as: 'listingStatus'
+      });
     }
   }
   Product.init(
@@ -45,6 +54,24 @@ module.exports = (sequelize, DataTypes) => {
       pack_type: DataTypes.STRING,
       is_active: DataTypes.BOOLEAN,
       in_seller_account: DataTypes.BOOLEAN,
+      marketplace_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+        references: {
+          model: 'marketplaces',
+          key: 'id'
+        }
+      },
+      listing_status_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'listings_status',
+          key: 'id'
+        },
+        defaultValue: 5
+      }
     },
     {
       sequelize,
