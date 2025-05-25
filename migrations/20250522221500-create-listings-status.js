@@ -54,7 +54,7 @@ module.exports = {
       },
       {
         id: 5,
-        description: 'INACTIVE',
+        description: 'TRACKING',
         createdAt: new Date(),
         updatedAt: new Date()
       }

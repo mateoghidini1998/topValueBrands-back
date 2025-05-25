@@ -247,61 +247,60 @@ const { FindAmazonProducts } = require("../repositories/product.repository");
 
 } */
 
-  const processAmazonListingStatus = async (product, accessToken) => {
-    const url = `${process.env.AMZ_BASE_URL}/listings/2021-08-01/items/${process.env.AMAZON_SELLER_ID}/${product.seller_sku}`;
-    const params = {
-      marketplaceIds: "ATVPDKIKX0DER",
-      includedData: ["summaries","issues","attributes"].join(",")
-    };
-  
-    const { data } = await axios.get(url, {
-      headers: { "Content-Type": "application/json", "x-amz-access-token": accessToken },
-      params
-    });
-  
-    let newStatusId = null;
-  
-    // 1) ¿Hay issues de tipo error?
-    const errorCategories = ["QUALIFICATION_REQUIRED", "CATALOG_ITEM_REMOVED"];
-    const hasError = Array.isArray(data.issues)
-      && data.issues.some(issue =>
-        issue.categories.some(cat => errorCategories.includes(cat))
-      );
-  
-    if (hasError) {
-      newStatusId = 3; // LISTING_ERROR
-    }
-    // 2) Si no hay error, chequeamos summaries
-    else if (Array.isArray(data.summaries) && data.summaries.length > 0) {
-      const statuses = data.summaries[0].status;
-      if (statuses.includes("BUYABLE")) {
-        newStatusId = 1; // ACTIVE
-      } else if (statuses.includes("DISCOVERABLE")) {
-        newStatusId = (product.warehouse_stock > 0) ? 4 /*IN_WAREHOUSE*/ : 2 /*OUT_OF_STOCK*/;
-      }
-    }
-  
-    // 3) Actualizamos sólo si cambió
-    if (newStatusId != null && newStatusId !== product.listing_status_id) {
-      const [count] = await Product.update(
-        { listing_status_id: newStatusId },
-        { where: { id: product.id } }
-      );
-      if (count === 1) {
-        return {
-          success: true,
-          seller_sku: product.seller_sku,
-          updated: {
-            old_status: product.listing_status_id,
-            new_status: newStatusId
-          }
-        };
-      }
-    }
-  
-    return { success: true, seller_sku: product.seller_sku };
+const processAmazonListingStatus = async (product, accessToken) => {
+  const url = `${process.env.AMZ_BASE_URL}/listings/2021-08-01/items/${process.env.AMAZON_SELLER_ID}/${product.seller_sku}`;
+  const params = {
+    marketplaceIds: "ATVPDKIKX0DER",
+    includedData: ["summaries", "issues", "attributes"].join(","),
   };
-  
+
+  const { data } = await axios.get(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "x-amz-access-token": accessToken,
+    },
+    params,
+  });
+
+  let newStatusId = null;
+
+  const errorCategories = ["QUALIFICATION_REQUIRED", "CATALOG_ITEM_REMOVED"];
+  const hasError =
+    Array.isArray(data.issues) &&
+    data.issues.some((issue) =>
+      issue.categories.some((cat) => errorCategories.includes(cat))
+    );
+
+  if (hasError) {
+    newStatusId = 3;
+  } else if (Array.isArray(data.summaries) && data.summaries.length > 0) {
+    const statuses = data.summaries[0].status;
+    if (statuses.includes("BUYABLE")) {
+      newStatusId = 1;
+    } else if (statuses.includes("DISCOVERABLE")) {
+      newStatusId = product.warehouse_stock > 0 ? 4 : 2;
+    }
+  }
+
+  if (newStatusId != null && newStatusId !== product.listing_status_id) {
+    const [count] = await Product.update(
+      { listing_status_id: newStatusId },
+      { where: { id: product.id } }
+    );
+    if (count === 1) {
+      return {
+        success: true,
+        seller_sku: product.seller_sku,
+        updated: {
+          old_status: product.listing_status_id,
+          new_status: newStatusId,
+        },
+      };
+    }
+  }
+
+  return { success: true, seller_sku: product.seller_sku };
+};
 
 const GetListingStatus = asyncHandler(async (req, res) => {
   const accessToken = req.headers["x-amz-access-token"];
@@ -330,7 +329,6 @@ const GetListingStatus = asyncHandler(async (req, res) => {
       updated: [],
     };
 
-    // Process products in batches of 20
     const BATCH_SIZE = 20;
     for (let i = 0; i < AmazonProducts.length; i += BATCH_SIZE) {
       const batch = AmazonProducts.slice(i, i + BATCH_SIZE);
@@ -339,7 +337,10 @@ const GetListingStatus = asyncHandler(async (req, res) => {
       const batchResults = await Promise.all(
         batch.map(async (product) => {
           try {
-            const result = await processAmazonListingStatus(product, accessToken);
+            const result = await processAmazonListingStatus(
+              product,
+              accessToken
+            );
             if (result.updated) {
               results.updated.push(result.updated);
             }
@@ -347,7 +348,6 @@ const GetListingStatus = asyncHandler(async (req, res) => {
             return result;
           } catch (error) {
             if (error.response?.status === 429) {
-              // If rate limited, wait 2 seconds before continuing
               await new Promise((resolve) => setTimeout(resolve, 2000));
               return {
                 success: false,
@@ -355,17 +355,26 @@ const GetListingStatus = asyncHandler(async (req, res) => {
                 error: "Rate limited",
               };
             }
-            // Handle 404 errors separately
+            // Handle 404 errors by setting status to 5 (TRACKING)
             if (error.response?.status === 404) {
-              results.errors.push({
-                seller_sku: product.seller_sku,
-                error: "Product not found in Amazon",
-              });
+              const [count] = await Product.update(
+                { listing_status_id: 5 },
+                { where: { id: product.id } }
+              );
+              if (count === 1) {
+                results.updated.push({
+                  old_status: product.listing_status_id,
+                  new_status: 5
+                });
+              }
               results.processed++;
               return {
-                success: false,
+                success: true,
                 seller_sku: product.seller_sku,
-                error: "Product not found",
+                updated: {
+                  old_status: product.listing_status_id,
+                  new_status: 5
+                }
               };
             }
             results.errors.push({
