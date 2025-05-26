@@ -25,6 +25,8 @@ const FindAllProducts = async ({
       p.is_active,
       p.in_seller_account,
       p.seller_sku,
+      p.listing_status_id,
+      p.marketplace_id,
       p.warehouse_stock AS amazon_warehouse_stock,
       
       -- Datos de AmazonProductDetail
