@@ -98,7 +98,7 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
   });
 
   const cleanedProducts = products.map((product, i) => {
-    
+
     if (i === 0) {
       console.log(product)
     }
@@ -121,7 +121,7 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
       in_seller_account: product.in_seller_account,
       seller_sku: product.seller_sku,
       updatedAt: isAmazon ? product.amazon_updatedAt : product.walmart_updatedAt,
-      listing_status_id: product.listing_status_id,
+      listing_status: product.listing_status,
       marketplace_id: product.marketplace_id,
       marketplace: isAmazon && isWalmart ? "both" : isAmazon ? "amazon" : isWalmart ? "walmart" : null
     };
