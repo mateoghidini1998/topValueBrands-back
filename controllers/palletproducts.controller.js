@@ -241,8 +241,8 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
 
   const [withoutZeroQty, withZeroQty] = allGroups.reduce(
     ([noZero, hasZero], grp) => {
-      const tieneCero = grp.pallets.some(p =>
-        p.palletProducts.some(pp => pp.available_quantity === 0)
+      const tieneCero = grp.pallets.every(p =>
+        p.palletProducts.every(pp => pp.available_quantity === 0)
       );
       if (tieneCero) hasZero.push(grp);
       else noZero.push(grp);
