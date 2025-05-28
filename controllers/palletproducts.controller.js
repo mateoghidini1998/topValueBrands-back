@@ -136,6 +136,18 @@ exports.getPalletProductByPurchaseOrderProductId = asyncHandler(
 );
 
 exports.getAllPalletProducts = asyncHandler(async (req, res) => {
+
+  const palletProductWhere = {
+    [Op.or]: [
+      { is_active: true },
+      {
+        available_quantity: {
+          [Op.gt]: 0
+        }
+      }
+    ]
+  };
+
   const pallets = await Pallet.findAll({
     attributes: ["id", "pallet_number", "warehouse_location_id", "purchase_order_id"],
     include: [
@@ -161,7 +173,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
           "updatedAt",
           "pallet_id",
         ],
-        where: { is_active: true },
+        where: palletProductWhere,
         include: [
           {
             model: PurchaseOrderProduct,
@@ -259,7 +271,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
     );
 
   const orderedWithoutZero = sortDescByFirstUpdated(withoutZeroQty);
-  const orderedWithZero    = sortDescByFirstUpdated(withZeroQty);
+  const orderedWithZero = sortDescByFirstUpdated(withZeroQty);
 
   const response = [...orderedWithoutZero, ...orderedWithZero];
 
