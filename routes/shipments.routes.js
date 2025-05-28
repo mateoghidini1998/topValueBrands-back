@@ -16,7 +16,8 @@ const {
     addReferenceId,
     addFbaShipmentId,
     updateFbaShipmentStatusToShipped,
-    checkAllShipmentProductsOfAPallet
+    checkAllShipmentProductsOfAPallet,
+    updateShipmentV2
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
@@ -26,6 +27,7 @@ router.get('/', getShipments)
 router.get('/:id', getShipment)
 router.delete('/:id', deleteShipment)
 router.put('/:id', protect, updateShipment)
+router.put('/:id/v2', updateShipmentV2)
 router.get('/:id/download', download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
