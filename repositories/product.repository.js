@@ -25,6 +25,8 @@ const FindAllProducts = async ({
       p.is_active,
       p.in_seller_account,
       p.seller_sku,
+      ls.description AS listing_status,
+      p.marketplace_id,
       p.warehouse_stock AS amazon_warehouse_stock,
       
       -- Datos de AmazonProductDetail
@@ -52,6 +54,7 @@ const FindAllProducts = async ({
     LEFT JOIN suppliers s ON p.supplier_id = s.id
     LEFT JOIN amz_product_details apd ON p.id = apd.product_id
     LEFT JOIN wmt_product_details wpd ON p.id = wpd.product_id
+    LEFT JOIN listings_status ls ON p.listing_status_id = ls.id
     ${whereClause}
     ORDER BY ${orderBy} ${orderWay}
     LIMIT :limit OFFSET :offset
@@ -108,6 +111,15 @@ const UpdateProductDgType = async (id, dgType) => {
   );
 };
 
+const FindAmazonProducts = async (limit = 10000) => {
+  return await Product.findAll({
+    where: {
+      marketplace_id: 1,
+    },
+    limit,
+    attributes: ["id", "seller_sku", "warehouse_stock", "listing_status_id"],
+  });
+};
 
 module.exports = {
   FindAllProducts,
@@ -116,5 +128,6 @@ module.exports = {
   CreateAmazonProductDetail,
   CreateWalmartProductDetail,
   DeleteProduct,
-  UpdateProductDgType
+  UpdateProductDgType,
+  FindAmazonProducts
 };

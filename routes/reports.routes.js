@@ -42,7 +42,4 @@ const asyncHandler = require('../middlewares/async');
  *                   type: string
  *                   example: "An error occurred."
  */
-router.get('/sync', addAccessTokenHeader, syncDBWithAmazon);
-router.get('/download/:filename', downloadReport);
-router.get('/generate-order-report', addAccessTokenHeader, asyncHandler(generateOrderReportV2));
 module.exports = router;
