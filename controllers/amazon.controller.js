@@ -288,6 +288,7 @@ const processAmazonListingStatus = async (product, accessToken) => {
       { where: { id: product.id } }
     );
     if (count === 1) {
+      console.log(`Product ${product.seller_sku} updated with status ${newStatusId}`);
       return {
         success: true,
         seller_sku: product.seller_sku,
@@ -329,8 +330,9 @@ const GetListingStatus = asyncHandler(async (req, res) => {
       updated: [],
     };
 
-    const BATCH_SIZE = 20;
+    const BATCH_SIZE = 2;
     for (let i = 0; i < AmazonProducts.length; i += BATCH_SIZE) {
+      console.log(`processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(AmazonProducts.length / BATCH_SIZE)}`);
       const batch = AmazonProducts.slice(i, i + BATCH_SIZE);
 
       // Process batch
@@ -345,9 +347,13 @@ const GetListingStatus = asyncHandler(async (req, res) => {
               results.updated.push(result.updated);
             }
             results.processed++;
+            console.log('listing status ready to update');
             return result;
           } catch (error) {
+            console.log('error fetching listing status');
+            // console.log(error)
             if (error.response?.status === 429) {
+              console.log("Rate limited");
               await new Promise((resolve) => setTimeout(resolve, 2000));
               return {
                 success: false,
@@ -357,6 +363,7 @@ const GetListingStatus = asyncHandler(async (req, res) => {
             }
             // Handle 404 errors by setting status to 5 (TRACKING)
             if (error.response?.status === 404) {
+              console.log("Product not found");
               const [count] = await Product.update(
                 { listing_status_id: 5 },
                 { where: { id: product.id } }
@@ -392,6 +399,7 @@ const GetListingStatus = asyncHandler(async (req, res) => {
       );
 
       // Add a small delay between batches to avoid rate limits
+      console.log('waiting 1 second');
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
