@@ -153,7 +153,7 @@ app.listen(PORT, () => {
   );
 
   cron.schedule(
-    "0 3,7,10,14,17,20 * * *",
+    "20 3,7,10,14,17,20 * * *",
     async () => {
       console.log("Starting Listing status update cron job...");
       logger.info("Starting Listing status update cron job...");
