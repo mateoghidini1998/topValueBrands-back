@@ -12,6 +12,7 @@ const {
   TrackedProduct,
   Supplier,
   PurchaseOrderProduct,
+  ListingStatus,
 } = require("../models");
 const axios = require("axios");
 const asyncHandler = require("../middlewares/async");
@@ -76,6 +77,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
       "pack_type",
       "upc",
       "seller_sku",
+      "listing_status_id"
     ],
     include: [
       {
@@ -94,6 +96,12 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         model: Supplier,
         as: "supplier",
         attributes: ["supplier_name"],
+        required: false,
+      },
+      {
+        model: ListingStatus,
+        as: "listingStatus",
+        attributes: ["description"],
         required: false,
       },
     ],
@@ -125,6 +133,7 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
     "product_name",
     "ASIN",
     "seller_sku",
+    "listing_status_id"
   ].includes(orderBy);
   const order = isProductField
     ? [[literal(`product.${orderBy}`), orderWay]]
@@ -184,6 +193,8 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           upc: product.upc,
           pack_type: product.pack_type,
           seller_sku: product.seller_sku,
+          listing_status_id: product.listing_status_id,
+          listing_status: product.listingStatus?.description ?? null,
 
           ASIN: amazonDetail?.ASIN ?? null,
           FBA_available_inventory:
