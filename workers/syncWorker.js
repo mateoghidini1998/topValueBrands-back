@@ -5,7 +5,6 @@ const {
 } = require("../controllers/trackedproducts.controller");
 const logger = require("../logger/logger");
 const {
-  updateProductsListingStatus,
   updateBreakdownForReservedInventory,
 } = require("../utils/utils");
 const moment = require("moment");
@@ -82,8 +81,7 @@ const moment = require("moment");
         throw err;
       }
     };
-    /* await updateProductsListingStatus(reqListingsData, res, next);
-    await updateBreakdownForReservedInventory(reqBreakdownData, res, next); */
+    await updateBreakdownForReservedInventory(reqBreakdownData, res, next);
     await syncDBWithAmazon(reqProducts, res, next);
     await generateTrackedProductsData(reqOrders, res, next);
 

@@ -102,7 +102,7 @@ app.listen(PORT, () => {
       }
     },
     {
-      timezone: "America/Argentina/Buenos_Aires",
+      timezone: "America/New_York",
       scheduled: true,
     }
   );
@@ -153,7 +153,7 @@ app.listen(PORT, () => {
   );
 
   cron.schedule(
-    "55 6,12,16,20 * * *",
+    "0 3,7,11,14,17,20 * * *",
     async () => {
       console.log("Starting Listing status update cron job...");
       logger.info("Starting Listing status update cron job...");
@@ -172,7 +172,7 @@ app.listen(PORT, () => {
       }
     },
     {
-      timezone: "America/Argentina/Buenos_Aires",
+      timezone: "America/New_York",
       scheduled: true,
     }
   );
