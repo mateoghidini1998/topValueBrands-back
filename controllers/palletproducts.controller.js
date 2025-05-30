@@ -136,6 +136,18 @@ exports.getPalletProductByPurchaseOrderProductId = asyncHandler(
 );
 
 exports.getAllPalletProducts = asyncHandler(async (req, res) => {
+
+  const palletProductWhere = {
+    [Op.or]: [
+      { is_active: true },
+      {
+        available_quantity: {
+          [Op.gt]: 0
+        }
+      }
+    ]
+  };
+
   const pallets = await Pallet.findAll({
     attributes: ["id", "pallet_number", "warehouse_location_id", "purchase_order_id"],
     include: [
@@ -161,7 +173,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
           "updatedAt",
           "pallet_id",
         ],
-        where: { available_quantity: { [Op.gt]: 0 }, is_active: true },
+        where: palletProductWhere,
         include: [
           {
             model: PurchaseOrderProduct,
@@ -176,6 +188,7 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
                   "product_image",
                   "in_seller_account",
                   "upc",
+                  "seller_sku",
                 ],
                 include: [
                   {
@@ -236,13 +249,40 @@ exports.getAllPalletProducts = asyncHandler(async (req, res) => {
     return acc;
   }, {});
 
-  const response = Object.values(groupedByPurchaseOrder).sort(
-    (a, b) => b.pallets[0]?.palletProducts[0]?.updatedAt - a.pallets[0]?.palletProducts[0]?.updatedAt
+  const allGroups = Object.values(groupedByPurchaseOrder);
+
+  const [withoutZeroQty, withZeroQty] = allGroups.reduce(
+    ([noZero, hasZero], grp) => {
+      const tieneCero = grp.pallets.every(p =>
+        p.palletProducts.every(pp => pp.available_quantity === 0)
+      );
+      if (tieneCero) hasZero.push(grp);
+      else noZero.push(grp);
+      return [noZero, hasZero];
+    },
+    [[], []]
   );
 
-  return res.status(200).json(response);
-});
+  const sortDescByFirstUpdated = arr =>
+    arr.sort(
+      (a, b) =>
+        new Date(b.pallets[0]?.palletProducts[0]?.updatedAt) -
+        new Date(a.pallets[0]?.palletProducts[0]?.updatedAt)
+    );
 
+  const orderedWithoutZero = sortDescByFirstUpdated(withoutZeroQty);
+  const orderedWithZero = sortDescByFirstUpdated(withZeroQty);
+
+  const response = [...orderedWithoutZero, ...orderedWithZero];
+
+  return res.status(200).json(response);
+
+  // const response = Object.values(groupedByPurchaseOrder).sort(
+  //   (a, b) => b.pallets[0]?.palletProducts[0]?.updatedAt - a.pallets[0]?.palletProducts[0]?.updatedAt
+  // );
+
+  // return res.status(200).json(response);
+});
 
 exports.getPalletProducts = asyncHandler(async (req, res) => {
   const palletProducts = await PalletProduct.findAll({

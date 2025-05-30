@@ -594,6 +594,154 @@ exports.deleteShipment = asyncHandler(async (req, res) => {
   }
 });
 
+//@route    PUT api/v1/shipments/:id
+//@desc     Update an outgoing shipment (add/remove/update products)
+//@access   Private
+exports.updateShipmentV2 = asyncHandler(async (req, res) => {
+  const shipmentId = req.params.id;
+  const newItems = req.body.palletproducts; // [{ pallet_product_id, quantity }, ...]
+  const existingShipment = await OutgoingShipment.findOne({
+    where: { id: shipmentId },
+    include: [{
+      model: PalletProduct,
+      attributes: ["id", "purchaseorderproduct_id", "available_quantity"],
+      through: { attributes: ["quantity"] }
+    }],
+  });
+
+  if (!existingShipment) {
+    return res.status(404).json({ msg: "Shipment not found" });
+  }
+
+  // Construir mapas para lookup rápido
+  const existingMap = new Map(); // pallet_product_id => current quantity in shipment
+  for (let pp of existingShipment.PalletProducts) {
+    existingMap.set(
+      pp.id,
+      pp.OutgoingShipmentProduct.quantity
+    );
+  }
+  const newMap = new Map(newItems.map(i => [i.pallet_product_id, i.quantity]));
+
+  const affectedProducts = new Set();
+
+  // 1) ELIMINAR los que ya no están en el payload
+  for (let [palletProductId, oldQty] of existingMap.entries()) {
+    if (!newMap.has(palletProductId)) {
+      // 1.a) restaurar available_quantity
+      const pp = await PalletProduct.findByPk(palletProductId);
+      await pp.update({
+        available_quantity: pp.available_quantity + oldQty,
+      });
+      // 1.b) eliminar la asociación
+      await OutgoingShipmentProduct.destroy({
+        where: {
+          outgoing_shipment_id: shipmentId,
+          pallet_product_id: palletProductId,
+        },
+      });
+      // 1.c) marcar para recálculo
+      const pop = await PurchaseOrderProduct.findByPk(pp.purchaseorderproduct_id);
+      if (pop) affectedProducts.add(pop.product_id);
+    }
+  }
+
+  // 2) ACTUALIZAR cantidades de los que siguen
+  for (let [palletProductId, oldQty] of existingMap.entries()) {
+    if (newMap.has(palletProductId)) {
+      const newQty = newMap.get(palletProductId);
+      if (newQty !== oldQty) {
+        const pp = await PalletProduct.findByPk(palletProductId);
+        const diff = newQty - oldQty;
+        // 2.a) si aumentamos cantidad en el shipment, restamos stock
+        if (diff > 0) {
+          if (diff > pp.available_quantity) {
+            return res.status(400).json({
+              msg: `Insufficient stock to increase by ${diff} for pallet_product_id ${palletProductId}`
+            });
+          }
+          await pp.update({ available_quantity: pp.available_quantity - diff });
+        }
+        // 2.b) si disminuimos cantidad, restauramos stock
+        if (diff < 0) {
+          await pp.update({ available_quantity: pp.available_quantity + Math.abs(diff) });
+        }
+        // 2.c) actualizar cantidad en la tabla puente
+        await OutgoingShipmentProduct.update(
+          { quantity: newQty },
+          {
+            where: {
+              outgoing_shipment_id: shipmentId,
+              pallet_product_id: palletProductId,
+            },
+          }
+        );
+        // 2.d) marcar para recálculo
+        const pop = await PurchaseOrderProduct.findByPk(pp.purchaseorderproduct_id);
+        if (pop) affectedProducts.add(pop.product_id);
+      }
+    }
+  }
+
+  // 3) AÑADIR nuevos productos
+  for (let item of newItems) {
+    if (!existingMap.has(item.pallet_product_id)) {
+      const pp = await PalletProduct.findByPk(item.pallet_product_id);
+      if (!pp) {
+        return res.status(404).json({
+          msg: `PalletProduct with id ${item.pallet_product_id} not found`
+        });
+      }
+      if (item.quantity > pp.available_quantity) {
+        return res.status(400).json({
+          msg: `Quantity ${item.quantity} exceeds available ${pp.available_quantity} for pallet_product_id ${item.pallet_product_id}`
+        });
+      }
+      // descontar stock
+      await pp.update({
+        available_quantity: pp.available_quantity - item.quantity,
+      });
+      // crear asociación
+      await OutgoingShipmentProduct.create({
+        outgoing_shipment_id: shipmentId,
+        pallet_product_id: item.pallet_product_id,
+        quantity: item.quantity,
+      });
+      // marcar para recálculo
+      const pop = await PurchaseOrderProduct.findByPk(pp.purchaseorderproduct_id);
+      if (pop) affectedProducts.add(pop.product_id);
+    }
+  }
+
+  // 4) re-calcular stock de warehouse por cada producto afectado
+  for (const productId of affectedProducts) {
+    await recalculateWarehouseStock(productId);
+  }
+
+  // 5) devolver el shipment ya actualizado
+  const updatedShipment = await OutgoingShipment.findOne({
+    where: { id: shipmentId },
+    include: [{
+      model: PalletProduct,
+      attributes: [
+        "id",
+        "purchaseorderproduct_id",
+        "pallet_id",
+        "quantity",
+        "available_quantity",
+        "createdAt",
+        "updatedAt",
+      ],
+      through: { attributes: ["quantity"] },
+    }],
+  });
+
+  return res.status(200).json({
+    msg: "Shipment updated successfully",
+    shipment: updatedShipment,
+  });
+});
+
 // @route   PUT api/v1/shipments/:id
 // @desc    Update shipment and adjust available quantities in PurchaseOrderProduct
 // @access  Private
