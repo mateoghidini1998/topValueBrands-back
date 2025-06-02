@@ -38,5 +38,5 @@ router.put('/:shipmentId/pallets/:palletId/check', checkAllShipmentProductsOfAPa
 router.patch('/reference/:id', addReferenceId)
 router.patch('/reference/fba/:id', addFbaShipmentId)
 router.patch('/status-shipped/:id', updateFbaShipmentStatusToShipped)
-router.patch('/status-ready-to-be-shipped/:id', updateFbaShipmentStatusToReadyToBeShipped)
+router.patch('/status-ready/:id', updateFbaShipmentStatusToReadyToBeShipped)
 module.exports = router;
