@@ -82,7 +82,7 @@ exports.recalculateWarehouseStock = async (productId) => {
         (po.is_active = 1 OR po.is_active IS NULL)
 
 
-        AND (os.status = 'READY TO BE SHIPPED' OR os.status IS NULL);
+        AND (os.status = 'READY TO PICK' OR os.status IS NULL);
 
       `,
 

@@ -1246,7 +1246,7 @@ exports.updateFbaShipmentStatusToReadyToBeShipped = asyncHandler(async (req, res
       replacements: { shipmentId: shipment.id },
     }
   );
-  shipment.status = 'READY TO BE SHIPPED';
+  shipment.status = 'READY TO PICK';
   await shipment.save();
 
   const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
