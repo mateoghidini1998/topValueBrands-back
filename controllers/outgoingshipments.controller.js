@@ -59,7 +59,7 @@ exports.createShipment = asyncHandler(async (req, res) => {
   }
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
-    status: "WORKING",
+    status: "READY TO PICK",
   });
 
   const affectedProducts = new Set();
@@ -175,7 +175,7 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 
   const newShipment = await OutgoingShipment.create({
     shipment_number,
-    status: "WORKING",
+    status: "READY TO PICK",
   });
 
   for (let palletProduct of palletProducts) {
@@ -1223,7 +1223,7 @@ exports.updateFbaShipmentStatusToShipped = asyncHandler(async (req, res) => {
   return res.status(200).json({ msg: "Shipment status updated and warehouse stock recalculated successfully" });
 })
 
-exports.updateFbaShipmentStatusToReadyToBeShipped = asyncHandler(async (req, res) => {
+exports.updateFbaShipmentStatusToWorking = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const shipment = await OutgoingShipment.findOne({
     where: { id },
@@ -1246,7 +1246,7 @@ exports.updateFbaShipmentStatusToReadyToBeShipped = asyncHandler(async (req, res
       replacements: { shipmentId: shipment.id },
     }
   );
-  shipment.status = 'READY TO PICK';
+  shipment.status = 'WORKING';
   await shipment.save();
 
   const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
@@ -1257,8 +1257,6 @@ exports.updateFbaShipmentStatusToReadyToBeShipped = asyncHandler(async (req, res
   }
   return res.status(200).json({ msg: "Shipment status updated and warehouse stock recalculated successfully" });
 })
-
-
 
 exports.toggleProductChecked = asyncHandler(async (req, res) => {
   const { outgoingShipmentProductId } = req.params;
