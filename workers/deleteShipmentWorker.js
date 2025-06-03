@@ -12,7 +12,7 @@ const { Op } = require('sequelize');
         logger.info('Worker: Deleting old shipments...');
         const result = await OutgoingShipment.destroy({
             where: {
-                status: { [Op.not]: 'READY TO PICK' },
+                status: {[Op.notIn]: ['READY TO PICK', 'IN PROGRESS', 'WORKING'] },
                 createdAt: { [Op.lt]: threeWeeksAgo },
             },
         });

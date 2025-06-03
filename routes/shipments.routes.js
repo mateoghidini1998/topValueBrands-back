@@ -18,7 +18,8 @@ const {
     updateFbaShipmentStatusToShipped,
     checkAllShipmentProductsOfAPallet,
     updateShipmentV2,
-    updateFbaShipmentStatusToWorking
+    updateFbaShipmentStatusToWorking,
+    updateFbaShipmentStatusToReadyToPick
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
@@ -38,5 +39,6 @@ router.put('/:shipmentId/pallets/:palletId/check', checkAllShipmentProductsOfAPa
 router.patch('/reference/:id', addReferenceId)
 router.patch('/reference/fba/:id', addFbaShipmentId)
 router.patch('/status-shipped/:id', updateFbaShipmentStatusToShipped)
-router.patch('/status-ready/:id', updateFbaShipmentStatusToWorking)
+router.patch('/status-working/:id', updateFbaShipmentStatusToWorking)
+router.patch('/status-ready/:id', updateFbaShipmentStatusToReadyToPick)
 module.exports = router;
