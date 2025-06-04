@@ -59,7 +59,7 @@ exports.createShipment = asyncHandler(async (req, res) => {
   }
   const newShipment = await OutgoingShipment.create({
     shipment_number: req.body.shipment_number,
-    status: "IN PROGRESS",
+    status: "DRAFT",
   });
 
   const affectedProducts = new Set();
@@ -175,7 +175,7 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 
   const newShipment = await OutgoingShipment.create({
     shipment_number,
-    status: "IN PROGRESS",
+    status: "DRAFT",
   });
 
   for (let palletProduct of palletProducts) {
@@ -1258,41 +1258,6 @@ exports.updateFbaShipmentStatusToWorking = asyncHandler(async (req, res) => {
   return res.status(200).json({ msg: "Shipment status updated and warehouse stock recalculated successfully" });
 })
 
-exports.updateFbaShipmentStatusToReadyToPick = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const shipment = await OutgoingShipment.findOne({
-    where: { id },
-  });
-  if (!shipment) {
-    return res.status(404).json({ msg: "Shipment not found" });
-  }
-  const shipmentProducts = await sequelize.query(
-    `
-      SELECT osp.*, 
-      pp.*, 
-      pop.product_id
-      FROM outgoingshipmentproducts osp
-      LEFT JOIN palletproducts pp ON osp.pallet_product_id = pp.id
-      LEFT JOIN purchaseorderproducts pop ON pp.purchaseorderproduct_id = pop.id
-      WHERE osp.outgoing_shipment_id = :shipmentId
-    `,
-    {
-      type: sequelize.QueryTypes.SELECT,
-      replacements: { shipmentId: shipment.id },
-    }
-  );
-  shipment.status = 'READY TO PICK';
-  await shipment.save();
-
-  const productIds = shipmentProducts.map(sp => sp.product_id).filter(id => id);
-
-  for (const productId of productIds) {
-    console.log(`we are talking about our product with id: ${productId}`);
-    await recalculateWarehouseStock(productId);
-  }
-  return res.status(200).json({ msg: "Shipment status updated and warehouse stock recalculated successfully" });
-})
-
 exports.toggleProductChecked = asyncHandler(async (req, res) => {
   const { outgoingShipmentProductId } = req.params;
 
@@ -1306,6 +1271,14 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
       .json({ message: "OutgoingShipmentProduct no encontrado" });
   }
 
+  const shipment = await OutgoingShipment.findByPk(outgoingShipmentProduct.outgoing_shipment_id);
+
+  if (shipment.status !== 'WORKING') {
+    return res.status(400).json({ 
+      message: "Solo se pueden marcar productos cuando el envío está en estado WORKING"
+    });
+  }
+
   outgoingShipmentProduct.is_checked = !outgoingShipmentProduct.is_checked;
   await outgoingShipmentProduct.save();
 
@@ -1314,26 +1287,6 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
       message:
         "Error: pallet_product_id es undefined en OutgoingShipmentProduct",
     });
-  }
-
-  // Verificar si todos los productos del shipment están marcados
-  const shipment = await OutgoingShipment.findByPk(outgoingShipmentProduct.outgoing_shipment_id);
-  const totalProducts = await OutgoingShipmentProduct.count({
-    where: { outgoing_shipment_id: shipment.id }
-  });
-  const checkedProducts = await OutgoingShipmentProduct.count({
-    where: { 
-      outgoing_shipment_id: shipment.id,
-      is_checked: true
-    }
-  });
-
-  if (checkedProducts < totalProducts) {
-    shipment.status = 'IN PROGRESS';
-    await shipment.save();
-  } else if (checkedProducts === totalProducts && totalProducts > 0) {
-    shipment.status = 'READY TO PICK';
-    await shipment.save();
   }
 
   const palletProduct = await PalletProduct.findByPk(
@@ -1459,6 +1412,14 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
       .json({ message: "shipmentId y palletId son requeridos." });
   }
 
+  const shipment = await OutgoingShipment.findByPk(shipmentId);
+
+  if (shipment.status !== 'WORKING') {
+    return res.status(400).json({ 
+      message: "Solo se pueden marcar productos cuando el envío está en estado WORKING"
+    });
+  }
+
   // Obtener todos los palletProduct IDs del pallet
   const palletProducts = await PalletProduct.findAll({
     where: { pallet_id: palletId },
@@ -1497,26 +1458,6 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
       },
     }
   );
-
-  // Verificar el estado de todos los productos del shipment
-  const shipment = await OutgoingShipment.findByPk(shipmentId);
-  const totalShipmentProducts = await OutgoingShipmentProduct.count({
-    where: { outgoing_shipment_id: shipmentId }
-  });
-  const checkedShipmentProducts = await OutgoingShipmentProduct.count({
-    where: { 
-      outgoing_shipment_id: shipmentId,
-      is_checked: true
-    }
-  });
-
-  // Actualizar el estado del shipment
-  if (checkedShipmentProducts < totalShipmentProducts) {
-    shipment.status = 'IN PROGRESS';
-  } else if (checkedShipmentProducts === totalShipmentProducts && totalShipmentProducts > 0) {
-    shipment.status = 'READY TO PICK';
-  }
-  await shipment.save();
 
   await Promise.all(
     palletProductIds.map((palletProductId) =>

@@ -24,7 +24,7 @@ exports.recalculateWarehouseStock = async (productId) => {
       WHERE 
         (po.is_active = 1 OR po.is_active IS NULL)
         AND (
-          os.status IN ('READY TO PICK', 'WORKING', 'IN PROGRESS')
+          os.status IN ('WORKING', 'DRAFT')
           OR os.status IS NULL
         );
       `,

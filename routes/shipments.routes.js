@@ -40,5 +40,4 @@ router.patch('/reference/:id', addReferenceId)
 router.patch('/reference/fba/:id', addFbaShipmentId)
 router.patch('/status-shipped/:id', updateFbaShipmentStatusToShipped)
 router.patch('/status-working/:id', updateFbaShipmentStatusToWorking)
-router.patch('/status-ready/:id', updateFbaShipmentStatusToReadyToPick)
 module.exports = router;
