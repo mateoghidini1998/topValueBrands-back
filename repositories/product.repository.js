@@ -48,6 +48,7 @@ const FindAllProducts = async ({
       wpd.available_to_sell_qty AS walmart_available_to_sell_qty,
       wpd.price AS walmart_price,
       wpd.gtin AS walmart_gtin,
+      wpd.wpid AS walmart_wpid,
       wpd.updatedAt AS walmart_updatedAt
 
     FROM products p
