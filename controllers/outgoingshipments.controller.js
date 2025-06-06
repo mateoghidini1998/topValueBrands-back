@@ -222,6 +222,7 @@ exports.createShipmentByPurchaseOrder = asyncHandler(async (req, res) => {
 //@route    GET api/v1/shipments
 //@desc     Get all outgoing shipments
 //@access   Private
+// controllers/outgoingShipment.controller.js
 exports.getShipments = asyncHandler(async (req, res) => {
   const {
     page = 1,
@@ -235,19 +236,14 @@ exports.getShipments = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit;
   const whereClause = {};
 
-  const validOrderFields = [
-    "shipment_number",
-    "status",
-    "createdAt",
-    "updatedAt",
-  ];
-  const validOrderBy = validOrderFields.includes(orderBy)
-    ? orderBy
-    : "createdAt";
+  // Validación de campos para ORDER BY
+  const validOrderFields = ["shipment_number", "status", "createdAt", "updatedAt"];
+  const validOrderBy = validOrderFields.includes(orderBy) ? orderBy : "createdAt";
   const validOrderWay = ["ASC", "DESC"].includes(orderWay.toUpperCase())
     ? orderWay.toUpperCase()
     : "DESC";
 
+  // Filtro por keyword (puede buscar por número o por estado)
   if (keyword) {
     whereClause[Op.or] = [
       { shipment_number: { [Op.like]: `%${keyword}%` } },
@@ -255,40 +251,73 @@ exports.getShipments = asyncHandler(async (req, res) => {
     ];
   }
 
+  // Filtro por estado
   if (status) {
     whereClause.status = status;
   }
 
-  const shipments = await OutgoingShipment.findAndCountAll({
+  // Hacemos el findAndCountAll incluyendo PalletProduct y trayendo en el through
+  // el campo is_checked que está en la tabla de relación (OutgoingShipmentProduct).
+  const shipmentsData = await OutgoingShipment.findAndCountAll({
     where: whereClause,
     include: [
       {
         model: PalletProduct,
-        attributes: [
-          "id",
-          "purchaseorderproduct_id",
-          "pallet_id",
-          "quantity",
-          "available_quantity",
-          "createdAt",
-          "updatedAt",
-        ],
-        through: { attributes: ["quantity"] },
+        // Sólo trayemos los atributos del PalletProduct que necesitemos
+        attributes: ["id", "purchaseorderproduct_id", "pallet_id", "quantity", "available_quantity", "createdAt", "updatedAt"],
+        // En el through (tabla que une OutgoingShipment ↔ PalletProduct)
+        // pedimos explícitamente el campo is_checked además de quantity.
+        through: {
+          attributes: ["quantity", "is_checked"],
+        },
       },
     ],
-    distinct: true, // -> elimina los duplicados
+    distinct: true, // para que count no duplique rows
     limit: parseInt(limit),
     offset: parseInt(offset),
     order: [[validOrderBy, validOrderWay]],
   });
 
+  // Ahora iteramos cada instancia y le agregamos el campo readyToPick calculado:
+  // ‣ Si el estado es "WORKING" y TODOS los PalletProducts asociados tienen is_checked = false,
+  //   entonces readyToPick = true. Si hay al menos uno con is_checked = true, o no hay productos, readyToPick = false.
+  const shipmentsWithFlag = shipmentsData.rows.map((shipmentInstance) => {
+    // Lo transformamos a JSON plano
+    const plain = shipmentInstance.get({ plain: true });
+
+    let readyToPick = false;
+
+    if (plain.status === "WORKING") {
+      const productos = plain.PalletProducts || [];
+      // Si al menos hay 1 producto en el arreglo, chequeamos su campo is_checked
+      if (productos.length > 0) {
+        // Cada `productos[i].OutgoingShipmentProduct` es el through que contiene is_checked
+        const todosSinChequear = productos.every(
+          (pp) => pp.OutgoingShipmentProduct?.is_checked === false
+        );
+        readyToPick = todosSinChequear;
+      }
+      // Si no hay productos (length === 0), podrías decidir:
+      //   ‣ marcar readyToPick = false (p.ej. no tiene nada para pickear) 
+      //     o
+      //   ‣ = true (interpretar que, al no haber productos, está “listo”).
+      // En este ejemplo, dejamos false porque no tiene productos que pickear.
+    }
+
+    return {
+      ...plain,
+      readyToPick,
+    };
+  });
+
   return res.status(200).json({
-    total: shipments.count,
-    pages: Math.ceil(shipments.count / limit),
+    total: shipmentsData.count,
+    pages: Math.ceil(shipmentsData.count / limit),
     currentPage: parseInt(page),
-    shipments: shipments.rows,
+    shipments: shipmentsWithFlag,
   });
 });
+
 
 //@route    GET api/v1/shipment/:id
 //@desc     Get outgoing shipment by id

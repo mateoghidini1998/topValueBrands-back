@@ -108,14 +108,12 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // Obtener la orden de compra destino
     const purchaseOrderToMerge = await PurchaseOrder.findByPk(id, { transaction });
     if (!purchaseOrderToMerge || purchaseOrderToMerge.purchase_order_status_id !== 2) {
       await transaction.rollback();
       return res.status(404).json({ msg: "Purchase Order status should be Pending" });
     }
 
-    // Obtener las órdenes de compra a fusionar
     const purchaseOrders = await PurchaseOrder.findAll({
       where: {
         id: purchaseOrderIds,
@@ -130,7 +128,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ msg: "Invalid orders are selected to merge" });
     }
 
-    // Obtener productos de todas las órdenes a fusionar
     const productsToMerge = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: purchaseOrderIds, is_active: true },
       transaction,
@@ -140,7 +137,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       return res.status(400).json({ msg: "No products to merge" });
     }
 
-    // Obtener productos existentes en la orden destino y mapearlos por product_id
     const existingProducts = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: id, is_active: true },
       transaction,
@@ -150,7 +146,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       existingProductMap.set(p.product_id, p);
     });
 
-    // Actualizar los productos duplicados
     for (const product of productsToMerge) {
       if (existingProductMap.has(product.product_id)) {
         const existingProduct = existingProductMap.get(product.product_id);
@@ -165,18 +160,15 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
           { transaction }
         );
 
-        // Eliminar el producto duplicado después de actualizar
         await product.destroy({ transaction });
       }
     }
 
-    // Asignar a la orden destino los productos que no eran duplicados
     await PurchaseOrderProduct.update(
       { purchase_order_id: id },
       { where: { purchase_order_id: purchaseOrderIds }, transaction }
     );
 
-    // Recalcular el total_price basado en los productos finales de la orden destino
     const updatedProducts = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: id },
       transaction,
@@ -186,13 +178,11 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     }, 0);
     await purchaseOrderToMerge.update({ total_price: newTotalPrice }, { transaction });
 
-    // Concatenar notas de todas las órdenes de compra
     const allNotes = [purchaseOrderToMerge.notes, ...purchaseOrders.map(po => po.notes)]
       .filter(Boolean)
       .join("\n");
     await purchaseOrderToMerge.update({ notes: allNotes }, { transaction });
 
-    // Eliminar las órdenes de compra que fueron fusionadas
     await PurchaseOrder.destroy({ where: { id: purchaseOrderIds }, transaction });
 
     await transaction.commit();
@@ -205,7 +195,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   } catch (error) {
     await transaction.rollback();
 
-    // Manejo específico para error de restricción de clave foránea
     if (error.name === "SequelizeForeignKeyConstraintError") {
       console.error("Error merging purchase orders - Foreign Key Constraint:", error);
       return res.status(409).json({
@@ -217,9 +206,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(500).json({ msg: "Internal Server Error" });
   }
 });
-
-
-
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
   const transaction = await sequelize.transaction();
 
@@ -943,7 +929,6 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
   }
 });
 
-
 exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
 
@@ -1122,8 +1107,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     },
   });
 });
-
-
 
 exports.updatePONumber = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;

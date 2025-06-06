@@ -145,7 +145,8 @@ const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, o
     if (isWalmart) {
       base.available_to_sell_qty = product.walmart_available_to_sell_qty,
         base.price = product.walmart_price,
-        base.gtin = product.walmart_gtin
+        base.gtin = product.walmart_gtin,
+        base.wpid = product.walmart_wpid
     }
 
     return base;
