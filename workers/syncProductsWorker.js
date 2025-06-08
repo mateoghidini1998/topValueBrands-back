@@ -1,7 +1,7 @@
 const logger = require("../logger/logger");
 const { fetchNewTokenForFees } = require("../middlewares/lwa_token");
 const productService = require("../services/products.service");
-
+const logger = require("../logger/logger");
 
 const API_URL_BASE = "https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items";
 const MARKETPLACE_ID = "ATVPDKIKX0DER";
@@ -50,7 +50,7 @@ const loopPeticiones = async () => {
       id: p.id,
       needsUpdate: p.dangerous_goods === '--'
     }
-  })
+  });
 
   let token = await fetchNewTokenForFees();
 

@@ -16,18 +16,20 @@ const {
     addReferenceId,
     addFbaShipmentId,
     updateFbaShipmentStatusToShipped,
-    getShipmentTracking,
-    checkAllShipmentProductsOfAPallet
+    checkAllShipmentProductsOfAPallet,
+    updateShipmentV2,
+    updateFbaShipmentStatusToWorking,
+    updateFbaShipmentStatusToReadyToPick
 } = require('../controllers/outgoingshipments.controller');
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
 
 router.post('/', createShipment)
 router.post('/po/:id', protect, createShipmentByPurchaseOrder)
-router.get('/tracking', addAccessTokenHeader, getShipmentTracking)
 router.get('/', getShipments)
 router.get('/:id', getShipment)
 router.delete('/:id', deleteShipment)
 router.put('/:id', protect, updateShipment)
+router.put('/:id/v2', updateShipmentV2)
 router.get('/:id/download', download2DWorkflowTemplate);
 router.get('/pallets/:purchase_order_id', protect, getPalletsByPurchaseOrder);
 router.get('/purchaseorders/pallets', protect, getPurchaseOrdersWithPallets);
@@ -37,4 +39,5 @@ router.put('/:shipmentId/pallets/:palletId/check', checkAllShipmentProductsOfAPa
 router.patch('/reference/:id', addReferenceId)
 router.patch('/reference/fba/:id', addFbaShipmentId)
 router.patch('/status-shipped/:id', updateFbaShipmentStatusToShipped)
+router.patch('/status-working/:id', updateFbaShipmentStatusToWorking)
 module.exports = router;

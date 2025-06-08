@@ -15,15 +15,15 @@ const { roleMiddleware } = require('../middlewares/roleMiddleware');
 
 const router = express.Router();
 // Aplicar autenticación a todas las rutas dentro de este router
-router.use(authMiddleware);
+/* router.use(authMiddleware);
+ */
+router.get('/', getProducts);
 
-router.get('/', roleMiddleware(['admin', 'warehouse']), getProducts);
-
-router.post('/', roleMiddleware(['admin', 'warehouse']), addAccessTokenHeader, createProduct);
+router.post('/', addAccessTokenHeader, createProduct);
 
 router.patch(
   '/addExtraInfoToProduct',
-  roleMiddleware(['admin', 'warehouse']),
+  /* roleMiddleware(['admin', 'warehouse']), */
 
   addExtraInfoToProduct
 );
@@ -32,9 +32,9 @@ router.get('/supressed', roleMiddleware(['admin', 'warehouse']), getSupressedLis
 
 router.patch('/dg-type/:productId', updateDGType)
 
-router.patch('/disable', roleMiddleware(['admin', 'manager']), toggleShowProduct);
+router.patch('/disable', addAccessTokenHeader,toggleShowProduct);
 
-router.delete('/:id', roleMiddleware(['admin', 'manager']), addAccessTokenHeader, deleteProduct)
+router.delete('/:id', addAccessTokenHeader, deleteProduct)
 
 
 module.exports = router;

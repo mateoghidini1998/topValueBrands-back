@@ -1,15 +1,11 @@
 const express = require('express');
 const asyncHandler = require('../middlewares/async');
 const axios = require('axios');
-const { Supplier, TrackedProduct, Product, User, SupressedListing } = require('../models');
-const fs = require('fs');
-const path = require('path');
+const { Supplier, TrackedProduct, Product, SupressedListing, AmazonProductDetail, WalmartProductDetail } = require('../models');
 const dotenv = require('dotenv');
-const { where, Op } = require('sequelize');
 const productService = require('../services/products.service');
-
-const { clerkClient, getAuth } = require('@clerk/express');
-const req = require('express/lib/request');
+const logger = require('../logger/logger')
+const { Op } = require('sequelize');
 
 dotenv.config({
   path: './.env',
@@ -35,47 +31,84 @@ exports.createProduct = asyncHandler(async (req, res) => {
 //@desc     Update product
 //@access   Private
 exports.addExtraInfoToProduct = asyncHandler(async (req, res) => {
+  const {
+    id,
+    product_name,
+    product_image,
+    supplier_id,
+    supplier_item_number,
+    product_cost,
+    pack_type,
+    ASIN,
+    gtin,
+    seller_sku,
+    upc
+  } = req.body;
+
   const product = await Product.findOne({
-    where: { id: req.body.id },
+    where: { id },
+    include: [
+      {
+        model: AmazonProductDetail,
+        as: 'AmazonProductDetail',
+        attributes: ['id', 'ASIN', 'FBA_available_inventory', 'reserved_quantity', 'Inbound_to_FBA']
+      },
+      {
+        model: WalmartProductDetail,
+        as: 'WalmartProductDetail',
+        attributes: ['id', 'gtin']
+      }
+    ]
   });
+
   if (!product) {
     return res.status(404).json({ msg: 'Product not found' });
   }
 
-  const supplier = await Supplier.findByPk(req.body.supplier_id);
-
-  if (req.supplier && !supplier) {
+  const supplier = await Supplier.findByPk(supplier_id);
+  if (supplier_id && !supplier) {
     return res.status(404).json({ msg: 'Supplier not found' });
   }
 
   try {
-    product.product_name = req.body.product_name;
-    product.product_image = req.body.product_image;
-    product.ASIN = req.body.ASIN;
-    product.seller_sku = req.body.seller_sku;
+    product.product_name = product_name;
+    product.product_image = product_image;
+    product.supplier_id = supplier_id;
+    product.supplier_item_number = supplier_item_number;
+    product.product_cost = product_cost;
+    product.pack_type = pack_type;
+    product.upc = upc || null;
+    product.seller_sku = seller_sku;
+    await product.save();
 
-    product.supplier_id = req.body.supplier_id;
-    product.supplier_item_number = req.body.supplier_item_number;
-    product.product_cost = req.body.product_cost;
+    if (product.AmazonProductDetail) {
+      if (ASIN !== undefined) {
+        product.AmazonProductDetail.ASIN = ASIN;
+      };
 
-    const trackedProduct = await TrackedProduct.findOne({ where: { product_id: req.body.id } });
+      await product.AmazonProductDetail.save();
+    }
+
+    if (product.WalmartProductDetail) {
+      if (gtin !== undefined) {
+        product.WalmartProductDetail.gtin = gtin
+      };
+      await product.WalmartProductDetail.save();
+    }
+
+    const trackedProduct = await TrackedProduct.findOne({ where: { product_id: id } });
     if (trackedProduct) {
       trackedProduct.profit = trackedProduct.lowest_fba_price - trackedProduct.fees - product.product_cost;
       await trackedProduct.save();
     }
 
-    product.pack_type = req.body.pack_type;
-    product.FBA_available_inventory = req.body.FBA_available_inventory;
-    product.reserved_quantity = req.body.reserved_quantity;
-    product.Inbound_to_FBA = req.body.Inbound_to_FBA;
-
-    await product.save();
-
-    res.status(200).json(product);
+    res.status(200).json({ msg: 'Product updated successfully', product });
   } catch (error) {
     console.error({ msg: error.message });
+    res.status(500).json({ msg: 'Internal server error' });
   }
 });
+
 
 //@route    DELETE api/products/:id
 //@desc     Delete product
@@ -97,6 +130,10 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
 //@desc     Update is_active as a toggle field of products
 //@access   Private
 exports.toggleShowProduct = asyncHandler(async (req, res) => {
+
+  const accessToken = req.headers['x-amz-access-token'];
+  const productId = req.body.id;
+
   const product = await Product.findOne({
     where: { id: req.body.id },
   });
@@ -121,8 +158,17 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 
     if (trackedProduct) {
       trackedProduct.is_active = !trackedProduct.is_active;
-      await trackedProduct.save();
+      const deletedProduct = await trackedProduct.save();
+
+      // If the products was deleted successfully, return the deleted product
+      if (deletedProduct) {
+        console.log(deletedProduct)
+        await productService.deleteProduct(productId, accessToken);
+      }
+
     }
+
+
 
     res.status(200).json(product);
   } catch (error) {
@@ -133,17 +179,14 @@ exports.toggleShowProduct = asyncHandler(async (req, res) => {
 //@route    GET api/products/
 //@desc     Get products
 //@access   Private
-//@route    GET api/products/
-//@desc     Get products
-//@access   Private
 exports.getProducts = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 10000 || parseInt(req.query.limit) || 50;
     const keyword = req.query.keyword || '';
     const supplier = req.query.supplier || null;
-    const orderBy = req.query.orderBy || 'updatedAt';
-    const orderWay = req.query.orderWay || 'DESC';
+    const orderBy = req.query.orderBy;
+    const orderWay = req.query.orderWay;
 
     const products = await productService.findAllProducts({ page, limit, keyword, supplier, orderBy, orderWay });
     return res.status(200).json({
@@ -188,7 +231,19 @@ const addImageToProducts = async (products, accessToken) => {
     const remainingProducts = products.slice(index, index + maxRequests);
 
     for (const product of remainingProducts) {
-      const { ASIN } = product;
+      // Obtener el ASIN desde AmazonProductDetail
+      const amazonDetail = await AmazonProductDetail.findOne({
+        where: { product_id: product.id }
+      });
+
+      if (!amazonDetail || !amazonDetail.ASIN) {
+        logger.warn(`No ASIN found for product ID: ${product.id}`);
+        productsWithoutImage.push(product);
+        index++;
+        continue;
+      }
+
+      const { ASIN } = amazonDetail;
       const urlImage = `https://sellingpartnerapi-na.amazon.com/catalog/2022-04-01/items/${ASIN}?marketplaceIds=${'ATVPDKIKX0DER'}&includedData=images`;
 
       try {
@@ -206,7 +261,7 @@ const addImageToProducts = async (products, accessToken) => {
 
         await Product.update(
           { product_image: image.link },
-          { where: { ASIN: ASIN } }
+          { where: { id: product.id } }
         );
       } catch (error) {
         errorCount++;
@@ -214,19 +269,22 @@ const addImageToProducts = async (products, accessToken) => {
         if (error.response) {
           switch (error.response.status) {
             case 404:
+              logger.warn(`Image not found for ASIN: ${ASIN}`);
               break;
             case 403:
               error403Count++;
+              logger.error(`Access denied for ASIN: ${ASIN}`);
               break;
             case 429:
               error429Count++;
+              logger.error(`Rate limit exceeded for ASIN: ${ASIN}`);
               break;
             default:
-              console.error({ msg: error.message });
+              logger.error(`Error fetching image for ASIN ${ASIN}: ${error.message}`);
               break;
           }
         } else {
-          console.error('Request error without response:', error.message);
+          logger.error(`Request error without response for ASIN ${ASIN}: ${error.message}`);
         }
 
         productsWithoutImage.push(product);
@@ -253,7 +311,16 @@ const addImageToProducts = async (products, accessToken) => {
 
 exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
   const newProducts = await Product.findAll({
-    where: { product_image: null } || { product_image: '' },
+    where: {
+      [Op.or]: [
+        { product_image: null },
+        { product_image: '' }
+      ]
+    },
+    include: [{
+      model: AmazonProductDetail,
+      required: true
+    }]
   });
 
   const result = await addImageToProducts(newProducts, accessToken);
@@ -263,17 +330,12 @@ exports.addImageToNewProducts = asyncHandler(async (accessToken) => {
 
 exports.addUPCToPOProduct = async (product, upc) => {
 
-  // if (!product.upc) {
   if (!upc || upc.trim() === '') {
     throw new Error(`Invalid UPC provided for product ${product.id}`);
   }
   product.upc = upc.trim();
   await product.save();
-  // } 
-  // else {
-  //   console.log(Product ${product.id} already has a valid UPC: ${product.upc});
-  //   throw new Error(Product ${product.id} already has a valid UPC: ${product.upc});
-  // }
+
 }
 
 exports.addUPC = asyncHandler(async (req, res) => {
@@ -296,7 +358,6 @@ exports.addUPC = asyncHandler(async (req, res) => {
 })
 
 exports.updateDGType = asyncHandler(async (req, res) => {
-
   const { productId } = req.params;
   const { dgType } = req.body;
 

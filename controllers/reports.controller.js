@@ -1,5 +1,4 @@
-
-const { sequelize } = require('../models');
+const { sequelize, AmazonProductDetail } = require('../models');
 const path = require('path');
 const fs = require('fs');
 
@@ -7,7 +6,6 @@ const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
 const { sendCSVasJSON, updateDangerousGoodsFromReport } = require('../utils/utils');
 const {
-
   addImageToNewProducts,
 } = require('../controllers/products.controller');
 const { fetchNewTokenForFees } = require('../middlewares/lwa_token');
@@ -16,45 +14,11 @@ const logger = require('../logger/logger');
 //@route   POST api/reports
 //@desc    Generate new report
 //@access  private
-exports.syncDBWithAmazon = asyncHandler(async (req, res, next) => {
-
-  logger.info('fetching new token for sync db with amazon...');
-  let accessToken = await fetchNewTokenForFees();
-  console.log(accessToken);
-
-  try {
-
-    if (!accessToken) {
-      logger.info('fetching new token for sync db with amazon...');
-      accessToken = await fetchNewTokenForFees();
-      req.headers['x-amz-access-token'] = accessToken;
-    } else {
-      logger.info('Token is still valid...');
-    }
-
-
-    // Call createReport and get the reportId
-    const report = await sendCSVasJSON(req, res, next);
-    logger.info('Finish creating report');
-    // Continue with the rest of the code after sendCSVasJSON has completed
-    const newSync = await processReport(report);
-    const imageSyncResult = await addImageToNewProducts(accessToken);
-
-    res.json({ newSync, imageSyncResult });
-    return { newSync, imageSyncResult };
-  } catch (error) {
-    next(error);
-  }
-});
-
-
 exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => {
-
   logger.info('fetching new token for sync db with amazon...');
   let accessToken = await fetchNewTokenForFees();
 
   try {
-
     if (!accessToken) {
       logger.info('fetching new token for sync db with amazon...');
       accessToken = await fetchNewTokenForFees();
@@ -86,77 +50,85 @@ exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => 
 const processReport = async (productsArray) => {
   logger.info('Start processReport function');
   const t = await sequelize.transaction();
+
   try {
     const newProducts = [];
     const updatedProducts = [];
-    const productsInReport = new Set();  // Para llevar control de productos presentes en el reporte
+    const productsInReport = new Set();
 
-    // 1. Obtener todos nuestros productos de la base de datos
-    const allOurProducts = await Product.findAll({ transaction: t });
-    const ourProductsMap = new Map();
+    // 1. Obtener todos los AmazonProductDetail con su Product
+    const allDetails = await AmazonProductDetail.findAll({
+      include: [{ model: Product, as: 'product' }],
+      transaction: t,
+    });
 
-    for (const product of allOurProducts) {
-      ourProductsMap.set(product.ASIN, product);
+    const asinMap = new Map();
+    for (const detail of allDetails) {
+      asinMap.set(detail.ASIN, detail);
     }
-
 
     // 2. Procesar productos del reporte
     for (const product of productsArray) {
+      const asin = product.asin;
+      productsInReport.add(asin);
 
-      productsInReport.add(product.asin);  // Marcamos como presente en el reporte
-      const existingProduct = ourProductsMap.get(product.asin);
+      const existingDetail = asinMap.get(asin);
 
-      if (existingProduct) {
+      if (existingDetail) {
         let needsUpdate = false;
 
-        // Comparar los valores
-        if (existingProduct.FBA_available_inventory !== parseFloat(product['afn-fulfillable-quantity'])) {
+        if (existingDetail.FBA_available_inventory !== parseFloat(product['afn-fulfillable-quantity'])) {
+          existingDetail.FBA_available_inventory = parseFloat(product['afn-fulfillable-quantity']);
           needsUpdate = true;
-          existingProduct.FBA_available_inventory = parseFloat(product['afn-fulfillable-quantity']);
-        }
-        if (existingProduct.reserved_quantity !== parseFloat(product['afn-reserved-quantity'])) {
-          needsUpdate = true;
-          existingProduct.reserved_quantity = parseFloat(product['afn-reserved-quantity']);
-        }
-        if (existingProduct.Inbound_to_FBA !== parseFloat(product['afn-inbound-shipped-quantity'])) {
-          needsUpdate = true;
-          existingProduct.Inbound_to_FBA = parseFloat(product['afn-inbound-shipped-quantity']);
         }
 
-        // Siempre asegurar que in_seller_account sea true (está en el reporte)
-        if (!existingProduct.in_seller_account) {
+        if (existingDetail.reserved_quantity !== parseFloat(product['afn-reserved-quantity'])) {
+          existingDetail.reserved_quantity = parseFloat(product['afn-reserved-quantity']);
           needsUpdate = true;
-          existingProduct.in_seller_account = true;
+        }
+
+        if (existingDetail.Inbound_to_FBA !== parseFloat(product['afn-inbound-shipped-quantity'])) {
+          existingDetail.Inbound_to_FBA = parseFloat(product['afn-inbound-shipped-quantity']);
+          needsUpdate = true;
+        }
+
+        if (!existingDetail.in_seller_account) {
+          existingDetail.in_seller_account = true;
+          needsUpdate = true;
         }
 
         if (needsUpdate) {
-          await existingProduct.save({ transaction: t });
-          updatedProducts.push(existingProduct);
+          await existingDetail.save({ transaction: t });
+          updatedProducts.push(existingDetail.Product);
         }
       } else {
-        // Crear nuevo producto
+        // Crear nuevo Product y su AmazonProductDetail
         const newProduct = await Product.create({
-          ASIN: product.asin,
           product_name: product['product-name'],
           seller_sku: product.sku,
           in_seller_account: true,
+        }, { transaction: t });
+
+        const newDetail = await AmazonProductDetail.create({
+          product_id: newProduct.id,
+          ASIN: asin,
           FBA_available_inventory: parseFloat(product['afn-fulfillable-quantity']),
           reserved_quantity: parseFloat(product['afn-reserved-quantity']),
           Inbound_to_FBA: parseFloat(product['afn-inbound-shipped-quantity']),
         }, { transaction: t });
 
+        newProduct.AmazonProductDetail = newDetail;
         newProducts.push(newProduct);
       }
     }
 
-    // 3. Actualizar productos que NO están en el reporte
-    for (const [asin, product] of ourProductsMap) {
+    // 3. Marcar como inactivos los productos que no están en el reporte
+    for (const [asin, detail] of asinMap) {
       if (!productsInReport.has(asin)) {
-        // Producto en BD pero no en reporte → marcar como false
-        if (product.in_seller_account !== false) {
-          product.in_seller_account = false;
-          await product.save({ transaction: t });
-          updatedProducts.push(product);
+        if (detail.in_seller_account !== false) {
+          detail.in_seller_account = false;
+          await detail.save({ transaction: t });
+          updatedProducts.push(detail.Product);
         }
       }
     }
@@ -172,7 +144,6 @@ const processReport = async (productsArray) => {
     };
   } catch (error) {
     await t.rollback();
-    console.error('Error al actualizar o crear productos:', error);
     logger.error('Error al actualizar o crear productos:', error);
     throw error;
   }
@@ -201,5 +172,4 @@ exports.downloadReport = asyncHandler(async (req, res) => {
       res.status(500).json({ msg: 'Error downloading file' });
     }
   });
-});
-// 
+}); 

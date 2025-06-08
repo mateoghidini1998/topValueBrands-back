@@ -7,12 +7,15 @@ const {
   TrackedProduct,
   PurchaseOrderStatus,
   PurchaseOrderProductReason,
+  AmazonProductDetail,
+  WalmartProductDetail,
 } = require("../models");
 const { addUPCToPOProduct: addUPC } = require("./products.controller");
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const { where, Transaction, or, Op } = require("sequelize");
+const MarkdownIt = require('markdown-it');
 const {
   getTrackedProductsFromAnOrder,
 } = require("./trackedproducts.controller");
@@ -105,14 +108,12 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // Obtener la orden de compra destino
     const purchaseOrderToMerge = await PurchaseOrder.findByPk(id, { transaction });
     if (!purchaseOrderToMerge || purchaseOrderToMerge.purchase_order_status_id !== 2) {
       await transaction.rollback();
       return res.status(404).json({ msg: "Purchase Order status should be Pending" });
     }
 
-    // Obtener las órdenes de compra a fusionar
     const purchaseOrders = await PurchaseOrder.findAll({
       where: {
         id: purchaseOrderIds,
@@ -127,7 +128,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ msg: "Invalid orders are selected to merge" });
     }
 
-    // Obtener productos de todas las órdenes a fusionar
     const productsToMerge = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: purchaseOrderIds, is_active: true },
       transaction,
@@ -137,7 +137,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       return res.status(400).json({ msg: "No products to merge" });
     }
 
-    // Obtener productos existentes en la orden destino y mapearlos por product_id
     const existingProducts = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: id, is_active: true },
       transaction,
@@ -147,7 +146,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
       existingProductMap.set(p.product_id, p);
     });
 
-    // Actualizar los productos duplicados
     for (const product of productsToMerge) {
       if (existingProductMap.has(product.product_id)) {
         const existingProduct = existingProductMap.get(product.product_id);
@@ -162,18 +160,15 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
           { transaction }
         );
 
-        // Eliminar el producto duplicado después de actualizar
         await product.destroy({ transaction });
       }
     }
 
-    // Asignar a la orden destino los productos que no eran duplicados
     await PurchaseOrderProduct.update(
       { purchase_order_id: id },
       { where: { purchase_order_id: purchaseOrderIds }, transaction }
     );
 
-    // Recalcular el total_price basado en los productos finales de la orden destino
     const updatedProducts = await PurchaseOrderProduct.findAll({
       where: { purchase_order_id: id },
       transaction,
@@ -183,13 +178,11 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     }, 0);
     await purchaseOrderToMerge.update({ total_price: newTotalPrice }, { transaction });
 
-    // Concatenar notas de todas las órdenes de compra
     const allNotes = [purchaseOrderToMerge.notes, ...purchaseOrders.map(po => po.notes)]
       .filter(Boolean)
       .join("\n");
     await purchaseOrderToMerge.update({ notes: allNotes }, { transaction });
 
-    // Eliminar las órdenes de compra que fueron fusionadas
     await PurchaseOrder.destroy({ where: { id: purchaseOrderIds }, transaction });
 
     await transaction.commit();
@@ -202,7 +195,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
   } catch (error) {
     await transaction.rollback();
 
-    // Manejo específico para error de restricción de clave foránea
     if (error.name === "SequelizeForeignKeyConstraintError") {
       console.error("Error merging purchase orders - Foreign Key Constraint:", error);
       return res.status(409).json({
@@ -214,9 +206,6 @@ exports.mergePurchaseOrder = asyncHandler(async (req, res, next) => {
     return res.status(500).json({ msg: "Internal Server Error" });
   }
 });
-
-
-
 exports.updatePurchaseOrder = asyncHandler(async (req, res, next) => {
   const transaction = await sequelize.transaction();
 
@@ -875,6 +864,14 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
           })
         );
 
+        const activeProducts = purchaseOrder.purchaseOrderProducts.filter((purchaseOrderProduct) => purchaseOrderProduct.is_active);
+
+        const hasMissingQuantities = activeProducts.some(
+          (purchaseOrderProduct) => purchaseOrderProduct.quantity_purchased > (purchaseOrderProduct.quantity_received || 0)
+        )
+
+        purchaseOrder.setDataValue("hasMissingQuantities", hasMissingQuantities);
+
         const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
         const trackedProducts = await TrackedProduct.findAll({
           where: { product_id: productIds },
@@ -932,11 +929,10 @@ exports.getIncomingShipments = asyncHandler(async (req, res) => {
   }
 });
 
-
 exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const purchaseOrderId = req.params.id;
 
-  // Obtener la orden de compra con productos y estado
+  // 1. Obtener la orden con productos y estado
   const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId, {
     where: { is_active: true },
     include: [
@@ -944,7 +940,11 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: PurchaseOrderProduct,
         as: "purchaseOrderProducts",
         where: { is_active: true },
-        attributes: ["product_id", "quantity_purchased", "quantity_received", "quantity_missing", "quantity_available", "product_cost", "total_amount", "id", 'reason_id', "expire_date", "profit"],
+        attributes: [
+          "product_id", "quantity_purchased", "quantity_received",
+          "quantity_missing", "quantity_available", "product_cost",
+          "total_amount", "id", "reason_id", "expire_date", "profit"
+        ],
         include: {
           model: PurchaseOrderProductReason,
           attributes: ["description"]
@@ -969,7 +969,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
 
   const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
 
-  // Obtener productos rastreados con información de producto y proveedor
+  // 2. TrackedProducts con Amazon info
   const trackedProducts = await TrackedProduct.findAll({
     where: { product_id: { [Op.in]: productIds } },
     include: [
@@ -977,21 +977,16 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         model: Product,
         as: "product",
         attributes: [
-          "product_name",
-          "id",
-          "ASIN",
-          "seller_sku",
-          "supplier_id",
-          "product_image",
-          "product_cost",
-          "in_seller_account",
-          "supplier_item_number",
-          "pack_type",
-          "upc",
-          "warehouse_stock",
-          "dangerous_goods"
+          "product_name", "id", "supplier_id", "product_image",
+          "product_cost", "in_seller_account", "supplier_item_number",
+          "pack_type", "upc", "warehouse_stock","seller_sku"
         ],
         include: [
+          {
+            model: AmazonProductDetail,
+            as: "AmazonProductDetail",
+            attributes: ["ASIN", "dangerous_goods"]
+          },
           {
             model: Supplier,
             as: "supplier",
@@ -1002,48 +997,80 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     ]
   });
 
-  if (!trackedProducts.length) {
-    return res.status(404).json({ message: "Tracked products not found" });
-  }
+  // 3. Walmart products (para los que no tienen TrackedProduct)
+  const walmartProducts = await Product.findAll({
+    where: { id: { [Op.in]: productIds } },
+    include: [
+      {
+        model: WalmartProductDetail,
+        as: "WalmartProductDetail",
+        attributes: ["gtin", "wpid"]
+      },
+      {
+        model: Supplier,
+        as: "supplier",
+        attributes: ["supplier_name"]
+      }
+    ]
+  });
 
-  // Transformar datos y calcular ROI
-  const productsData = trackedProducts.map(tp => {
-    const product = tp.product;
-    const orderProduct = purchaseOrder.purchaseOrderProducts.find(p => p.product_id === tp.product_id);
-    const roi = orderProduct.product_cost ? ((orderProduct.profit / orderProduct.product_cost) * 100) : 0;
+  // 4. Crear mapas de lookup
+  const trackedMap = new Map();
+  trackedProducts.forEach(tp => trackedMap.set(tp.product_id, tp));
+
+  const productMap = new Map();
+  walmartProducts.forEach(p => productMap.set(p.id, p));
+
+  // 5. Armar la respuesta basada en purchaseOrderProducts
+  const productsData = purchaseOrder.purchaseOrderProducts.map(orderProduct => {
+    const tracked = trackedMap.get(orderProduct.product_id);
+    const product = tracked?.product || productMap.get(orderProduct.product_id);
+    const amazonDetail = tracked?.product?.AmazonProductDetail || null;
+    const walmartDetail = product?.WalmartProductDetail || null;
+
+    const roi = orderProduct.product_cost
+      ? ((orderProduct.profit / orderProduct.product_cost) * 100)
+      : 0;
+
+    const marketplace = amazonDetail
+      ? 'Amazon'
+      : walmartDetail
+        ? 'Walmart'
+        : 'Unknown';
+
     return {
-      // product
-      id: product.id,
-      product_name: product.product_name,
-      in_seller_account: product.in_seller_account,
-      ASIN: product.ASIN,
-      seller_sku: product.seller_sku,
-      supplier_name: product.supplier.supplier_name,
-      supplier_id: product.supplier_id,
-      pack_type: parseInt(product.pack_type),
-      product_image: product.product_image,
-      supplier_item_number: product.supplier_item_number,
-      upc: product.upc,
-      warehouse_stock: product.warehouse_stock,
-      dg_item: product.dangerous_goods,
+      id: product?.id,
+      product_name: product?.product_name,
+      in_seller_account: product?.in_seller_account,
+      ASIN: amazonDetail?.ASIN || null,
+      GTIN: walmartDetail?.gtin || null,
+      wpid: walmartDetail?.wpid || null,
+      seller_sku: product?.seller_sku || null,
+      supplier_name: product?.supplier?.supplier_name || null,
+      supplier_id: product?.supplier_id,
+      pack_type: parseInt(product?.pack_type),
+      product_image: product?.product_image,
+      supplier_item_number: product?.supplier_item_number,
+      upc: product?.upc,
+      warehouse_stock: product?.warehouse_stock,
+      dg_item: amazonDetail?.dangerous_goods || false,
+      marketplace,
 
-      // tracked product
-      product_velocity: tp.product_velocity,
-      units_sold: tp.units_sold,
-      thirty_days_rank: tp.thirty_days_rank,
-      ninety_days_rank: tp.ninety_days_rank,
-      lowest_fba_price: tp.lowest_fba_price,
-      fees: parseFloat(tp.fees),
+      product_velocity: tracked?.product_velocity || null,
+      units_sold: tracked?.units_sold || null,
+      thirty_days_rank: tracked?.thirty_days_rank || null,
+      ninety_days_rank: tracked?.ninety_days_rank || null,
+      lowest_fba_price: tracked?.lowest_fba_price || null,
+      fees: parseFloat(tracked?.fees || 0),
       roi: parseFloat(roi.toFixed(2)),
-      updatedAt: tp.updatedAt,
-      sellable_quantity: tp.sellable_quantity,
+      updatedAt: tracked?.updatedAt || product?.updatedAt || null,
+      sellable_quantity: tracked?.sellable_quantity || null,
 
-      // order product
       product_id: orderProduct.product_id,
       product_cost: parseFloat(orderProduct.product_cost),
       purchase_order_product_id: orderProduct.id,
-      total_amount: parseFloat(orderProduct?.total_amount ?? "0"), // Obtener total_amount ya en el backend
-      quantity_purchased: parseInt((orderProduct?.quantity_purchased ?? 0).toString()), // Obtener cantidad comprada ya en el backend
+      total_amount: parseFloat(orderProduct?.total_amount ?? "0"),
+      quantity_purchased: parseInt(orderProduct?.quantity_purchased ?? 0),
       quantity_received: orderProduct.quantity_received,
       quantity_missing: orderProduct.quantity_missing,
       quantity_available: orderProduct.quantity_available,
@@ -1054,8 +1081,11 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     };
   });
 
-  // Calcular el promedio de ROI
-  const averageRoi = productsData.reduce((sum, p) => sum + parseFloat(p.roi), 0) / productsData.length;
+  // 6. Ordenar: productos peligrosos al final
+  productsData.sort((a, b) => (a.dg_item === b.dg_item) ? 0 : a.dg_item ? 1 : -1);
+
+  // 7. Promedio ROI
+  const averageRoi = productsData.reduce((sum, p) => sum + parseFloat(p.roi || 0), 0) / productsData.length;
   purchaseOrder.setDataValue("average_roi", averageRoi.toFixed(2));
 
   return res.status(200).json({
@@ -1073,7 +1103,6 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         notes: purchaseOrder.notes,
         incoming_order_notes: purchaseOrder.incoming_order_notes,
       },
-      // order the productsData so that when the dangerous_goods is true, it will be at the bottom
       purchaseOrderProducts: productsData,
     },
   });
@@ -1426,155 +1455,213 @@ exports.deletePurchaseOrder = asyncHandler(async (req, res, next) => {
 });
 
 // Método para descargar la orden de compra
+const md = new MarkdownIt();
+
+// Handler para descargar la orden de compra en PDF
 exports.downloadPurchaseOrder = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
+  // Traer orden y productos activos
   const purchaseOrder = await PurchaseOrder.findByPk(id, {
-    include: [
-      {
-        model: PurchaseOrderProduct,
-        as: "purchaseOrderProducts",
-        where: { is_active: true },
-      },
-    ],
+    include: [{
+      model: PurchaseOrderProduct,
+      as: 'purchaseOrderProducts',
+      where: { is_active: true }
+    }]
   });
+  if (!purchaseOrder) return res.status(404).json({ message: 'Purchase Order not found' });
 
-  if (!purchaseOrder) {
-    return res.status(404).json({ message: "Purchase Order not found" });
-  }
+  // Obtener datos de producto en una sola consulta
+  const productIds = purchaseOrder.purchaseOrderProducts.map(p => p.product_id);
+  const productsData = await Product.findAll({ where: { id: productIds } });
+  const productMap = new Map(productsData.map(p => [p.id, p]));
 
-  const purchaseOrderProducts = purchaseOrder.purchaseOrderProducts;
-  let totalQuantity = purchaseOrderProducts.reduce(
-    (total, product) => total + Number(product.quantity_purchased),
-    0
-  );
-
-  let totalAmount = purchaseOrderProducts.reduce(
-    (total, product) => total + parseFloat(product.total_amount),
-    0
-  );
-
-  // Obtener información de los productos en una sola consulta
-  const productIds = purchaseOrderProducts.map((p) => p.product_id);
-  const productsData = await Product.findAll({
-    where: { id: productIds },
-  });
-
-  // Crear un mapa de productos para acceder más rápido
-  const productMap = new Map(productsData.map((p) => [p.id, p]));
-
-  const products = purchaseOrderProducts.map((product) => {
-    const productData = productMap.get(product.product_id);
-    if (!productData) return null;
-
-    const packType = Number(productData.pack_type) || 1;
-    const product_cost = product.dataValues.product_cost / packType;
-    const quantity_purchased = product.dataValues.quantity_purchased * packType;
-    const total_amount = product_cost * quantity_purchased;
+  // Mapear items con cálculos numéricos puros
+  const items = purchaseOrder.purchaseOrderProducts.map((poProd, i) => {
+    const pd = productMap.get(poProd.product_id);
+    const packType = Number(pd.pack_type) || 1;
+    const unitCost = poProd.product_cost / (packType || 1);
+    const qty = Number(poProd.quantity_purchased) * (packType || 1);
     return {
-      ASIN: productData.ASIN,
-      product_id: product.dataValues.product_id,
-      product_cost: product_cost.toFixed(2),
-      quantity_purchased,
-      total_amount: total_amount,
-      pack_type: packType,
-      supplier_item_number: productData.supplier_item_number,
+      supplier_item_number: pd.supplier_item_number || 'n/a - ' + (i + 1),
+      product_id: pd.id,
+      unitCost,       // number
+      quantity: qty,  // number
+      total: unitCost * qty // number
     };
-  }).filter((p) => p !== null);
+  });
 
-  // Obtener el nombre del proveedor
+  // Obtener proveedor
   const supplier = await Supplier.findByPk(purchaseOrder.supplier_id);
-  if (!supplier) {
-    return res.status(404).json({ message: "Supplier not found" });
-  }
+  if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
 
+  // Datos que pasaremos al generador
   const pdfData = {
-    purchaseOrder: {
-      id: purchaseOrder.id,
-      order_number: purchaseOrder.order_number,
-      supplier_name: supplier.supplier_name,
-      status: purchaseOrder.purchase_order_status_id,
-      total_price: Number(purchaseOrder.total_price).toFixed(2),
-      total_quantity: totalQuantity,
-      total_amount: parseFloat(totalAmount).toFixed(2),
-      notes: purchaseOrder.notes || "",
+    order: {
+      number: purchaseOrder.order_number,
+      date: new Date(),
+      supplierName: supplier.supplier_name,
+      notes: purchaseOrder.notes || ''
     },
-    products,
+    items
   };
 
-  // Generar PDF
+  // Generar buffer y enviarlo
   const pdfBuffer = await generatePDF(pdfData);
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=purchase-order.pdf");
-  res.send(pdfBuffer);
+  res
+    .setHeader('Content-Type', 'application/pdf')
+    .setHeader('Content-Disposition', 'attachment; filename=purchase-order.pdf')
+    .send(pdfBuffer);
 });
 
-const generatePDF = (data) => {
+/**
+ * Genera el PDF a partir de los datos pasados.
+ * @param {{order: {number:string,date:Date,supplierName:string,notes:string}, items:Array}} data
+ * @returns {Promise<Buffer>}
+ */
+function generatePDF(data) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ size: 'A4', margins: { top: 60, bottom: 60, left: 50, right: 50 } });
     const buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-    doc.on("data", buffers.push.bind(buffers));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    // --- HEADER ---
+    const logoPath = path.join(__dirname, '../data/top_values_brand_logo.jpg');
+    const logoWidth = 200;
+    doc.image(logoPath, (doc.page.width - logoWidth) / 2, 20, { width: logoWidth });
+    doc.moveDown(4);
 
-    const logoPath = path.join(__dirname, "../data/top_values_brand_logo.jpg");
+    // Fecha y Order ID a la derecha
+    doc.fontSize(10)
+      .text(`DATE: ${data.order.date.toLocaleDateString()}`, { align: 'right' })
+      .text(`Order ID: ${data.order.number}`, { align: 'right' });
 
-    doc.image(logoPath, 200, 10, { width: 200, align: "center" });
-    doc.moveDown(8);
-    doc.text(`DATE: ${new Date().toLocaleDateString()}`);
-    doc.moveDown(1);
-    doc.fontSize(12).text("ISSUED TO:", { bold: true });
-    doc.moveDown(1);
-    doc.text(`${data.purchaseOrder.supplier_name}`);
-    doc.text("Top Value Brands 1141 Holland Dr 8 Boca Raton");
-    doc.text("FL 33487 USA");
-    doc.moveDown();
-    doc.fontSize(12).text(`Order ID: ${data.purchaseOrder.order_number}`);
-    doc.moveDown(3);
+    doc.moveDown(2);
+    doc.fontSize(12).font('Helvetica-Bold').text('ISSUED TO:');
+    doc.moveDown(0.5)
+      .font('Helvetica').fontSize(10)
+      .text(data.order.supplierName)
+      .text('Top Value Brands 1141 Holland Dr 8 Boca Raton')
+      .text('FL 33487 USA');
+    doc.moveDown(2);
 
-    const TABLE_LEFT = 70;
-    const TABLE_TOP = 350;
-    const itemDistanceY = 20;
+    // --- TABLE HEADER ---
+    const columnWidths = { itemNo: 120, unitPrice: 120, qty: 120, total: 120 };
+    const tableWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0);
+    const startX = doc.page.margins.left + ((doc.page.width - doc.page.margins.left - doc.page.margins.right - tableWidth) / 2);
 
-    // Table Headers
-    doc.fillColor("blue").fontSize(12);
-    doc.text("ITEM NO.", TABLE_LEFT, TABLE_TOP, { bold: true });
-    doc.text("UNIT PRICE", TABLE_LEFT + 180, TABLE_TOP, { bold: true });
-    doc.text("QUANTITY", TABLE_LEFT + 300, TABLE_TOP, { bold: true });
-    doc.text("TOTAL", TABLE_LEFT + 400, TABLE_TOP, { bold: true });
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#004080');
+    const headerY = doc.y;
+    doc.text('ITEM NO.', startX, headerY, { width: columnWidths.itemNo });
+    doc.text('UNIT PRICE', startX + columnWidths.itemNo, headerY, { width: columnWidths.unitPrice, align: 'right' });
+    doc.text('QUANTITY', startX + columnWidths.itemNo + columnWidths.unitPrice, headerY, { width: columnWidths.qty, align: 'right' });
+    doc.text('TOTAL', startX + columnWidths.itemNo + columnWidths.unitPrice + columnWidths.qty, headerY, { width: columnWidths.total, align: 'right' });
 
-    let position = TABLE_TOP + itemDistanceY;
-    data.products.forEach((product, index) => {
-      if (index % 2 === 0) {
-        doc.rect(TABLE_LEFT - 10, position - 5, 500, itemDistanceY).fill("#f2f2f2").stroke();
+    const headerBottomY = headerY + 15;
+    doc.moveTo(startX, headerBottomY)
+      .lineTo(startX + tableWidth, headerBottomY)
+      .stroke();
+    doc.y = headerBottomY + 5;
+
+    // --- AGRUPAR ITEMS ---
+    const grouped = [];
+    data.items.forEach(item => {
+      let g = grouped.find(x => x.supplier_item_number === item.supplier_item_number);
+      if (g) {
+        g.quantity += item.quantity;
+        g.total += item.total;
+      } else {
+        grouped.push({ ...item });
       }
-      doc.fillColor("black");
-      doc.text(product.supplier_item_number, TABLE_LEFT, position);
-      doc.text(`$${product.product_cost}`, TABLE_LEFT + 180, position);
-      doc.text(product.quantity_purchased, TABLE_LEFT + 300, position);
-      doc.text(`$${product.total_amount}`, TABLE_LEFT + 400, position);
-      position += itemDistanceY;
     });
 
-    // Subtotal y Total
-    doc.moveDown(3);
-    doc.fillColor("black").text(`SUBTOTAL: $ ${data.purchaseOrder.total_amount}`, TABLE_LEFT);
+    // --- TABLE ROWS ---
+    doc.font('Helvetica').fontSize(10).fillColor('black');
+    const rowHeight = 20;
+    let y = doc.y;
 
-    // Notas de la orden
-    if (data.purchaseOrder.notes) {
-      doc.moveDown(2);
-      doc.text("ORDER NOTES:", TABLE_LEFT);
-      doc.moveDown();
-      doc.text(data.purchaseOrder.notes);
+    grouped.forEach((row, i) => {
+      if (y + rowHeight > doc.page.height - doc.page.margins.bottom - 60) {
+        doc.addPage();
+        y = doc.page.margins.top;
+      }
+      if (i % 2 === 0) {
+        doc.rect(startX, y - 2, tableWidth, rowHeight)
+          .fill('#f9f9f9')
+          .fillColor('black');
+      }
+      const itemNo = row.supplier_item_number || row.asin || row.product_id;
+      // Imprimir valores con separadores de miles
+      doc.text(itemNo.toString(), startX, y, { width: columnWidths.itemNo });
+      doc.text(
+        `$${row.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        startX + columnWidths.itemNo,
+        y,
+        { width: columnWidths.unitPrice, align: 'right' }
+      );
+      doc.text(
+        row.quantity.toLocaleString('en-US'),
+        startX + columnWidths.itemNo + columnWidths.unitPrice,
+        y,
+        { width: columnWidths.qty, align: 'right' }
+      );
+      doc.text(
+        `$${row.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        startX + columnWidths.itemNo + columnWidths.unitPrice + columnWidths.qty,
+        y,
+        { width: columnWidths.total, align: 'right' }
+      );
+
+      y += rowHeight;
+      doc.y = y;
+    });
+
+    // --- SUBTOTAL ---
+    const subTotal = grouped.reduce((sum, r) => sum + r.total, 0);
+    doc.moveDown(2)
+      .font('Helvetica-Bold')
+      .text(
+        `SUBTOTAL: $${subTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        { align: 'right' }
+      );
+
+    // --- ORDER NOTES (Markdown simple) ---
+    if (data.order.notes) {
+      doc.moveDown(2)
+        .font('Helvetica-Bold')
+        .fontSize(10)
+        .text('ORDER NOTES:');
+      doc.moveDown(0.5)
+        .font('Helvetica')
+        .fontSize(10);
+      const lines = data.order.notes.split(/\r?\n/);
+      lines.forEach(line => {
+        if (!line.trim()) {
+          doc.moveDown(0.5);
+        } else if (/^#+\s/.test(line)) {
+          const text = line.replace(/^#+\s/, '');
+          doc.font('Helvetica-Bold').fontSize(12).text(text);
+          doc.font('Helvetica').fontSize(10);
+        } else if (/^-\s/.test(line)) {
+          const text = line.replace(/^-+\s/, '');
+          doc.text(`• ${text}`, { indent: 20 });
+        } else {
+          doc.text(line);
+        }
+      });
     }
 
-    doc.text("Thank you for your business!", { bold: true, align: "center" });
-    doc.text("www.topvaluebrands.com", { bold: true, align: "center" });
+    // --- FOOTER ---
+    const footerY = doc.page.height - doc.page.margins.bottom - 40;
+    doc.font('Helvetica-Bold').fontSize(10);
+    doc.text('Thank you for your business!', 0, footerY, { align: 'center' });
+    doc.text('www.topvaluebrands.com', 0, footerY + 15, { align: 'center' });
 
     doc.end();
   });
-};
+}
+
 
 
 exports.fixPurchaseOrderProductsProfit = asyncHandler(async (req, res, next) => {

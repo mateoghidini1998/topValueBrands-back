@@ -1,5 +1,5 @@
-const { sequelize, Product } = require('../models');
-const logger = require('../logger/logger');
+const { sequelize, Product } = require("../models");
+const logger = require("../logger/logger");
 
 exports.recalculateWarehouseStock = async (productId) => {
   try {
@@ -23,25 +23,35 @@ exports.recalculateWarehouseStock = async (productId) => {
         purchaseorders AS po ON pop.purchase_order_id = po.id
       WHERE 
         (po.is_active = 1 OR po.is_active IS NULL)
-        AND (os.status = 'WORKING' OR os.status IS NULL);
+        AND (
+          os.status IN ('WORKING', 'DRAFT')
+          OR os.status IS NULL
+        );
       `,
       {
         replacements: { productId },
         type: sequelize.QueryTypes.SELECT,
       }
-    )
+    );
 
     const totalSum = result.length > 0 ? result[0].total_sum : 0;
+    console.log(
+      `Calculated warehouse_stock for product_id=${productId}: ${totalSum}`
+    );
 
-    console.log(`Calculated warehouse_stock for product_id=${productId}: ${totalSum}`);
+    // Actualiza warehouse_stock en la tabla Product
+    await Product.update(
+      { warehouse_stock: totalSum },
+      { where: { id: productId } }
+    );
 
-    // Update the warehouse_stock of the product
-    await Product.update({ warehouse_stock: totalSum }, { where: { id: productId } });
-
-    // Fetch the updated product to confirm the change
+    // Opcional: obtener el producto actualizado para verificar
     const updatedProduct = await Product.findByPk(productId);
   } catch (error) {
-    logger.error(`Error recalculating warehouse stock for product_id=${productId}:`, error)
-    throw error
+    logger.error(
+      `Error recalculating warehouse stock for product_id=${productId}:`,
+      error
+    );
+    throw error;
   }
-}
+};

@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { addAccessTokenHeader } = require('../middlewares/lwa_token');
-
-const {
-    syncDBWithAmazon,
-    downloadReport,
-    updateDangerousGoodsFromReport
-} = require('../controllers/reports.controller');
-const { importJSON } = require('../utils/utils');
-
-
+const { downloadReport } = require('../controllers/reports.controller');
+const { syncDBWithAmazon } = require('../controllers/amazon.controller');
+const { generateOrderReportV2 } = require('../utils/utils');
+const asyncHandler = require('../middlewares/async');
 /**
  * @swagger
  * /api/v1/reports/sync:
@@ -47,10 +42,4 @@ const { importJSON } = require('../utils/utils');
  *                   type: string
  *                   example: "An error occurred."
  */
-router.get('/sync', addAccessTokenHeader, syncDBWithAmazon);
-router.get('/sync/dg', addAccessTokenHeader, updateDangerousGoodsFromReport);
-router.get('/import', importJSON)
-router.get('/download/:filename', downloadReport);
-
-
 module.exports = router;
