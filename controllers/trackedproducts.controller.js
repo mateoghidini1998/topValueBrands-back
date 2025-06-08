@@ -292,7 +292,7 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
 
   try {
     const products = await fetchProducts({
-      limit: 100,
+      limit: 20000,
       offset: 0,
     });
 
