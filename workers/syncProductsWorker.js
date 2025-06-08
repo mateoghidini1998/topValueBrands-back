@@ -1,4 +1,3 @@
-const logger = require("../logger/logger");
 const { fetchNewTokenForFees } = require("../middlewares/lwa_token");
 const productService = require("../services/products.service");
 const logger = require("../logger/logger");
