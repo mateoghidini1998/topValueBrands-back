@@ -1,14 +1,13 @@
 const { Product, AmazonProductDetail } = require("../models");
 const logger = require("../logger/logger");
 const asyncHandler = require("../middlewares/async");
-const {
-  generateInventoryReport,
-  getReportStatus,
-  downloadReport,
-  csvToJson,
-} = require("../utils/utils");
+const { sendCSVasJSON } = require("../utils/utils");
+const { fetchNewTokenForFees } = require("../middlewares/lwa_token");
 const axios = require("axios");
 const { FindAmazonProducts } = require("../repositories/product.repository");
+const { sequelize, Op } = require("../models");
+const path = require("path");
+const fs = require("fs");
 
 const processAmazonListingStatus = async (product, accessToken) => {
   const url = `${process.env.AMZ_BASE_URL}/listings/2021-08-01/items/${process.env.AMAZON_SELLER_ID}/${product.seller_sku}`;
@@ -51,7 +50,9 @@ const processAmazonListingStatus = async (product, accessToken) => {
       { where: { id: product.id } }
     );
     if (count === 1) {
-      console.log(`Product ${product.seller_sku} updated with status ${newStatusId}`);
+      console.log(
+        `Product ${product.seller_sku} updated with status ${newStatusId}`
+      );
       return {
         success: true,
         seller_sku: product.seller_sku,
@@ -95,7 +96,11 @@ const GetListingStatus = asyncHandler(async (req, res) => {
 
     const BATCH_SIZE = 2;
     for (let i = 0; i < AmazonProducts.length; i += BATCH_SIZE) {
-      console.log(`processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(AmazonProducts.length / BATCH_SIZE)}`);
+      console.log(
+        `processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(
+          AmazonProducts.length / BATCH_SIZE
+        )}`
+      );
       const batch = AmazonProducts.slice(i, i + BATCH_SIZE);
 
       // Process batch
@@ -110,10 +115,10 @@ const GetListingStatus = asyncHandler(async (req, res) => {
               results.updated.push(result.updated);
             }
             results.processed++;
-            console.log('listing status ready to update');
+            console.log("listing status ready to update");
             return result;
           } catch (error) {
-            console.log('error fetching listing status');
+            console.log("error fetching listing status");
             // console.log(error)
             if (error.response?.status === 429) {
               console.log("Rate limited");
@@ -134,7 +139,7 @@ const GetListingStatus = asyncHandler(async (req, res) => {
               if (count === 1) {
                 results.updated.push({
                   old_status: product.listing_status_id,
-                  new_status: 5
+                  new_status: 5,
                 });
               }
               results.processed++;
@@ -143,8 +148,8 @@ const GetListingStatus = asyncHandler(async (req, res) => {
                 seller_sku: product.seller_sku,
                 updated: {
                   old_status: product.listing_status_id,
-                  new_status: 5
-                }
+                  new_status: 5,
+                },
               };
             }
             results.errors.push({
@@ -162,7 +167,7 @@ const GetListingStatus = asyncHandler(async (req, res) => {
       );
 
       // Add a small delay between batches to avoid rate limits
-      console.log('waiting 1 second');
+      console.log("waiting 1 second");
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
@@ -181,229 +186,303 @@ const GetListingStatus = asyncHandler(async (req, res) => {
   }
 });
 
-const syncDBWithAmazon = asyncHandler(async (req, res, next) => {
-  logger.info("Starting syncDBWithAmazon process");
+const processReport = async (productsArray) => {
+  logger.info("Start processReport function");
+  const t = await sequelize.transaction();
 
   try {
-    // 1. Generate and validate inventory report
-    const reportId = await generateInventoryReport(req, res, next);
-    if (!reportId) {
-      throw new Error("Failed to generate inventory report");
+    const newProducts = [];
+    const updatedProducts = [];
+    const productsInReport = new Set();
+
+    // 1) Traer todos los productos con su detalle (LEFT JOIN)
+    const allProducts = await Product.findAll({
+      include: [
+        {
+          model: AmazonProductDetail,
+          as: "AmazonProductDetail",
+        },
+      ],
+      transaction: t,
+    });
+
+    // 2) Construir un Map para búsquedas rápidas por ASIN
+    const productMap = new Map();
+    for (const prod of allProducts) {
+      // puede que AmazonProductDetail sea null
+      const detail = prod.AmazonProductDetail;
+      if (detail) {
+        productMap.set(detail.ASIN, { product: prod, detail });
+      } else {
+        // marcamos la existencia de prod sin detail
+        productMap.set(prod.seller_sku /*o prod.upc segun tu lógica*/, {
+          product: prod,
+          detail: null,
+        });
+      }
     }
 
-    logger.info(`Inventory report generated with ID: ${reportId}`);
+    // 3) Procesar el arreglo de reporte
+    for (const item of productsArray) {
+      const asin = item.asin;
+      productsInReport.add(asin);
 
-    // 2. Wait for report processing with timeout and exponential backoff
-    const MAX_RETRIES = 10;
-    const INITIAL_RETRY_DELAY = 5000; // 5 seconds
-    let reportStatus = null;
-    let retryCount = 0;
+      const entry = productMap.get(asin);
 
-    while (retryCount < MAX_RETRIES) {
-      try {
-        reportStatus = await getReportStatus(req, res, next, reportId);
+      if (entry && entry.detail) {
+        // — Ya existe detalle: actualizar si cambian valores
+        const d = entry.detail;
+        let needsUpdate = false;
 
-        if (reportStatus === "DONE") {
-          break;
-        } else if (
-          reportStatus === "CANCELLED" ||
-          reportStatus === "FAILED"
-        ) {
-          throw new Error(
-            `Report processing failed with status: ${reportStatus}`
-          );
+        if (d.FBA_available_inventory !== +item["afn-fulfillable-quantity"]) {
+          d.FBA_available_inventory = +item["afn-fulfillable-quantity"];
+          needsUpdate = true;
+        }
+        if (d.reserved_quantity !== +item["afn-reserved-quantity"]) {
+          d.reserved_quantity = +item["afn-reserved-quantity"];
+          needsUpdate = true;
+        }
+        if (d.Inbound_to_FBA !== +item["afn-inbound-shipped-quantity"]) {
+          d.Inbound_to_FBA = +item["afn-inbound-shipped-quantity"];
+          needsUpdate = true;
+        }
+        if (!d.in_seller_account) {
+          d.in_seller_account = true;
+          needsUpdate = true;
         }
 
-        logger.info(
-          `Report status: ${reportStatus}, retry ${
-            retryCount + 1
-          }/${MAX_RETRIES}`
+        if (needsUpdate) {
+          await d.save({ transaction: t });
+          updatedProducts.push(entry.product);
+        }
+      } else if (entry && !entry.detail) {
+        // — Producto existe pero detalle eliminado: crearlo
+        const newDetail = await AmazonProductDetail.create(
+          {
+            product_id: entry.product.id,
+            ASIN: asin,
+            FBA_available_inventory: +item["afn-fulfillable-quantity"],
+            reserved_quantity: +item["afn-reserved-quantity"],
+            Inbound_to_FBA: +item["afn-inbound-shipped-quantity"],
+            in_seller_account: true,
+          },
+          { transaction: t }
         );
 
-        // Exponential backoff
-        const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        retryCount++;
-      } catch (error) {
-        if (error.response?.status === 429) {
-          logger.warn("Rate limit hit, waiting before retry...");
-          await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 10 seconds
-          continue;
-        }
-        throw error;
+        // Adjuntar al objeto para consistencia (opcional)
+        entry.product.AmazonProductDetail = newDetail;
+        newProducts.push(entry.product);
+      } else {
+        // — Ni el producto ni el detalle existen: crear ambos
+        const newProduct = await Product.create(
+          {
+            product_name: item["product-name"],
+            seller_sku: item.sku,
+            in_seller_account: true,
+          },
+          { transaction: t }
+        );
+
+        const newDetail = await AmazonProductDetail.create(
+          {
+            product_id: newProduct.id,
+            ASIN: asin,
+            FBA_available_inventory: +item["afn-fulfillable-quantity"],
+            reserved_quantity: +item["afn-reserved-quantity"],
+            Inbound_to_FBA: +item["afn-inbound-shipped-quantity"],
+            in_seller_account: true,
+          },
+          { transaction: t }
+        );
+
+        newProduct.AmazonProductDetail = newDetail;
+        newProducts.push(newProduct);
       }
     }
 
-    if (reportStatus !== "DONE") {
-      throw new Error(
-        `Report processing timed out after ${MAX_RETRIES} retries`
-      );
-    }
-
-    // 3. Download and process report with validation
-    const reportData = await downloadReport(req, res, next, reportId);
-    if (!reportData) {
-      throw new Error("Failed to download report data");
-    }
-
-    // 4. Convert CSV to JSON with validation
-    const inventoryData = await csvToJson(reportData);
-    if (!inventoryData || !Array.isArray(inventoryData)) {
-      throw new Error("Invalid inventory data format");
-    }
-
-    // Validate required fields
-    const requiredFields = [
-      "seller_sku",
-      "asin",
-      "fnsku",
-      "condition",
-      "quantity",
-      "fulfillment_channel",
-    ];
-    const invalidItems = inventoryData.filter(
-      (item) =>
-        !requiredFields.every(
-          (field) => item[field] !== undefined && item[field] !== null
-        )
-    );
-
-    if (invalidItems.length > 0) {
-      logger.warn(
-        `Found ${invalidItems.length} items with missing required fields`
-      );
-    }
-
-    logger.info(`Processing ${inventoryData.length} inventory items`);
-
-    // 5. Batch process database updates with transaction
-    const BATCH_SIZE = 100;
-    const processedItems = [];
-    const errors = [];
-    const transaction = await sequelize.transaction();
-
-    try {
-      for (let i = 0; i < inventoryData.length; i += BATCH_SIZE) {
-        const batch = inventoryData.slice(i, i + BATCH_SIZE);
-        try {
-          const batchResults = await Promise.all(
-            batch.map(async (item) => {
-              try {
-                // Validate item data
-                if (!item.seller_sku || !item.asin) {
-                  return { error: `Invalid item data: missing SKU or ASIN` };
-                }
-
-                const product = await Product.findOne({
-                  where: { seller_sku: item.seller_sku },
-                  transaction,
-                });
-
-                if (!product) {
-                  return {
-                    error: `Product not found for SKU: ${item.seller_sku}`,
-                  };
-                }
-
-                const amazonProductDetail = await AmazonProductDetail.findOne(
-                  {
-                    where: { product_id: product.id },
-                    transaction,
-                  }
-                );
-
-                if (!amazonProductDetail) {
-                  return {
-                    error: `AmazonProductDetail not found for product: ${product.id}`,
-                  };
-                }
-
-                // Validate quantity
-                const quantity = parseInt(item.quantity, 10);
-                if (isNaN(quantity) || quantity < 0) {
-                  return {
-                    error: `Invalid quantity for SKU ${item.seller_sku}: ${item.quantity}`,
-                  };
-                }
-
-                await amazonProductDetail.update(
-                  {
-                    asin: item.asin,
-                    fnsku: item.fnsku,
-                    condition: item.condition,
-                    quantity: quantity,
-                    fulfillment_channel: item.fulfillment_channel,
-                  },
-                  { transaction }
-                );
-
-                return { success: true, sku: item.seller_sku };
-              } catch (error) {
-                return {
-                  error: `Error processing item ${item.seller_sku}: ${error.message}`,
-                };
-              }
-            })
-          );
-
-          processedItems.push(...batchResults.filter((r) => r.success));
-          errors.push(...batchResults.filter((r) => r.error));
-
-          logger.info(
-            `Processed batch ${i / BATCH_SIZE + 1} of ${Math.ceil(
-              inventoryData.length / BATCH_SIZE
-            )}`
-          );
-        } catch (error) {
-          logger.error(`Error processing batch ${i / BATCH_SIZE + 1}:`, {
-            error: error.message,
-            stack: error.stack,
-          });
-          errors.push({ error: `Batch processing error: ${error.message}` });
-        }
+    // 4) Marcar como fuera de cuenta los detalles que ya no vienen en el reporte
+    for (const [asin, { detail }] of productMap) {
+      if (detail && !productsInReport.has(asin) && detail.in_seller_account) {
+        detail.in_seller_account = false;
+        await detail.save({ transaction: t });
+        // para notificarlo como actualizado:
+        const prod =
+          detail.Product || (await detail.getProduct({ transaction: t }));
+        updatedProducts.push(prod);
       }
-
-      // Commit transaction if all batches processed successfully
-      await transaction.commit();
-
-      // 6. Send response with detailed results
-      res.status(200).json({
-        success: true,
-        message: "Database synchronized successfully",
-        stats: {
-          totalItems: inventoryData.length,
-          processedItems: processedItems.length,
-          errorCount: errors.length,
-          invalidItems: invalidItems.length,
-        },
-        errors: errors.length > 0 ? errors : undefined,
-      });
-
-      logger.info("syncDBWithAmazon completed successfully", {
-        totalItems: inventoryData.length,
-        processedItems: processedItems.length,
-        errorCount: errors.length,
-        invalidItems: invalidItems.length,
-      });
-    } catch (error) {
-      // Rollback transaction on error
-      await transaction.rollback();
-      throw error;
     }
+
+    await t.commit();
+    logger.info("Finish processReport function");
+
+    return {
+      newSyncProductsQuantity: newProducts.length,
+      newSyncQuantity: updatedProducts.length,
+      newSyncProducts: newProducts,
+      newSyncData: updatedProducts,
+    };
   } catch (error) {
-    logger.error("Error in syncDBWithAmazon:", {
-      error: error.message,
-      stack: error.stack,
-    });
-    res.status(500).json({
-      success: false,
-      message: error.message,
-      error: error.stack,
-    });
+    await t.rollback();
+    logger.error("Error al actualizar o crear productos:", error);
+    throw error;
+  }
+};
+
+const syncDBWithAmazon = asyncHandler(async (req, res, next) => {
+  logger.info("fetching new token for sync db with amazon...");
+  let accessToken = await fetchNewTokenForFees();
+  console.log(accessToken);
+
+  try {
+    if (!accessToken) {
+      logger.info("fetching new token for sync db with amazon...");
+      accessToken = await fetchNewTokenForFees();
+      req.headers["x-amz-access-token"] = accessToken;
+    } else {
+      logger.info("Token is still valid...");
+    }
+
+    // Call createReport and get the reportId
+    const report = await sendCSVasJSON(req, res, next);
+    logger.info("Finish creating report");
+    const newSync = await processReport(report);
+/*     const imageSyncResult = await addImageToNewProducts(accessToken);
+ */
+    res.json({ newSync });
+    return { newSync };
+  } catch (error) {
+    next(error);
   }
 });
+
+/* const retrieveProducts = asyncHandler(async (req, res, next) => {
+  try {
+    // Leer el archivo CSV de SKUs
+    const csvFilePath = path.join(__dirname, '../data/skus.csv');
+    const fileContent = await fs.promises.readFile(csvFilePath, 'utf-8');
+    
+    // Parsear el CSV y extraer los SKUs
+    const skusToProcess = fileContent
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#')); // Ignorar líneas vacías y comentarios
+
+    if (skusToProcess.length === 0) {
+      return res.json({ success: true, message: "No hay SKUs para procesar en el archivo" });
+    }
+
+    console.log(`Procesando ${skusToProcess.length} SKUs del archivo`);
+    const accessToken = await fetchNewTokenForFees();
+    const results = [];
+    const errors = [];
+
+    for (const sku of skusToProcess) {
+      try {
+        console.log("Procesando SKU:", sku);
+        
+        // Buscar el producto por SKU
+        const product = await Product.findOne({
+          where: { seller_sku: sku }
+        });
+
+        if (!product) {
+          console.log(`Producto no encontrado para SKU: ${sku}`);
+          errors.push({
+            sku,
+            error: "Producto no encontrado en la base de datos"
+          });
+          continue;
+        }
+
+        // Esperar 1 segundo antes de hacer la petición a Amazon
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Obtener ASIN de Amazon
+        const response = await axios.get(
+          `${process.env.AMZ_BASE_URL}/catalog/2022-04-01/items?identifiersType=SKU&includedData=identifiers&sellerId=${process.env.AMAZON_SELLER_ID}&marketplaceIds=${process.env.MARKETPLACE_US_ID}&identifiers=${sku}`,
+          {
+            headers: {
+              'x-amz-access-token': accessToken
+            }
+          }
+        );
+
+        console.log("Respuesta de Amazon para SKU", sku, ":", response.data);
+        
+        if (response.data.items && response.data.items.length > 0) {
+          const item = response.data.items[0];
+          if (item.asin) {
+            try {
+              // Crear AmazonProductDetail
+              await AmazonProductDetail.create({
+                product_id: product.id,
+                ASIN: item.asin,
+                marketplace_id: 1,
+                in_seller_account: true
+              });
+
+              results.push({
+                sku,
+                asin: item.asin,
+                status: 'created'
+              });
+              console.log(`Creado AmazonProductDetail para SKU ${sku} con ASIN ${item.asin}`);
+            } catch (createError) {
+              errors.push({
+                sku,
+                error: `Error creando AmazonProductDetail: ${createError.message}`
+              });
+              console.error(`Error creando AmazonProductDetail para SKU ${sku}:`, createError.message);
+            }
+          } else {
+            errors.push({
+              sku,
+              error: "No se encontró ASIN en la respuesta de Amazon"
+            });
+            console.log(`No se encontró ASIN para SKU ${sku}`);
+          }
+        } else {
+          errors.push({
+            sku,
+            error: "No se encontró el producto en Amazon"
+          });
+          console.log(`No se encontró el producto en Amazon para SKU ${sku}`);
+        }
+
+      } catch (err) {
+        logger.error(`Error procesando SKU ${sku}:`, err.message);
+        if (err.response && err.response.status === 429) {
+          logger.warn('Rate limit alcanzado, esperando 5 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          // Reintentar este SKU
+          skusToProcess.push(sku);
+        } else {
+          errors.push({
+            sku,
+            error: err.message
+          });
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      results: {
+        created: results,
+        errors: errors,
+        total: skusToProcess.length,
+        processed: results.length + errors.length
+      }
+    });
+    
+  } catch (error) {
+    logger.error("Error retrieving and updating products:", error);
+    return next(error);
+  }
+}); */
 
 module.exports = {
   GetListingStatus,
   syncDBWithAmazon,
+  /* retrieveProducts */
 };
