@@ -127,6 +127,10 @@ const processReport = async (productsArray) => {
       if (!productsInReport.has(asin)) {
         if (detail.in_seller_account !== false) {
           detail.in_seller_account = false;
+
+          detail.FBA_available_inventory = 0;
+          detail.reserved_quantity = 0;
+          detail.Inbound_to_FBA = 0;
           await detail.save({ transaction: t });
           updatedProducts.push(detail.Product);
         }
