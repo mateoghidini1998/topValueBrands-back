@@ -79,8 +79,8 @@ app.listen(PORT, () => {
   console.log("DATABASE_URL_LOCAL:", process.env.DATABASE_URL_LOCAL);
   swaggerDoc(app, PORT);
 
-  // loopPeticiones(); // <-- Aquí empieza el loop una vez
-
+/*   loopPeticiones(); // <-- Aquí empieza el loop una vez
+ */
   // Cron job to sync database with Amazon
   cron.schedule(
     "55 6,12,16,20 * * *",
@@ -153,7 +153,7 @@ app.listen(PORT, () => {
   );
 
   cron.schedule(
-    "20 3,7,10,14,17,20 * * *",
+    "55 6,9,13,16,20,23 * * *",
     async () => {
       console.log("Starting Listing status update cron job...");
       logger.info("Starting Listing status update cron job...");

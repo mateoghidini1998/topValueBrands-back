@@ -14,7 +14,6 @@ const fetchProductAttributes = async (asin, token) => {
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
       "Accept": "application/json",
       "x-amz-access-token": token, // Amazon SP-API lo requiere
@@ -44,10 +43,11 @@ const fetchProductAttributes = async (asin, token) => {
  */
 const loopPeticiones = async () => {
 
-  const asins = await (await productService.findAllProducts({ page: 1, limit: 1000 })).data.map((p) => {
+  const asins = await (await productService.findAllProducts({ page: 1, limit: 5000 })).data.map((p) => {
     return {
       asin: p.ASIN,
-      id: p.id
+      id: p.id,
+      needsUpdate: p.dangerous_goods === '--'
     }
   });
 
@@ -93,6 +93,7 @@ const loopPeticiones = async () => {
     }
   }
 
+  logger.info("✔️ Todas las peticiones fueron procesadas.");
   console.log("✔️ Todas las peticiones fueron procesadas.");
 };
 

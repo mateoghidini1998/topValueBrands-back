@@ -4,7 +4,6 @@ const fs = require('fs');
 
 const asyncHandler = require('../middlewares/async');
 const { Product } = require('../models');
-const { sendCSVasJSON, updateDangerousGoodsFromReport } = require('../utils/utils');
 const {
   addImageToNewProducts,
 } = require('../controllers/products.controller');
@@ -46,112 +45,6 @@ exports.updateDangerousGoodsFromReport = asyncHandler(async (req, res, next) => 
     next(error);
   }
 });
-
-const processReport = async (productsArray) => {
-  logger.info('Start processReport function');
-  const t = await sequelize.transaction();
-
-  try {
-    const newProducts = [];
-    const updatedProducts = [];
-    const productsInReport = new Set();
-
-    // 1. Obtener todos los AmazonProductDetail con su Product
-    const allDetails = await AmazonProductDetail.findAll({
-      include: [{ model: Product, as: 'product' }],
-      transaction: t,
-    });
-
-    const asinMap = new Map();
-    for (const detail of allDetails) {
-      asinMap.set(detail.ASIN, detail);
-    }
-
-    // 2. Procesar productos del reporte
-    for (const product of productsArray) {
-      const asin = product.asin;
-      productsInReport.add(asin);
-
-      const existingDetail = asinMap.get(asin);
-
-      if (existingDetail) {
-        let needsUpdate = false;
-
-        if (existingDetail.FBA_available_inventory !== parseFloat(product['afn-fulfillable-quantity'])) {
-          existingDetail.FBA_available_inventory = parseFloat(product['afn-fulfillable-quantity']);
-          needsUpdate = true;
-        }
-
-        if (existingDetail.reserved_quantity !== parseFloat(product['afn-reserved-quantity'])) {
-          existingDetail.reserved_quantity = parseFloat(product['afn-reserved-quantity']);
-          needsUpdate = true;
-        }
-
-        if (existingDetail.Inbound_to_FBA !== parseFloat(product['afn-inbound-shipped-quantity'])) {
-          existingDetail.Inbound_to_FBA = parseFloat(product['afn-inbound-shipped-quantity']);
-          needsUpdate = true;
-        }
-
-        if (!existingDetail.in_seller_account) {
-          existingDetail.in_seller_account = true;
-          needsUpdate = true;
-        }
-
-        if (needsUpdate) {
-          await existingDetail.save({ transaction: t });
-          updatedProducts.push(existingDetail.Product);
-        }
-      } else {
-        // Crear nuevo Product y su AmazonProductDetail
-        const newProduct = await Product.create({
-          product_name: product['product-name'],
-          seller_sku: product.sku,
-          in_seller_account: true,
-        }, { transaction: t });
-
-        const newDetail = await AmazonProductDetail.create({
-          product_id: newProduct.id,
-          ASIN: asin,
-          FBA_available_inventory: parseFloat(product['afn-fulfillable-quantity']),
-          reserved_quantity: parseFloat(product['afn-reserved-quantity']),
-          Inbound_to_FBA: parseFloat(product['afn-inbound-shipped-quantity']),
-        }, { transaction: t });
-
-        newProduct.AmazonProductDetail = newDetail;
-        newProducts.push(newProduct);
-      }
-    }
-
-    // 3. Marcar como inactivos los productos que no están en el reporte
-    for (const [asin, detail] of asinMap) {
-      if (!productsInReport.has(asin)) {
-        if (detail.in_seller_account !== false) {
-          detail.in_seller_account = false;
-
-          detail.FBA_available_inventory = 0;
-          detail.reserved_quantity = 0;
-          detail.Inbound_to_FBA = 0;
-          await detail.save({ transaction: t });
-          updatedProducts.push(detail.Product);
-        }
-      }
-    }
-
-    await t.commit();
-
-    logger.info('Finish processReport function');
-    return {
-      newSyncProductsQuantity: newProducts.length,
-      newSyncQuantity: updatedProducts.length,
-      newSyncProducts: newProducts,
-      newSyncData: updatedProducts,
-    };
-  } catch (error) {
-    await t.rollback();
-    logger.error('Error al actualizar o crear productos:', error);
-    throw error;
-  }
-};
 
 // @route    GET api/reports/download/:filename
 // @desc     Download a CSV file
