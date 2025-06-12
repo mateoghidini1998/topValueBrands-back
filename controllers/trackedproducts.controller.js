@@ -89,6 +89,9 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           "reserved_quantity",
           "Inbound_to_FBA",
           "dangerous_goods",
+          "fc_transfer",
+          "customer_order",
+          "fc_processing"
         ],
         required: false,
       },
@@ -202,6 +205,9 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           reserved_quantity: amazonDetail?.reserved_quantity ?? null,
           Inbound_to_FBA: amazonDetail?.Inbound_to_FBA ?? null,
           dangerous_goods: amazonDetail?.dangerous_goods ?? null,
+          fc_transfer: amazonDetail?.fc_transfer ?? null,
+          customer_order: amazonDetail?.customer_order ?? null,
+          fc_processing: amazonDetail?.fc_processing ?? null,
 
           supplier_name: supplier?.supplier_name ?? null,
         };
