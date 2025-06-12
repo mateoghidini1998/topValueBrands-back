@@ -307,11 +307,13 @@ const processReport = async (productsArray) => {
         detail.reserved_quantity = 0;
         detail.Inbound_to_FBA = 0;
         await detail.save({ transaction: t });
+    
         const prod =
           detail.Product || (await detail.getProduct({ transaction: t }));
         updatedProducts.push(prod);
       }
     }
+    
 
     await t.commit();
     logger.info("Finish processReport function");
