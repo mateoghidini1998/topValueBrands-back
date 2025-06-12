@@ -195,7 +195,6 @@ const processReport = async (productsArray) => {
     const updatedProducts = [];
     const productsInReport = new Set();
 
-    // 1) Traer todos los productos con su detalle (LEFT JOIN)
     const allProducts = await Product.findAll({
       include: [
         {
@@ -206,31 +205,29 @@ const processReport = async (productsArray) => {
       transaction: t,
     });
 
-    // 2) Construir un Map para búsquedas rápidas por ASIN
     const productMap = new Map();
     for (const prod of allProducts) {
-      // puede que AmazonProductDetail sea null
       const detail = prod.AmazonProductDetail;
-      if (detail) {
-        productMap.set(detail.ASIN, { product: prod, detail });
-      } else {
-        // marcamos la existencia de prod sin detail
-        productMap.set(prod.seller_sku /*o prod.upc segun tu lógica*/, {
-          product: prod,
-          detail: null,
-        });
+      const sku = prod.seller_sku?.trim().toLowerCase();
+      const asin = detail?.ASIN?.trim().toLowerCase();
+      
+      if (sku && asin) {
+        const key = `${sku}-${asin}`;
+        productMap.set(key, { product: prod, detail });
       }
     }
 
-    // 3) Procesar el arreglo de reporte
     for (const item of productsArray) {
-      const asin = item.asin;
-      productsInReport.add(asin);
+      const asin = item.asin?.trim().toLowerCase();
+      const sku = item.sku?.trim().toLowerCase();
+      
+      if (!asin || !sku) continue;
 
-      const entry = productMap.get(asin);
+      const key = `${sku}-${asin}`;
+      productsInReport.add(key);
 
+      const entry = productMap.get(key);
       if (entry && entry.detail) {
-        // — Ya existe detalle: actualizar si cambian valores
         const d = entry.detail;
         let needsUpdate = false;
 
@@ -254,9 +251,9 @@ const processReport = async (productsArray) => {
         if (needsUpdate) {
           await d.save({ transaction: t });
           updatedProducts.push(entry.product);
+          logger.info(`Producto actualizado: SKU=${sku}, ASIN=${asin}`);
         }
       } else if (entry && !entry.detail) {
-        // — Producto existe pero detalle eliminado: crearlo
         const newDetail = await AmazonProductDetail.create(
           {
             product_id: entry.product.id,
@@ -269,11 +266,10 @@ const processReport = async (productsArray) => {
           { transaction: t }
         );
 
-        // Adjuntar al objeto para consistencia (opcional)
         entry.product.AmazonProductDetail = newDetail;
         newProducts.push(entry.product);
+        logger.info(`Nuevo detalle creado: SKU=${sku}, ASIN=${asin}`);
       } else {
-        // — Ni el producto ni el detalle existen: crear ambos
         const newProduct = await Product.create(
           {
             product_name: item["product-name"],
@@ -297,23 +293,35 @@ const processReport = async (productsArray) => {
 
         newProduct.AmazonProductDetail = newDetail;
         newProducts.push(newProduct);
+        logger.info(`Nuevo producto creado: SKU=${sku}, ASIN=${asin}`);
       }
     }
 
-    for (const [asin, { detail }] of productMap) {
-      if (detail && !productsInReport.has(asin) && detail.in_seller_account) {
-        detail.in_seller_account = false;
-        detail.FBA_available_inventory = 0;
-        detail.reserved_quantity = 0;
-        detail.Inbound_to_FBA = 0;
-        await detail.save({ transaction: t });
-    
-        const prod =
-          detail.Product || (await detail.getProduct({ transaction: t }));
+    for (const prod of allProducts) {
+      const detail = prod.AmazonProductDetail;
+      const sku = prod.seller_sku?.trim().toLowerCase();
+      const asin = detail?.ASIN?.trim().toLowerCase();
+      
+      if (!sku || !asin) continue;
+
+      const key = `${sku}-${asin}`;
+      if (!productsInReport.has(key)) {
+        prod.listing_status_id = 5;
+        prod.in_seller_account = false;
+        await prod.save({ transaction: t });
+
+        if (detail) {
+          detail.FBA_available_inventory = 0;
+          detail.reserved_quantity = 0;
+          detail.Inbound_to_FBA = 0;
+          detail.in_seller_account = false;
+          await detail.save({ transaction: t });
+        }
+
         updatedProducts.push(prod);
+        logger.info(`Producto no reportado actualizado a status 5 y stocks en 0: SKU=${sku}, ASIN=${asin}`);
       }
     }
-    
 
     await t.commit();
     logger.info("Finish processReport function");
