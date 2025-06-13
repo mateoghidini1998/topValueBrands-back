@@ -382,6 +382,11 @@ exports.generateTrackedProductsData = asyncHandler(async (req, res, next) => {
     const trackedProductIds = combinedData.map(item => item.product_id);
     const relatedProducts = await Product.findAll({
       where: { id: trackedProductIds },
+      include: [{
+        model: AmazonProductDetail,
+        as: "AmazonProductDetail",
+        attributes: ["ASIN"]
+      }]
     });
 
     logger.info(`Processing fees for ${relatedProducts.length} products`);
@@ -688,7 +693,7 @@ const getEstimateFees = async (req, res, next, products) => {
 };
 
 const estimateFeesForProduct = async (product, accessToken) => {
-  const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.ASIN}/feesEstimate`;
+  const url = `https://sellingpartnerapi-na.amazon.com/products/fees/v0/items/${product.AmazonProductDetail.ASIN}/feesEstimate`;
   const trackedProduct = await TrackedProduct.findOne({
     where: { product_id: product.id },
   });
@@ -701,7 +706,7 @@ const estimateFeesForProduct = async (product, accessToken) => {
     FeesEstimateRequest: {
       MarketplaceId: "ATVPDKIKX0DER",
       IsAmazonFulfilled: true,
-      Identifier: product.ASIN,
+      Identifier: product.AmazonProductDetail.ASIN,
       PriceToEstimateFees: {
         ListingPrice: {
           Amount: trackedProduct.lowest_fba_price.toString(),
