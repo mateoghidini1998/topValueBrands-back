@@ -136,6 +136,17 @@ const GetListingStatus = asyncHandler(async (req, res) => {
                 { listing_status_id: 5 },
                 { where: { id: product.id } }
               );
+
+              // Update associated AmazonProductDetail
+              await AmazonProductDetail.update(
+                {
+                  FBA_available_inventory: 0,
+                  reserved_quantity: 0,
+                  Inbound_to_FBA: 0
+                },
+                { where: { product_id: product.id } }
+              );
+
               if (count === 1) {
                 results.updated.push({
                   old_status: product.listing_status_id,
