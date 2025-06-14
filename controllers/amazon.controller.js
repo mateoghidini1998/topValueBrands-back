@@ -246,6 +246,11 @@ const processReport = async (productsArray) => {
           d.Inbound_to_FBA = +item["afn-inbound-shipped-quantity"];
           needsUpdate = true;
         }
+        // selling price?
+        if (d.selling_price != item["your-price"]) {
+          d.selling_price = +item["your-price"];
+          needsUpdate = true;
+        }
         if (!d.in_seller_account) {
           d.in_seller_account = true;
           needsUpdate = true;
