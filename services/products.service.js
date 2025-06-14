@@ -35,27 +35,40 @@ const createProduct = async (productData, accessToken) => {
     } else {
       throw new Error('Product already exists');
     }
-  } else {
-    const { productName, imageUrl } = await getProductDetailsByASIN(productData.ASIN, accessToken);
-
-    productData.product_name = productName;
-    productData.product_image = imageUrl || null;
-
-    const requiredFields = ['product_cost', 'ASIN', 'supplier_id'];
-    for (const field of requiredFields) {
-      if (!productData[field]) {
-        throw new Error(`Missing required field: ${field}`);
-      }
-    }
-
-    let supplier = await supplierService.getSupplierById(productData.supplier_id);
-
-    if (!supplier) {
-      supplier = await supplierService.createSupplier(productData.supplier_id);
-    }
-
-    return await productRepository.CreateProduct(productData);
   }
+
+  const { productName, imageUrl } = await getProductDetailsByASIN(productData.ASIN, accessToken);
+
+  productData.product_name = productName;
+  productData.product_image = imageUrl || null;
+
+  const requiredFields = ['product_cost', 'ASIN', 'supplier_id'];
+  for (const field of requiredFields) {
+    if (!productData[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+
+  let supplier = await supplierService.getSupplierById(productData.supplier_id);
+
+  if (!supplier) {
+    supplier = await supplierService.createSupplier(productData.supplier_id);
+  }
+
+  // Crear el producto
+  const newProduct = await productRepository.CreateProduct(productData);
+
+  // Crear el detalle de Amazon
+  await productRepository.CreateAmazonProductDetail({
+    product_id: newProduct.id,
+    ASIN: productData.ASIN,
+    FBA_available_inventory: 0,
+    reserved_quantity: 0,
+    Inbound_to_FBA: 0,
+    in_seller_account: true
+  });
+
+  return newProduct;
 };
 
 const findAllProducts = async ({ page = 1, limit = 50, keyword = '', supplier, orderBy = 'product_name', orderWay = 'ASC' }) => {

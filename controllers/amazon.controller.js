@@ -305,12 +305,13 @@ const processReport = async (productsArray) => {
       }
     }
 
-    // 4) Marcar como fuera de cuenta los detalles que ya no vienen en el reporte
     for (const [asin, { detail }] of productMap) {
       if (detail && !productsInReport.has(asin) && detail.in_seller_account) {
         detail.in_seller_account = false;
+        detail.FBA_available_inventory = 0;
+        detail.reserved_quantity = 0;
+        detail.Inbound_to_FBA = 0;
         await detail.save({ transaction: t });
-        // para notificarlo como actualizado:
         const prod =
           detail.Product || (await detail.getProduct({ transaction: t }));
         updatedProducts.push(prod);
@@ -351,8 +352,8 @@ const syncDBWithAmazon = asyncHandler(async (req, res, next) => {
     const report = await sendCSVasJSON(req, res, next);
     logger.info("Finish creating report");
     const newSync = await processReport(report);
-/*     const imageSyncResult = await addImageToNewProducts(accessToken);
- */
+    /*     const imageSyncResult = await addImageToNewProducts(accessToken);
+     */
     res.json({ newSync });
     return { newSync };
   } catch (error) {
