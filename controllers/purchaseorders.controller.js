@@ -985,7 +985,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
           {
             model: AmazonProductDetail,
             as: "AmazonProductDetail",
-            attributes: ["ASIN", "dangerous_goods"]
+            attributes: ["ASIN", "dangerous_goods","selling_price"]
           },
           {
             model: Supplier,
@@ -1004,7 +1004,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       {
         model: WalmartProductDetail,
         as: "WalmartProductDetail",
-        attributes: ["gtin", "wpid"]
+        attributes: ["gtin", "wpid","price"]
       },
       {
         model: Supplier,
@@ -1045,6 +1045,9 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       ASIN: amazonDetail?.ASIN || null,
       GTIN: walmartDetail?.gtin || null,
       wpid: walmartDetail?.wpid || null,
+
+      selling_price: amazonDetail?.selling_price || walmartDetail?.price,
+
       seller_sku: product?.seller_sku || null,
       supplier_name: product?.supplier?.supplier_name || null,
       supplier_id: product?.supplier_id,
