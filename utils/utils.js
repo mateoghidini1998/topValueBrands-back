@@ -307,19 +307,19 @@ const generateAmazonListingsData = asyncHandler(async (req, res, next) => {
 
 const generateBreakdownForReservedInventory = asyncHandler(
   async (req, res, next) => {
-    // const reportData = await getReportById(
-    //   req,
-    //   'GET_RESTOCK_INVENTORY_RECOMMENDATIONS_REPORT'
-    // );
+    const reportData = await getReportById(
+      req,
+      'GET_RESTOCK_INVENTORY_RECOMMENDATIONS_REPORT'
+    );
 
-    // if (!reportData) {
-    //   logger.error("Error getting report by id");
-    //   throw new Error('Report data is invalid or missing reportDocumentId');
-    // }
+    if (!reportData) {
+      logger.error("Error getting report by id");
+      throw new Error('Report data is invalid or missing reportDocumentId');
+    }
 
-    // const documentId = reportData;
-    const documentId =
-      "amzn1.spdoc.1.4.na.e3b22cc4-981e-479e-aec5-1fe7956d44db.T3UASII812MA19.94300";
+    const documentId = reportData;
+    // const documentId =
+    //   "amzn1.spdoc.1.4.na.e3b22cc4-981e-479e-aec5-1fe7956d44db.T3UASII812MA19.94300";
 
     const response = await axios.get(
       `${process.env.AMZ_BASE_URL}/reports/2021-06-30/documents/${documentId}`,
