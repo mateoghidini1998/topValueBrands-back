@@ -9,6 +9,7 @@ const {
   PurchaseOrderProductReason,
   AmazonProductDetail,
   WalmartProductDetail,
+  ListingStatus,
 } = require("../models");
 const { addUPCToPOProduct: addUPC } = require("./products.controller");
 const path = require("path");
@@ -979,23 +980,33 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
         attributes: [
           "product_name", "id", "supplier_id", "product_image",
           "product_cost", "in_seller_account", "supplier_item_number",
-          "pack_type", "upc", "warehouse_stock","seller_sku"
+          "pack_type", "upc", "warehouse_stock", "seller_sku", "listing_status_id"
         ],
         include: [
           {
             model: AmazonProductDetail,
             as: "AmazonProductDetail",
-            attributes: ["ASIN", "dangerous_goods","selling_price"]
+            attributes: [
+              "ASIN", "dangerous_goods", "selling_price",
+              "FBA_available_inventory", "reserved_quantity",
+              "Inbound_to_FBA", "fc_transfer", "customer_order", "fc_processing"
+            ]
           },
           {
             model: Supplier,
             as: "supplier",
             attributes: ["supplier_name"]
+          },
+          {
+            model: ListingStatus,
+            as: "listingStatus",
+            attributes: ["description"]
           }
         ]
       }
     ]
   });
+
 
   // 3. Walmart products (para los que no tienen TrackedProduct)
   const walmartProducts = await Product.findAll({
@@ -1004,7 +1015,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       {
         model: WalmartProductDetail,
         as: "WalmartProductDetail",
-        attributes: ["gtin", "wpid","price"]
+        attributes: ["gtin", "wpid", "price"]
       },
       {
         model: Supplier,
@@ -1028,6 +1039,10 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     const amazonDetail = tracked?.product?.AmazonProductDetail || null;
     const walmartDetail = product?.WalmartProductDetail || null;
 
+    // Supplier y listingStatus pueden estar en null
+    const supplier = product?.supplier;
+    const listingStatus = product?.listingStatus;
+
     const roi = orderProduct.product_cost
       ? ((orderProduct.profit / orderProduct.product_cost) * 100)
       : 0;
@@ -1040,16 +1055,15 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
 
     return {
       id: product?.id,
+      product_id: orderProduct.product_id,
       product_name: product?.product_name,
       in_seller_account: product?.in_seller_account,
       ASIN: amazonDetail?.ASIN || null,
       GTIN: walmartDetail?.gtin || null,
       wpid: walmartDetail?.wpid || null,
-
       selling_price: amazonDetail?.selling_price || walmartDetail?.price,
-
       seller_sku: product?.seller_sku || null,
-      supplier_name: product?.supplier?.supplier_name || null,
+      supplier_name: supplier?.supplier_name || null,
       supplier_id: product?.supplier_id,
       pack_type: parseInt(product?.pack_type),
       product_image: product?.product_image,
@@ -1058,20 +1072,37 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       warehouse_stock: product?.warehouse_stock,
       dg_item: amazonDetail?.dangerous_goods || false,
       marketplace,
+      listing_status_id: product?.listing_status_id,
+      listing_status: listingStatus?.description || null,
 
-      product_velocity: tracked?.product_velocity || null,
-      units_sold: tracked?.units_sold || null,
-      thirty_days_rank: tracked?.thirty_days_rank || null,
-      ninety_days_rank: tracked?.ninety_days_rank || null,
-      lowest_fba_price: tracked?.lowest_fba_price || null,
+      // Amazon/FBA details
+      FBA_available_inventory: amazonDetail?.FBA_available_inventory ?? null,
+      reserved_quantity: amazonDetail?.reserved_quantity ?? null,
+      Inbound_to_FBA: amazonDetail?.Inbound_to_FBA ?? null,
+      fc_transfer: amazonDetail?.fc_transfer ?? null,
+      customer_order: amazonDetail?.customer_order ?? null,
+      fc_processing: amazonDetail?.fc_processing ?? null,
+
+      // TrackedProduct metrics
+      current_rank: tracked?.current_rank ?? null,
+      thirty_days_rank: tracked?.thirty_days_rank ?? null,
+      ninety_days_rank: tracked?.ninety_days_rank ?? null,
+      units_sold: tracked?.units_sold ?? null,
+      product_velocity: tracked?.product_velocity ?? null,
+      product_velocity_2: tracked?.product_velocity_2 ?? null,
+      product_velocity_7: tracked?.product_velocity_7 ?? null,
+      product_velocity_15: tracked?.product_velocity_15 ?? null,
+      product_velocity_60: tracked?.product_velocity_60 ?? null,
+      avg_selling_price: tracked?.avg_selling_price ?? null,
+      lowest_fba_price: tracked?.lowest_fba_price ?? null,
       fees: parseFloat(tracked?.fees || 0),
       roi: parseFloat(roi.toFixed(2)),
       updatedAt: tracked?.updatedAt || product?.updatedAt || null,
       sellable_quantity: tracked?.sellable_quantity || null,
 
-      product_id: orderProduct.product_id,
-      product_cost: parseFloat(orderProduct.product_cost),
+      // Datos de la orden de compra
       purchase_order_product_id: orderProduct.id,
+      product_cost: parseFloat(orderProduct.product_cost),
       total_amount: parseFloat(orderProduct?.total_amount ?? "0"),
       quantity_purchased: parseInt(orderProduct?.quantity_purchased ?? 0),
       quantity_received: orderProduct.quantity_received,
@@ -1083,6 +1114,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       profit: parseFloat(orderProduct.profit)
     };
   });
+
 
   // 6. Ordenar: productos peligrosos al final
   productsData.sort((a, b) => (a.dg_item === b.dg_item) ? 0 : a.dg_item ? 1 : -1);
