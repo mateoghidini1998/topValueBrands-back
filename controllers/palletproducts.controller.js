@@ -138,15 +138,12 @@ exports.getPalletProductByPurchaseOrderProductId = asyncHandler(
 exports.getAllPalletProducts = asyncHandler(async (req, res) => {
 
   const palletProductWhere = {
-    [Op.or]: [
-      { is_active: true },
-      {
-        available_quantity: {
-          [Op.gt]: 0
-        }
-      }
-    ]
+    is_active: true,
+    available_quantity: {
+      [Op.gt]: 0  // o 1 si así lo querés
+    }
   };
+
 
   const pallets = await Pallet.findAll({
     attributes: ["id", "pallet_number", "warehouse_location_id", "purchase_order_id"],
