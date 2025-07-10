@@ -165,6 +165,13 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
         const amazonDetail = product?.AmazonProductDetail;
         const supplier = product?.supplier;
 
+        const cost = Number(product.product_cost) || 0;
+        const lowestFbaPrice = Number(p.lowest_fba_price) || 0;
+        const fees = Number(p.fees) || 0;
+
+        const profit = lowestFbaPrice - (fees + cost);
+        const roi = cost > 0 ? (profit / cost) * 100 : null; 33
+
         return {
           id: p.id,
           product_id: p.product_id,
@@ -180,11 +187,13 @@ exports.getTrackedProducts = asyncHandler(async (req, res) => {
           avg_selling_price: p.avg_selling_price,
           lowest_fba_price: p.lowest_fba_price,
           fees: p.fees,
-          profit: p.profit,
+          //profit: p.lowest_fba_price - (p.fees + product.product_cost),
+          profit:  profit,
           is_active: p.is_active,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
-          roi: (p.profit / product.product_cost) * 100 || null,
+          //roi: ((p.lowest_fba_price - (p.fees + product.product_cost)) / (product.product_cost || 1)) * 100,
+          roi: roi,
 
           product_name: product.product_name,
           product_cost: product.product_cost,
@@ -489,7 +498,7 @@ const getProductsTrackedData = async (products) => {
             `getKeepaData raw response for group ${index + 1}: ${JSON.stringify(
               keepaDataResponse
             )}`
-          ); 
+          );
           keepaResponses.push(keepaDataResponse);
           tokensLeft = keepaDataResponse.tokensLeft;
           totalTokensConsumed += keepaDataResponse.tokensConsumed;
