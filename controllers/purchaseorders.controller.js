@@ -1036,6 +1036,15 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
   const productsData = purchaseOrder.purchaseOrderProducts.map(orderProduct => {
     const tracked = trackedMap.get(orderProduct.product_id);
     const product = tracked?.product || productMap.get(orderProduct.product_id);
+
+    const trackedProfit = tracked?.profit ?? 0;
+    const trackedFees = tracked?.fees ?? 0;
+    const trackedProductCost = product?.product_cost ?? orderProduct.product_cost ?? 0;
+
+    const profit = trackedProfit;
+    const roi = trackedProductCost
+      ? ((trackedProfit / trackedProductCost) * 100)
+      : 0;
     const amazonDetail = tracked?.product?.AmazonProductDetail || null;
     const walmartDetail = product?.WalmartProductDetail || null;
 
@@ -1043,9 +1052,7 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
     const supplier = product?.supplier;
     const listingStatus = product?.listingStatus;
 
-    const roi = orderProduct.product_cost
-      ? ((orderProduct.profit / orderProduct.product_cost) * 100)
-      : 0;
+
 
     const marketplace = amazonDetail
       ? 'Amazon'
@@ -1095,8 +1102,8 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       product_velocity_60: tracked?.product_velocity_60 ?? null,
       avg_selling_price: tracked?.avg_selling_price ?? null,
       lowest_fba_price: tracked?.lowest_fba_price ?? null,
-      fees: parseFloat(tracked?.fees || 0),
-      roi: parseFloat(roi.toFixed(2)),
+      fees: parseFloat(trackedFees),
+      // roi: parseFloat(roi.toFixed(2)),
       updatedAt: tracked?.updatedAt || product?.updatedAt || null,
       sellable_quantity: tracked?.sellable_quantity || null,
 
@@ -1111,17 +1118,18 @@ exports.getPurchaseOrderSummaryByID = asyncHandler(async (req, res, next) => {
       reason_id: orderProduct.reason_id,
       reason: orderProduct?.PurchaseOrderProductReason?.description || "Unknown",
       expire_date: orderProduct.expire_date,
-      profit: parseFloat(orderProduct.profit)
+      profit: parseFloat(profit),
+      poproduct_profit: orderProduct.profit,
+      roi: (orderProduct.profit / orderProduct.product_cost) * 100,
     };
   });
-
-
   // 6. Ordenar: productos peligrosos al final
   productsData.sort((a, b) => (a.dg_item === b.dg_item) ? 0 : a.dg_item ? 1 : -1);
 
   // 7. Promedio ROI
   const averageRoi = productsData.reduce((sum, p) => sum + parseFloat(p.roi || 0), 0) / productsData.length;
   purchaseOrder.setDataValue("average_roi", averageRoi.toFixed(2));
+
 
   return res.status(200).json({
     success: true,
