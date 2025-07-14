@@ -1759,3 +1759,94 @@ exports.fixPurchaseOrderProductsProfit = asyncHandler(async (req, res, next) => 
   });
 
 })
+
+exports.recalculateProfits = asyncHandler(async (req, res, next) => {
+  const { purchaseorderid } = req.params;
+
+  // Validar que el purchase order existe
+  const purchaseOrder = await PurchaseOrder.findByPk(purchaseorderid);
+  if (!purchaseOrder) {
+    return res.status(404).json({
+      success: false,
+      message: "Purchase Order no encontrado"
+    });
+  }
+
+  // Obtener todos los productos del purchase order
+  const purchaseOrderProducts = await PurchaseOrderProduct.findAll({
+    where: { purchase_order_id: purchaseorderid },
+    attributes: ['id', 'product_id', 'product_cost', 'profit']
+  });
+
+  if (purchaseOrderProducts.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No se encontraron productos en este Purchase Order"
+    });
+  }
+
+  // Obtener los product_ids únicos
+  const productIds = [...new Set(purchaseOrderProducts.map(p => p.product_id))];
+
+  // Obtener los tracked products correspondientes
+  const trackedProducts = await TrackedProduct.findAll({
+    where: { product_id: productIds },
+    attributes: ['product_id', 'lowest_fba_price', 'fees']
+  });
+
+  // Crear un mapa para acceso rápido
+  const trackedProductsMap = new Map();
+  trackedProducts.forEach(tp => trackedProductsMap.set(tp.product_id, tp));
+
+  // Calcular y actualizar los profits
+  const updatedProducts = [];
+
+  for (const purchaseOrderProduct of purchaseOrderProducts) {
+    const trackedProduct = trackedProductsMap.get(purchaseOrderProduct.product_id);
+
+    if (trackedProduct) {
+      // Calcular el nuevo profit: lowest_fba_price - (product_cost + fees)
+      const lowestFbaPrice = parseFloat(trackedProduct.lowest_fba_price) || 0;
+      const productCost = parseFloat(purchaseOrderProduct.product_cost) || 0;
+      const fees = parseFloat(trackedProduct.fees) || 0;
+
+      const newProfit = parseFloat((lowestFbaPrice - (productCost + fees)).toFixed(2));
+
+      // Actualizar en la base de datos
+      await PurchaseOrderProduct.update(
+        { profit: newProfit },
+        { where: { id: purchaseOrderProduct.id } }
+      );
+
+      updatedProducts.push({
+        id: purchaseOrderProduct.id,
+        product_id: purchaseOrderProduct.product_id,
+        old_profit: purchaseOrderProduct.profit,
+        new_profit: newProfit,
+        calculation: {
+          lowest_fba_price: lowestFbaPrice,
+          product_cost: productCost,
+          fees: fees,
+          formula: `${lowestFbaPrice} - (${productCost} + ${fees}) = ${newProfit}`
+        }
+      });
+    } else {
+      // Si no hay tracked product, mantener el profit actual
+      updatedProducts.push({
+        id: purchaseOrderProduct.id,
+        product_id: purchaseOrderProduct.product_id,
+        old_profit: purchaseOrderProduct.profit,
+        new_profit: purchaseOrderProduct.profit,
+        note: "No se encontró TrackedProduct para este producto"
+      });
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Profits recalculados exitosamente",
+    purchase_order_id: purchaseorderid,
+    updated_products: updatedProducts,
+    total_products_updated: updatedProducts.length
+  });
+});

@@ -9,3 +9,4 @@ node_modules/
 /logger/logs
 *.xlsx
 *.csv
+.cursor/

@@ -22,7 +22,8 @@ const {
   updateIncomingOrderProducts,
   updateIncomingOrderNotes,
   mergePurchaseOrder,
-  fixPurchaseOrderProductsProfit
+  fixPurchaseOrderProductsProfit,
+  recalculateProfits
 } = require('../controllers/purchaseorders.controller');
 const { protect } = require('../middlewares/auth');
 const { addUPC } = require('../controllers/products.controller');
@@ -77,5 +78,8 @@ router.patch('/expireDate/:purchaseOrderProductId', addExpireDateToPOProduct);
 
 // Fix PO Products Profit
 router.patch('/products/fix-profit', fixPurchaseOrderProductsProfit);
+
+// Recalculate profits for a specific purchase order
+router.patch('/:purchaseorderid/recalculate-profits', recalculateProfits);
 
 module.exports = router;
