@@ -105,30 +105,30 @@ app.listen(PORT, () => {
     }
   );
 
-  // cron.schedule(
-  //   "0 * * * *",
-  //   async () => {
-  //     console.log("Starting shipment tracking cron job...");
-  //     logger.info("Starting shipment tracking cron job...");
-  //     try {
-  //       logger.info("Fetching new token...");
-  //       const accessToken = await fetchNewTokenForFees();
-  //       if (!accessToken) {
-  //         throw new Error("Failed to fetch a valid access token.");
-  //       }
+  cron.schedule(
+    "0 * * * *",
+    async () => {
+      console.log("Starting shipment tracking cron job...");
+      logger.info("Starting shipment tracking cron job...");
+      try {
+        logger.info("Fetching new token...");
+        const accessToken = await fetchNewTokenForFees();
+        if (!accessToken) {
+          throw new Error("Failed to fetch a valid access token.");
+        }
 
-  //       logger.info("Access token en el cronjob:", accessToken);
-  //       await runWorker("./shipmentWorker.js", { accessToken });
-  //       logger.info("Shipment tracking cron job completed successfully");
-  //     } catch (error) {
-  //       logger.error("Error in shipment tracking cron job:", error.message);
-  //     }
-  //   },
-  //   {
-  //     timezone: "America/New_York",
-  //     scheduled: true,
-  //   }
-  // );
+        logger.info("Access token en el cronjob:", accessToken);
+        await runWorker("./shipmentWorker.js", { accessToken });
+        logger.info("Shipment tracking cron job completed successfully");
+      } catch (error) {
+        logger.error("Error in shipment tracking cron job:", error.message);
+      }
+    },
+    {
+      timezone: "America/New_York",
+      scheduled: true,
+    }
+  );
 
   //  Cron job to delete old shipments
 
