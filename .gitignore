@@ -7,6 +7,6 @@ node_modules/
 /logger/info.log
 /logger/debug.log
 /logger/logs
-*.xlsx
+/exports/
 *.csv
 .cursor/

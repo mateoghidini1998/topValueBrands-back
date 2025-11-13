@@ -919,7 +919,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
     __dirname,
     "..",
     "templates",
-    "2DWorkflow_Create_Shipment_Template.xlsx"
+    "2DWorkflow_Create_Shipment_Template_v2.xlsx"
   );
 
   if (!fs.existsSync(templatePath)) {
@@ -931,7 +931,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   await workbook.xlsx.readFile(templatePath);
 
   // Seleccionar la primera hoja del workbook
-  const worksheet = workbook.getWorksheet(1);
+  const worksheet = workbook.getWorksheet('Create Draft Template');
 
   // Agrupar los productos por seller_sku y sumar quantities
   const aggregatedProducts = {};
@@ -949,7 +949,7 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
         const month = String(date.getMonth() + 1).padStart(2, "0"); // Mes (0-based)
         const day = String(date.getDate()).padStart(2, "0");
         const year = date.getFullYear();
-        return `${month}-${day}-${year}`;
+        return `${month}/${day}/${year}`;
       })()
       : "N/A";
 
@@ -966,13 +966,13 @@ exports.download2DWorkflowTemplate = asyncHandler(async (req, res) => {
   });
 
   // Escribir los datos agrupados en el Excel
-  let rowIndex = 2; // Comenzar en la segunda fila después del encabezado
+  let rowIndex = 3; // Comenzar en la segunda fila después del encabezado
   Object.values(aggregatedProducts).forEach((product) => {
     const row = worksheet.getRow(rowIndex);
     row.getCell(1).value = product.sellerSku; // Columna SKU
     row.getCell(2).value = product.quantity; // Columna QTY
-    row.getCell(3).value = product.unitsPerCase; // Columna UNITS_PER_CASE
-    row.getCell(6).value = product.expireDate;
+    row.getCell(3).value = product.expireDate;
+    row.getCell(4).value = product.unitsPerCase; // Columna UNITS_PER_CASE
     row.commit();
     rowIndex++;
   });
@@ -1303,7 +1303,7 @@ exports.toggleProductChecked = asyncHandler(async (req, res) => {
   const shipment = await OutgoingShipment.findByPk(outgoingShipmentProduct.outgoing_shipment_id);
 
   if (shipment.status !== 'WORKING') {
-    return res.status(400).json({ 
+    return res.status(400).json({
       message: "Solo se pueden marcar productos cuando el envío está en estado WORKING"
     });
   }
@@ -1444,7 +1444,7 @@ exports.checkAllShipmentProductsOfAPallet = asyncHandler(async (req, res) => {
   const shipment = await OutgoingShipment.findByPk(shipmentId);
 
   if (shipment.status !== 'WORKING') {
-    return res.status(400).json({ 
+    return res.status(400).json({
       message: "Solo se pueden marcar productos cuando el envío está en estado WORKING"
     });
   }
